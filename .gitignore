@@ -4,3 +4,29 @@ node_modules/
 .next/
 dist/
 coverage/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Data files (large)
+*.xlsx
+*.xls
+*.csv
+
+# Temp/test files
+test-db.ts

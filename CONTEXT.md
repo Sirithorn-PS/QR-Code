@@ -17,7 +17,7 @@
 - `itemCode`: 7530010083
 - `unit`: GALLON
 - `productId`: 10001784
-- `name`: 3L. ENEOS X PRIME 0W-20 Gallon3L
+- `name`: 3L. Premium Synthetic Oil 0W-20 Gallon3L
 - `quantity`: จำนวนคงเหลือ/รายการ เช่น 5
 
 QR mapping:

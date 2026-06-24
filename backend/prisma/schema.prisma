@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+model User {
+  id                   Int           @id @default(autoincrement())
+  username             String        @unique
+  password             String
+  fullName             String
+  role                 String        @default("warehouse_staff")
+  createdAt            DateTime      @default(now())
+  createdTransactions  Transaction[] @relation("CreatedTransactions")
+  approvedTransactions Transaction[] @relation("ApprovedTransactions")
+}
+
+model Product {
+  id           Int           @id @default(autoincrement())
+  itemCode     String        @unique
+  productId    String?
+  description  String
+  unit         String
+  warehouse    String
+  location     String
+  quantity     Int
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+}
+
+model Transaction {
+  id            Int       @id @default(autoincrement())
+  productId     Int
+  type          String
+  quantity      Int
+  status        String    @default("pending")
+  itemSnapshot  Json
+  note          String?
+  createdById   Int
+  approvedById  Int?
+  createdAt     DateTime  @default(now())
+  confirmedAt   DateTime?
+  rejectedAt    DateTime?
+  product       Product   @relation(fields: [productId], references: [id])
+  createdBy     User      @relation("CreatedTransactions", fields: [createdById], references: [id])
+  approvedBy    User?     @relation("ApprovedTransactions", fields: [approvedById], references: [id])
+}

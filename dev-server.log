@@ -1,0 +1,165 @@
+
+> dev
+> concurrently "npm run dev:frontend" "npm run dev:backend"
+
+(node:25608) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[0] 
+[0] > dev:frontend
+[0] > cd eneos-frontend && npm run dev
+[0] 
+[1] 
+[1] > dev:backend
+[1] > cd backend && npm run dev
+[1] 
+[0] 
+[0] > eneos-frontend@0.1.0 dev
+[0] > next dev
+[0] 
+[1] 
+[1] > backend@1.0.0 dev
+[1] > ts-node-dev --respawn --transpile-only src/index.ts
+[1] 
+[1] [INFO] 11:00:48 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+[0] ▲ Next.js 16.2.9 (Turbopack)
+[0] - Local:         http://localhost:3000
+[0] - Network:       http://172.20.10.3:3000
+[0] ✓ Ready in 699ms
+[1] Backend listening on 4000
+[0] 
+[0]  GET / 200 in 2.6s (next.js: 2.3s, application-code: 327ms)
+[0]  GET / 200 in 356ms (next.js: 28ms, application-code: 328ms)
+[0] ⨯ TypeError: components.ComponentMod.handler is not a function
+[0]     at ignore-listed frames {
+[0]   page: '/register'
+[0] }
+[0] ⨯ Error: Failed to load external module @swc/helpers-203fe2cbc76dd276/_/_interop_require_default: Error: Cannot find module '@swc/helpers-203fe2cbc76dd276/_/_interop_require_default'
+[0] Require stack:
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\.next\dev\server\chunks\ssr\[root-of-the-server]__1gmgqwn._.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\.next\dev\server\chunks\ssr\[turbopack]_runtime.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\.next\dev\server\app\page.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\server\require.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\server\load-components.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\build\utils.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\server\lib\router-server.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\server\lib\start-server.js
+[0]     at module evaluation (D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\.next\dev\server\chunks\ssr\[root-of-the-server]__1gmgqwn._.js:28:35)
+[0]     at Object.<anonymous> (D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\.next\dev\server\pages\_document.js:3:3)
+[0]  GET /register 500 in 4.7s (next.js: 3.1s, application-code: 1569ms)
+[0] ⨯ TypeError: components.ComponentMod.handler is not a function
+[0]     at ignore-listed frames {
+[0]   page: '/register'
+[0] }
+[0] ⨯ Error: Failed to load external module @swc/helpers-203fe2cbc76dd276/_/_interop_require_default: Error: Cannot find module '@swc/helpers-203fe2cbc76dd276/_/_interop_require_default'
+[0] Require stack:
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\.next\dev\server\chunks\ssr\[root-of-the-server]__1gmgqwn._.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\.next\dev\server\chunks\ssr\[turbopack]_runtime.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\.next\dev\server\app\page.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\server\require.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\server\load-components.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\build\utils.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\server\lib\router-server.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\server\lib\start-server.js
+[0]     at module evaluation (D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\.next\dev\server\chunks\ssr\[root-of-the-server]__1gmgqwn._.js:28:35)
+[0]     at Object.<anonymous> (D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\.next\dev\server\pages\_document.js:3:3)
+[0]  GET /register 500 in 731ms (next.js: 606ms, application-code: 125ms)
+[0] [browser] Uncaught Error: Failed to load external module @swc/helpers-203fe2cbc76dd276/_/_interop_require_default: Error: Cannot find module '@swc/helpers-203fe2cbc76dd276/_/_interop_require_default'
+[0] Require stack:
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\.next\dev\server\chunks\ssr\[root-of-the-server]__1gmgqwn._.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\.next\dev\server\chunks\ssr\[turbopack]_runtime.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\.next\dev\server\app\page.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\server\require.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\server\load-components.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\build\utils.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\server\lib\router-server.js
+[0] - D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\node_modules\next\dist\server\lib\start-server.js
+[0]     at module evaluation (.next\dev\server\chunks\ssr\[root-of-the-server]__1gmgqwn._.js:28:35)
+[0]     at module evaluation (file://D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\.next\dev\server\chunks\ssr\[root-of-the-server]__1gmgqwn._.js:377:56)
+[0]     at module evaluation (file://D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\.next\dev\server\chunks\ssr\[root-of-the-server]__1gmgqwn._.js:2307:42)
+[0]     at module evaluation (file://D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\eneos-frontend\.next\dev\server\chunks\ssr\[root-of-the-server]__1gmgqwn._.js:2957:40)
+[0]     at Object.<anonymous> (.next\dev\server\pages\_document.js:3:3)
+[0] 
+[0] <--- Last few GCs --->
+[0] 
+[0] [16736:000001A362DCD000]  1193901 ms: Scavenge (interleaved) 7819.3 (7837.4) -> 7818.4 (7841.9) MB, pooled: 0 MB, 100.16 / 0.00 ms  (average mu = 0.330, current mu = 0.361) allocation failure; 
+[0] [16736:000001A362DCD000]  1239188 ms: Mark-Compact (reduce) 7822.5 (7842.4) -> 7813.4 (7833.0) MB, pooled: 0 MB, 28282.33 / 2128.05 ms  (+ 433.0 ms in 57 steps since start of marking, biggest step 36.6 ms, walltime since start of marking 30999 ms) (averag
+[0] FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+[0] ----- Native stack trace -----
+[0] 
+[0]  1: 00007FF61EB50E3F node::OnFatalError+1343
+[0]  2: 00007FF61F79F877 v8::Function::NewInstance+423
+[0]  3: 00007FF61F5A02A7 v8::base::AddressSpaceReservation::AddressSpaceReservation+322071
+[0]  4: 00007FF61F5A3FB4 v8::base::AddressSpaceReservation::AddressSpaceReservation+337700
+[0]  5: 00007FF61F5B2F0C v8::internal::StrongRootAllocatorBase::deallocate_impl+16604
+[0]  6: 00007FF61F5B274B v8::internal::StrongRootAllocatorBase::deallocate_impl+14619
+[0]  7: 00007FF620A3F9AD v8::base::UnsignedDivisionByConstant<unsigned __int64>+2794669
+[0]  8: 00007FF61F59DD70 v8::base::AddressSpaceReservation::AddressSpaceReservation+312544
+[0]  9: 00007FF61F5B85BA X509_STORE_set_cleanup+5098
+[0] 10: 00007FF61F5C4A56 uv_timer_set_repeat+20694
+[0] 11: 00007FF61F196767 v8::String::Value::~Value+144199
+[0] 12: 000001A31FE775FA 
+[0] [?25h
+[0] npm run dev:frontend exited with code 134
+[1] [INFO] 13:07:28 Restarting: D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\src\index.ts has been modified
+[1] [INFO] 15:21:50 Restarting: D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\src\index.ts has been modified
+[1] Backend listening on 4000
+[1] PrismaClientInitializationError: 
+[1] Invalid `prisma.user.findUnique()` invocation in
+[1] D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\src\index.ts:145:44
+[1] 
+[1]   142   return res.status(400).json({ error: 'Password must be at least 6 characters' })
+[1]   143 }
+[1]   144 
+[1] → 145 const existingUser = await prisma.user.findUnique(
+[1] Can't reach database server at `db.xiduuisnzqnpqkntqihp.supabase.co:5432`
+[1] 
+[1] Please make sure your database server is running at `db.xiduuisnzqnpqkntqihp.supabase.co:5432`.
+[1]     at $n.handleRequestError (D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\node_modules\@prisma\client\runtime\library.js:121:7615)
+[1]     at $n.handleAndLogRequestError (D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+[1]     at $n.request (D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+[1]     at l (D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+[1]     at D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\src\index.ts:145:26 {
+[1]   clientVersion: '5.22.0',
+[1]   errorCode: undefined
+[1] }
+[1] PrismaClientInitializationError: 
+[1] Invalid `prisma.user.findUnique()` invocation in
+[1] D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\src\index.ts:145:44
+[1] 
+[1]   142   return res.status(400).json({ error: 'Password must be at least 6 characters' })
+[1]   143 }
+[1]   144 
+[1] → 145 const existingUser = await prisma.user.findUnique(
+[1] Can't reach database server at `db.xiduuisnzqnpqkntqihp.supabase.co:5432`
+[1] 
+[1] Please make sure your database server is running at `db.xiduuisnzqnpqkntqihp.supabase.co:5432`.
+[1]     at $n.handleRequestError (D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\node_modules\@prisma\client\runtime\library.js:121:7615)
+[1]     at $n.handleAndLogRequestError (D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+[1]     at $n.request (D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+[1]     at l (D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+[1]     at D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\src\index.ts:145:26 {
+[1]   clientVersion: '5.22.0',
+[1]   errorCode: undefined
+[1] }
+[1] PrismaClientInitializationError: 
+[1] Invalid `prisma.user.findUnique()` invocation in
+[1] D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\src\index.ts:145:44
+[1] 
+[1]   142   return res.status(400).json({ error: 'Password must be at least 6 characters' })
+[1]   143 }
+[1]   144 
+[1] → 145 const existingUser = await prisma.user.findUnique(
+[1] Can't reach database server at `db.xiduuisnzqnpqkntqihp.supabase.co:5432`
+[1] 
+[1] Please make sure your database server is running at `db.xiduuisnzqnpqkntqihp.supabase.co:5432`.
+[1]     at $n.handleRequestError (D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\node_modules\@prisma\client\runtime\library.js:121:7615)
+[1]     at $n.handleAndLogRequestError (D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+[1]     at $n.request (D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+[1]     at l (D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+[1]     at D:\PailuiSirithorn\Pailui\Documents\รวมปี 4\ปี 4 เทอม 1\ฝึกงาน\QR Code Webapp\backend\src\index.ts:145:26 {
+[1]   clientVersion: '5.22.0',
+[1]   errorCode: undefined
+[1] }

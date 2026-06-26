@@ -149,6 +149,26 @@ export function fetchProduct(itemCode: string) {
   return apiRequest<Product>(`/products/${encodeURIComponent(itemCode)}`)
 }
 
+export function createProduct(data: {
+  itemCode: string
+  description: string
+  unit: string
+  warehouse: string
+  location: string
+  quantity: number
+}) {
+  return apiRequest<Product>('/products', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function deleteProduct(id: number) {
+  return apiRequest<{ success: boolean }>(`/products/${id}`, {
+    method: 'DELETE',
+  })
+}
+
 export function fetchTransactions(status = '') {
   const params = status ? `?status=${encodeURIComponent(status)}` : ''
   return apiRequest<StockTransaction[]>(`/transactions${params}`)

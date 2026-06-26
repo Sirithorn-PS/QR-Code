@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { ScanLine, PackageOpen, ArrowRight } from 'lucide-react'
 
 interface User {
   id: number
@@ -12,167 +12,81 @@ interface User {
 }
 
 export default function Home() {
-  const router = useRouter()
-  const [user] = useState<User | null>(() => {
-    if (typeof window === 'undefined') return null
-    const userStr = localStorage.getItem('user')
-    return userStr ? JSON.parse(userStr) : null
-  })
+  const [user, setUser] = useState<User | null>(null)
+  const [mounted, setMounted] = useState(false)
 
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    router.push('/login')
-  }
+  useEffect(() => {
+    setMounted(true)
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      try {
+        setUser(JSON.parse(userStr))
+      } catch (e) {
+        console.error('Failed to parse user from localStorage', e)
+      }
+    }
+  }, [])
+
+  if (!mounted) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Navigation */}
-      <nav className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-indigo-600">QR Code Webapp</h1>
-          <div className="flex items-center gap-4">
-            {user ? (
-              <>
-                <span className="text-gray-700">
-                  ยินดีต้อนรับ <span className="font-semibold">{user.fullName}</span>
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition"
-                >
-                  ออกจากระบบ
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition"
-                >
-                  เข้าสู่ระบบ
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
+    <div className="max-w-5xl mx-auto px-4 py-8 md:py-12">
+      {/* Welcome Header */}
+      <div className="mb-10 text-center">
+        <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 tracking-tight">
+          หน้าหลัก
+        </h2>
+        <p className="text-gray-500 mt-3 text-lg font-medium">
+          ยินดีต้อนรับกลับมา, {user?.fullName || 'ผู้ใช้งาน'}
+        </p>
+      </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        <div className="text-center mb-12">
-          <h2 className="text-5xl font-bold text-gray-900 mb-4">ระบบสแกน QR</h2>
-          <p className="text-xl text-gray-600 mb-8">สำหรับรับ/จ่ายสินค้าอัตโนมัติ</p>
+      {/* Quick Action */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm transition-shadow hover:shadow-md flex flex-col items-center text-center">
+          <div className="w-12 h-12 bg-red-50 text-[#BE1111] rounded-xl flex items-center justify-center mb-6">
+            <ScanLine className="w-6 h-6" />
+          </div>
+          <h3 className="text-xl font-display font-bold text-gray-900 mb-2">สแกนสินค้า</h3>
+          <p className="text-gray-500 mb-8 text-sm">สแกน QR Code เพื่อรับเข้าหรือจ่ายออกสินค้าอย่างรวดเร็ว</p>
+          <Link
+            href="/scan"
+            className="inline-flex items-center justify-center w-full md:w-auto px-6 py-2.5 bg-[#BE1111] text-white font-semibold rounded-xl hover:bg-[#A00F0F] transition-colors group"
+          >
+            เริ่มสแกน
+            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+          </Link>
         </div>
 
-        {user ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Scan Card */}
-            <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-2xl font-bold text-gray-900">สแกนสินค้า</h3>
-                <div className="text-4xl">📱</div>
-              </div>
-              <p className="text-gray-600 mb-6">สแกน QR Code เพื่อบันทึกรับเข้า/จ่ายออก</p>
-              <Link
-                href="/scan"
-                className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-semibold"
-              >
-                เริ่มสแกน →
-              </Link>
-            </div>
-
-            {/* Transactions Card */}
-            <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-2xl font-bold text-gray-900">รายการรอการยืนยัน</h3>
-                <div className="text-4xl">📋</div>
-              </div>
-              <p className="text-gray-600 mb-6">ดูรายการที่รอการยืนยันจากผู้จัดการ</p>
-              <Link
-                href="/transactions"
-                className="inline-block px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition font-semibold"
-              >
-                ดูรายการ →
-              </Link>
-            </div>
-
-            {/* Stock Card */}
-            <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-2xl font-bold text-gray-900">สต็อกสินค้า</h3>
-                <div className="text-4xl">📦</div>
-              </div>
-              <p className="text-gray-600 mb-6">ดูสต็อกสินค้าปัจจุบัน</p>
-              <Link
-                href="/inventory"
-                className="inline-block px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition font-semibold"
-              >
-                ดูสต็อก →
-              </Link>
-            </div>
-
-            {/* Reports Card */}
-            <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-2xl font-bold text-gray-900">รายงาน</h3>
-                <div className="text-4xl">📊</div>
-              </div>
-              <p className="text-gray-600 mb-6">ดูรายงานและประวัติการทำงาน</p>
-              <Link
-                href="/reports"
-                className="inline-block px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition font-semibold"
-              >
-                ดูรายงาน →
-              </Link>
-            </div>
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm transition-shadow hover:shadow-md flex flex-col items-center text-center">
+          <div className="w-12 h-12 bg-gray-50 text-gray-700 rounded-xl flex items-center justify-center mb-6">
+            <PackageOpen className="w-6 h-6" />
           </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow-lg p-12 text-center">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">ยังไม่ได้เข้าสู่ระบบ</h3>
-            <p className="text-gray-600 mb-8">กรุณาเข้าสู่ระบบหรือลงทะเบียนเพื่อเข้าใช้ระบบสแกน QR</p>
-            <div className="flex justify-center gap-4">
-              <Link
-                href="/login"
-                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition font-semibold"
-              >
-                เข้าสู่ระบบ
-              </Link>
-              <Link
-                href="/register"
-                className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition font-semibold"
-              >
-                ลงทะเบียน
-              </Link>
-            </div>
-          </div>
-        )}
+          <h3 className="text-xl font-display font-bold text-gray-900 mb-2">จัดการสต็อก</h3>
+          <p className="text-gray-500 mb-8 text-sm">ตรวจสอบสถานะสต็อกและอัปเดตข้อมูลรายการสินค้า</p>
+          <Link
+            href="/inventory"
+            className="inline-flex items-center justify-center w-full md:w-auto px-6 py-2.5 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition-colors"
+          >
+            ดูสต็อกสินค้า
+          </Link>
+        </div>
+      </div>
 
-        {/* User Info */}
-        {user && (
-          <div className="mt-12 bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">ข้อมูลบัญชี</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-gray-600 text-sm">ID</p>
-                <p className="text-lg font-semibold">{user.id}</p>
-              </div>
-              <div>
-                <p className="text-gray-600 text-sm">ชื่อผู้ใช้</p>
-                <p className="text-lg font-semibold">{user.username}</p>
-              </div>
-              <div>
-                <p className="text-gray-600 text-sm">ชื่อ-นามสกุล</p>
-                <p className="text-lg font-semibold">{user.fullName}</p>
-              </div>
-              <div>
-                <p className="text-gray-600 text-sm">บทบาท</p>
-                <p className="text-lg font-semibold">{user.role === 'warehouse_staff' ? 'เจ้าหน้าที่คลัง' : user.role}</p>
-              </div>
-            </div>
+      {/* System Status / Overview */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+        <h3 className="text-lg font-display font-bold text-gray-900 mb-4">ภาพรวมระบบ</h3>
+        <div className="flex flex-col md:flex-row gap-6 md:gap-12">
+          <div>
+            <p className="text-sm text-gray-500 mb-1">บทบาทของคุณ</p>
+            <p className="font-semibold text-gray-900">{user?.role === 'warehouse_staff' ? 'เจ้าหน้าที่คลังสินค้า' : user?.role || 'Guest'}</p>
           </div>
-        )}
-      </main>
+          <div>
+            <p className="text-sm text-gray-500 mb-1">อัปเดตล่าสุด</p>
+            <p className="font-semibold text-gray-900 text-sm">พร้อมใช้งาน</p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

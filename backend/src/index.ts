@@ -198,7 +198,7 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }))
 
-app.get('/users', authenticate, requireRole('manager'), async (req, res) => {
+app.get('/users', authenticate, async (req, res) => {
   const users = await prisma.user.findMany({
     select: {
       id: true,
@@ -240,6 +240,63 @@ app.get('/products/:itemCode', authenticate, async (req, res) => {
   }
 
   return res.json(productSnapshot(product))
+})
+
+app.post('/products', authenticate, async (req, res) => {
+  try {
+    const { itemCode, description, unit, warehouse, location, quantity } = req.body
+
+    if (!itemCode || !description || !unit || !warehouse || location === undefined || quantity === undefined) {
+      return res.status(400).json({ error: 'Missing required fields' })
+    }
+
+    const existingProduct = await prisma.product.findUnique({
+      where: { itemCode: String(itemCode) },
+    })
+
+    if (existingProduct) {
+      return res.status(409).json({ error: 'Product with this Item Code already exists' })
+    }
+
+    const newProduct = await prisma.product.create({
+      data: {
+        itemCode: String(itemCode),
+        description: String(description),
+        unit: String(unit),
+        warehouse: String(warehouse),
+        location: String(location),
+        quantity: Number(quantity),
+      },
+    })
+
+    return res.status(201).json(productSnapshot(newProduct))
+  } catch (error) {
+    console.error('Error creating product:', error)
+    return res.status(500).json({ error: 'Failed to create product' })
+  }
+})
+
+app.delete('/products/:id', authenticate, async (req, res) => {
+  try {
+    const id = Number(req.params.id)
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid product ID' })
+    }
+
+    // Delete related transactions first (due to no cascade delete in Prisma schema)
+    await prisma.transaction.deleteMany({
+      where: { productId: id },
+    })
+
+    await prisma.product.delete({
+      where: { id },
+    })
+
+    return res.status(200).json({ success: true })
+  } catch (error) {
+    console.error('Error deleting product:', error)
+    return res.status(500).json({ error: 'Failed to delete product' })
+  }
 })
 
 app.get('/transactions', authenticate, async (req, res) => {
@@ -305,7 +362,6 @@ app.post('/transactions', authenticate, async (req: AuthenticatedRequest, res: R
 app.post(
   '/transactions/:id/confirm',
   authenticate,
-  requireRole('manager'),
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const id = Number(req.params.id)
@@ -371,7 +427,6 @@ app.post(
 app.post(
   '/transactions/:id/reject',
   authenticate,
-  requireRole('manager'),
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const id = Number(req.params.id)

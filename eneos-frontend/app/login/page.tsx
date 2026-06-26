@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { login, setAuthData } from '@/lib/auth'
+import { Package } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -30,28 +31,34 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
-      <div className="w-full max-w-md">
-        {/* Card */}
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">เข้าสู่ระบบ</h1>
-            <p className="text-gray-600 mt-2">ระบบสแกน QR สำหรับรับ/จ่ายสินค้า</p>
+    <div className="min-h-screen flex items-center justify-center px-4 bg-gray-50">
+      <div className="w-full max-w-[400px]">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-white border border-gray-200 rounded-2xl shadow-sm mb-6">
+            <Package className="w-7 h-7 text-[#BE1111]" />
           </div>
+          <h1 className="text-3xl font-display font-bold text-gray-900 tracking-tight mb-2">
+            ยินดีต้อนรับกลับมา
+          </h1>
+          <p className="text-gray-500 text-sm">
+            เข้าสู่ระบบเพื่อจัดการคลังสินค้า
+          </p>
+        </div>
 
+        {/* Card */}
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
           {/* Error Message */}
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-800 text-sm">{error}</p>
+            <div className="mb-6 p-4 rounded-xl text-sm font-medium text-red-800 bg-red-50 border border-red-100">
+              <p>{error}</p>
             </div>
           )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Username Field */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1.5">
                 ชื่อผู้ใช้
               </label>
               <input
@@ -59,16 +66,15 @@ export default function LoginPage() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="กรอกชื่อผู้ใช้"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="กรอกชื่อผู้ใช้ของคุณ"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#BE1111] focus:border-transparent transition-shadow sm:text-sm"
                 required
                 disabled={loading}
               />
             </div>
 
-            {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
                 รหัสผ่าน
               </label>
               <input
@@ -76,45 +82,36 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="กรอกรหัสผ่าน"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="••••••••"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#BE1111] focus:border-transparent transition-shadow sm:text-sm"
                 required
                 disabled={loading}
               />
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
-            >
-              {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
-            </button>
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#BE1111] text-white font-semibold py-3 px-4 rounded-xl transition-colors hover:bg-[#A00F0F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#BE1111] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}
+              </button>
+            </div>
           </form>
+        </div>
 
-          {/* Divider */}
-          <div className="my-6 flex items-center">
-            <div className="flex-grow border-t border-gray-300"></div>
-            <span className="px-3 text-gray-500 text-sm">หรือ</span>
-            <div className="flex-grow border-t border-gray-300"></div>
-          </div>
-
-          {/* Link to Register */}
-          <div className="text-center">
-            <p className="text-gray-600">ยังไม่มีบัญชี?</p>
+        {/* Link to Register */}
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-600">
+            ยังไม่มีบัญชีผู้ใช้?{' '}
             <Link
               href="/register"
-              className="text-indigo-600 hover:text-indigo-700 font-semibold"
+              className="font-semibold text-[#BE1111] hover:underline"
             >
               ลงทะเบียนใหม่
             </Link>
-          </div>
-        </div>
-
-        {/* Footer Info */}
-        <div className="mt-6 text-center text-gray-600 text-xs">
-          <p>สำหรับเจ้าหน้าที่คลังสินค้า</p>
+          </p>
         </div>
       </div>
     </div>

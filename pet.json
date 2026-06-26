@@ -1,0 +1,7 @@
+{
+  "id": "le-chaton-fat",
+  "displayName": "Le Chaton Fat",
+  "description": "A morbidly obese orange cat with a deadpan royal attitude, adapted into a compact Codex digital pet.",
+  "spritesheetPath": "spritesheet.webp",
+  "kind": "animal"
+}

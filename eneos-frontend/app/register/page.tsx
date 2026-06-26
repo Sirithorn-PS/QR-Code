@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { register, setAuthData } from '@/lib/auth'
+import { Package } from 'lucide-react'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -18,7 +19,6 @@ export default function RegisterPage() {
     e.preventDefault()
     setError('')
 
-    // Validate inputs
     if (!username || !password || !confirmPassword || !fullName) {
       setError('กรุณากรอกข้อมูลให้ครบถ้วน')
       return
@@ -49,28 +49,34 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 px-4">
-      <div className="w-full max-w-md">
-        {/* Card */}
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">ลงทะเบียน</h1>
-            <p className="text-gray-600 mt-2">สร้างบัญชีใหม่เพื่อเข้าใช้ระบบ</p>
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gray-50">
+      <div className="w-full max-w-[400px]">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-white border border-gray-200 rounded-2xl shadow-sm mb-6">
+            <Package className="w-7 h-7 text-[#BE1111]" />
           </div>
+          <h1 className="text-3xl font-display font-bold text-gray-900 tracking-tight mb-2">
+            สร้างบัญชีใหม่
+          </h1>
+          <p className="text-gray-500 text-sm">
+            ลงทะเบียนเพื่อใช้งานระบบจัดการคลังสินค้า
+          </p>
+        </div>
 
+        {/* Card */}
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
           {/* Error Message */}
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-800 text-sm">{error}</p>
+            <div className="mb-6 p-4 rounded-xl text-sm font-medium text-red-800 bg-red-50 border border-red-100">
+              <p>{error}</p>
             </div>
           )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Full Name Field */}
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1.5">
                 ชื่อ-นามสกุล
               </label>
               <input
@@ -78,16 +84,15 @@ export default function RegisterPage() {
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="กรอกชื่อ-นามสกุล"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="นายตัวอย่าง สมมติ"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#BE1111] focus:border-transparent transition-shadow sm:text-sm"
                 required
                 disabled={loading}
               />
             </div>
 
-            {/* Username Field */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1.5">
                 ชื่อผู้ใช้
               </label>
               <input
@@ -95,16 +100,15 @@ export default function RegisterPage() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="กรอกชื่อผู้ใช้"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="ตั้งชื่อผู้ใช้"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#BE1111] focus:border-transparent transition-shadow sm:text-sm"
                 required
                 disabled={loading}
               />
             </div>
 
-            {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
                 รหัสผ่าน
               </label>
               <input
@@ -112,16 +116,15 @@ export default function RegisterPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="กรอกรหัสผ่าน (อย่างน้อย 6 ตัวอักษร)"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="อย่างน้อย 6 ตัวอักษร"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#BE1111] focus:border-transparent transition-shadow sm:text-sm"
                 required
                 disabled={loading}
               />
             </div>
 
-            {/* Confirm Password Field */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1.5">
                 ยืนยันรหัสผ่าน
               </label>
               <input
@@ -129,45 +132,36 @@ export default function RegisterPage() {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="ยืนยันรหัสผ่าน"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="กรอกรหัสผ่านอีกครั้ง"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#BE1111] focus:border-transparent transition-shadow sm:text-sm"
                 required
                 disabled={loading}
               />
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
-            >
-              {loading ? 'กำลังสร้างบัญชี...' : 'ลงทะเบียน'}
-            </button>
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#BE1111] text-white font-semibold py-3 px-4 rounded-xl transition-colors hover:bg-[#A00F0F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#BE1111] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'กำลังตรวจสอบ...' : 'ลงทะเบียน'}
+              </button>
+            </div>
           </form>
+        </div>
 
-          {/* Divider */}
-          <div className="my-6 flex items-center">
-            <div className="flex-grow border-t border-gray-300"></div>
-            <span className="px-3 text-gray-500 text-sm">หรือ</span>
-            <div className="flex-grow border-t border-gray-300"></div>
-          </div>
-
-          {/* Link to Login */}
-          <div className="text-center">
-            <p className="text-gray-600">มีบัญชีแล้ว?</p>
+        {/* Link to Login */}
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-600">
+            มีบัญชีผู้ใช้แล้ว?{' '}
             <Link
               href="/login"
-              className="text-green-600 hover:text-green-700 font-semibold"
+              className="font-semibold text-[#BE1111] hover:underline"
             >
               เข้าสู่ระบบ
             </Link>
-          </div>
-        </div>
-
-        {/* Footer Info */}
-        <div className="mt-6 text-center text-gray-600 text-xs">
-          <p>สำหรับเจ้าหน้าที่คลังสินค้า</p>
+          </p>
         </div>
       </div>
     </div>

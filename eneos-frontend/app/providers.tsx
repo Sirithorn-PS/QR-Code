@@ -21,7 +21,13 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => getUser())
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  React.useEffect(() => {
+    setUser(getUser())
+    setIsLoading(false)
+  }, [])
 
   const handleLogout = () => {
     logout()
@@ -32,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        isLoading: false,
+        isLoading,
         isAuthenticated: !!user,
         logout: handleLogout,
         setUser,

@@ -236,7 +236,7 @@ app.get('/products/:itemCode', authenticate, async (req, res) => {
   })
 
   if (!product) {
-    return res.status(404).json({ error: 'Product not found' })
+    return res.status(404).json({ error: 'ไม่พบสินค้ารหัสนี้ในระบบ' })
   }
 
   return res.json(productSnapshot(product))
@@ -247,7 +247,7 @@ app.post('/products', authenticate, async (req, res) => {
     const { itemCode, description, unit, warehouse, location, quantity } = req.body
 
     if (!itemCode || !description || !unit || !warehouse || location === undefined || quantity === undefined) {
-      return res.status(400).json({ error: 'Missing required fields' })
+      return res.status(400).json({ error: 'กรุณากรอกข้อมูลสินค้าให้ครบถ้วน' })
     }
 
     const existingProduct = await prisma.product.findUnique({
@@ -255,7 +255,7 @@ app.post('/products', authenticate, async (req, res) => {
     })
 
     if (existingProduct) {
-      return res.status(409).json({ error: 'Product with this Item Code already exists' })
+      return res.status(409).json({ error: 'รหัสสินค้า (Item Code) นี้มีอยู่ในระบบแล้ว กรุณาใช้รหัสอื่น' })
     }
 
     const newProduct = await prisma.product.create({
@@ -272,7 +272,7 @@ app.post('/products', authenticate, async (req, res) => {
     return res.status(201).json(productSnapshot(newProduct))
   } catch (error) {
     console.error('Error creating product:', error)
-    return res.status(500).json({ error: 'Failed to create product' })
+    return res.status(500).json({ error: 'เพิ่มรายการสินค้าไม่สำเร็จ เกิดข้อผิดพลาดที่เซิร์ฟเวอร์' })
   }
 })
 

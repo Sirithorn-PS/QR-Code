@@ -180,12 +180,14 @@ export default function ScanPage() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="fixed bottom-0 left-0 right-0 md:left-1/2 md:right-auto md:-translate-x-1/2 w-full max-w-xl bg-white/90 backdrop-blur-xl rounded-t-3xl border-t border-white/20 p-6 pb-8 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.08)]"
+              className="fixed bottom-[72px] left-3 right-3 md:bottom-0 md:left-1/2 md:right-auto md:-translate-x-1/2 w-[calc(100%-24px)] md:w-full max-w-xl max-h-[calc(100vh-90px)] md:max-h-[85vh] flex flex-col bg-white/95 backdrop-blur-xl rounded-3xl md:rounded-b-none border border-white/40 md:border-b-0 p-5 md:p-6 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.12)] overflow-hidden"
             >
               {/* Drag Handle */}
-              <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6" />
+              <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4 shrink-0" />
 
-              <div className="flex items-start justify-between mb-5">
+              {/* Scrollable Inner Content */}
+              <div className="overflow-y-auto overflow-x-hidden flex-1 pr-1 -mr-1">
+                <div className="flex items-start justify-between mb-5">
                 <div>
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700">
                     <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
@@ -309,6 +311,7 @@ export default function ScanPage() {
                   )}
                 </motion.button>
               </form>
+              </div>
             </motion.div>
           </>
         )}

@@ -13,6 +13,7 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(true)
 
   const [showAddModal, setShowAddModal] = useState(false)
+  const [modalError, setModalError] = useState('')
   const [newItem, setNewItem] = useState<{
     itemCode: string
     description: string
@@ -91,6 +92,7 @@ export default function InventoryPage() {
     e.preventDefault()
     setAdding(true)
     setError('')
+    setModalError('')
     try {
       await createProduct({
         ...newItem,
@@ -100,7 +102,11 @@ export default function InventoryPage() {
       setNewItem({ itemCode: '', description: '', unit: 'PCS', warehouse: 'WPK', location: '', quantity: '' })
       loadProducts(search)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'เพิ่มรายการสินค้าไม่สำเร็จ')
+      const msg = err instanceof Error ? err.message : 'เพิ่มรายการสินค้าไม่สำเร็จ'
+      const thaiMsg = msg.includes('already exists') 
+        ? 'รหัสสินค้า (Item Code) นี้มีอยู่ในระบบแล้ว กรุณาใช้รหัสอื่น' 
+        : msg
+      setModalError(thaiMsg)
     } finally {
       setAdding(false)
     }
@@ -185,7 +191,11 @@ export default function InventoryPage() {
               </button>
             </form>
             <button
-              onClick={() => setShowAddModal(true)}
+              onClick={() => {
+                setShowAddModal(true)
+                setModalError('')
+                setError('')
+              }}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#BE1111] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#A00F0F] shadow-sm hover:shadow transition-all shrink-0"
             >
               <Plus className="w-4 h-4" />
@@ -289,9 +299,9 @@ export default function InventoryPage() {
       </div>
 
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 animate-fade-in">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 md:p-8 shadow-2xl border border-gray-100">
-            <div className="flex items-center gap-3 mb-6">
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm p-3 md:p-4 pb-[72px] md:pb-4 animate-fade-in">
+          <div className="w-full max-w-md max-h-[calc(100vh-90px)] md:max-h-[85vh] flex flex-col rounded-3xl md:rounded-2xl bg-white p-5 md:p-8 shadow-2xl border border-gray-100 overflow-hidden">
+            <div className="flex items-center gap-3 mb-4 md:mb-6 shrink-0">
               <div className="w-10 h-10 bg-red-50 text-[#BE1111] rounded-xl flex items-center justify-center">
                 <Plus className="w-5 h-5" />
               </div>
@@ -301,7 +311,14 @@ export default function InventoryPage() {
               </div>
             </div>
 
-            <form onSubmit={handleAddItem} className="flex flex-col gap-4">
+            <div className="overflow-y-auto overflow-x-hidden flex-1 pr-1 -mr-1">
+              {modalError && (
+                <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs font-semibold text-red-700 flex items-center justify-between shadow-sm">
+                  <span>⚠️ {modalError}</span>
+                  <button type="button" onClick={() => setModalError('')} className="text-red-600 hover:text-red-900 font-bold ml-2">✕</button>
+                </div>
+              )}
+              <form onSubmit={handleAddItem} className="flex flex-col gap-4">
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-gray-700">Item Code <span className="text-[#BE1111]">*</span></label>
                 <input
@@ -362,11 +379,14 @@ export default function InventoryPage() {
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold text-gray-700">จำนวนเริ่มต้น <span className="text-[#BE1111]">*</span></label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     required
-                    min="0"
                     value={newItem.quantity}
-                    onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, '')
+                      setNewItem({ ...newItem, quantity: val })
+                    }}
                     className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] transition-all"
                     placeholder="เช่น 100"
                   />
@@ -375,7 +395,10 @@ export default function InventoryPage() {
               <div className="mt-6 flex gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    setShowAddModal(false)
+                    setModalError('')
+                  }}
                   className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
                   disabled={adding}
                 >
@@ -390,6 +413,7 @@ export default function InventoryPage() {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}

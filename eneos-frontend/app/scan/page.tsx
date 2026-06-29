@@ -9,12 +9,13 @@ import QRScanner from '@/components/QRScanner'
 export default function ScanPage() {
   const [itemCode, setItemCode] = useState('')
   const [type, setType] = useState<'receive' | 'issue'>('receive')
-  const [quantity, setQuantity] = useState(1)
+  const [quantity, setQuantity] = useState<number | string>(1)
   const [note, setNote] = useState('')
   const [product, setProduct] = useState<Product | null>(null)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [scanCooldown, setScanCooldown] = useState(false)
   const [user, setUser] = useState<{ fullName: string } | null>(null)
 
   useEffect(() => {
@@ -63,6 +64,15 @@ export default function ScanPage() {
     }
   }
 
+  const closeModalWithCooldown = () => {
+    setProduct(null)
+    setItemCode('')
+    setScanCooldown(true)
+    setTimeout(() => {
+      setScanCooldown(false)
+    }, 2000)
+  }
+
   const submitTransaction = async (event: FormEvent) => {
     event.preventDefault()
     setError('')
@@ -73,22 +83,30 @@ export default function ScanPage() {
       return
     }
 
+    const finalQuantity = Number(quantity)
+    if (!finalQuantity || finalQuantity <= 0) {
+      setError('กรุณาระบุจำนวนสินค้าให้ถูกต้อง (ต้องมากกว่า 0)')
+      return
+    }
+
     setLoading(true)
     try {
       const transaction = await createTransaction({
         itemCode: product.itemCode,
         type,
-        quantity,
+        quantity: finalQuantity,
         note,
       })
       setMessage(`สร้างรายการรอการยืนยัน #${transaction.id} สำเร็จ`)
       setNote('')
-      // Reset product & item code to allow new scan
+      setQuantity(1)
+      // ปิดป๊อปอัปทันทีเพื่อให้กลับสู่หน้าสแกนหลักโดยไม่มีดีเลย์ พร้อมหน่วงเวลา 2 วินาทีก่อนสแกนต่อ
+      closeModalWithCooldown()
+      
+      // ซ่อนข้อความแจ้งเตือนสีเขียวบนหน้าหลักอัตโนมัติหลังจาก 4 วินาที
       setTimeout(() => {
-        setProduct(null)
-        setItemCode('')
         setMessage('')
-      }, 3000)
+      }, 4000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'สร้างรายการไม่สำเร็จ')
     } finally {
@@ -132,8 +150,13 @@ export default function ScanPage() {
             <div className="mb-5 text-center">
               <h3 className="text-lg font-bold text-gray-800">จัดตำแหน่ง QR Code ให้อยู่ในกรอบ</h3>
               <p className="text-xs text-gray-400 mt-1">วางรหัส QR ของสินค้าให้อยู่ในช่องนำสายตาเพื่อสแกนอัตโนมัติ</p>
+              {scanCooldown && (
+                <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3.5 py-1 text-xs font-semibold text-[#BE1111] animate-pulse border border-red-100">
+                  <span>⏳ กำลังหน่วงเวลา 2 วินาที ก่อนเปิดกล้องสแกนชิ้นถัดไป...</span>
+                </div>
+              )}
             </div>
-            <QRScanner onScanSuccess={handleScanSuccess} />
+            <QRScanner onScanSuccess={handleScanSuccess} isPaused={loading || product !== null || scanCooldown} />
           </div>
         </motion.div>
       </div>
@@ -147,10 +170,7 @@ export default function ScanPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => {
-                setProduct(null)
-                setItemCode('')
-              }}
+              onClick={closeModalWithCooldown}
               className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
             />
 
@@ -177,10 +197,7 @@ export default function ScanPage() {
                   <p className="text-xs font-mono text-gray-400 mt-0.5">{product.itemCode}</p>
                 </div>
                 <button
-                  onClick={() => {
-                    setProduct(null)
-                    setItemCode('')
-                  }}
+                  onClick={closeModalWithCooldown}
                   className="rounded-full bg-gray-100 p-1.5 text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-colors"
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -247,10 +264,14 @@ export default function ScanPage() {
                     </label>
                     <input
                       id="quantity"
-                      type="number"
-                      min={1}
+                      type="text"
+                      inputMode="numeric"
                       value={quantity}
-                      onChange={(event) => setQuantity(Number(event.target.value))}
+                      onChange={(event) => {
+                        const val = event.target.value.replace(/[^0-9]/g, '')
+                        setQuantity(val === '' ? '' : Number(val))
+                      }}
+                      placeholder="ระบุจำนวน"
                       className="w-full rounded-xl border border-gray-200 bg-white/70 px-3.5 py-3 text-sm text-gray-800 font-semibold focus:border-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-900/5 transition-all"
                     />
                   </div>

@@ -6,6 +6,7 @@ import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 interface QRScannerProps {
   onScanSuccess: (decodedText: string) => void
   onScanFailure?: (error: string) => void
+  isPaused?: boolean
 }
 
 /**
@@ -14,7 +15,7 @@ interface QRScannerProps {
  * - Translates button labels to Thai
  * - Replaces the default icon with a lightweight SVG
  */
-export default function QRScanner({ onScanSuccess, onScanFailure }: QRScannerProps) {
+export default function QRScanner({ onScanSuccess, onScanFailure, isPaused }: QRScannerProps) {
   const scannerRef = useRef<Html5QrcodeScanner | null>(null)
 
   useEffect(() => {
@@ -66,6 +67,19 @@ export default function QRScanner({ onScanSuccess, onScanFailure }: QRScannerPro
       }
     }
   }, [onScanSuccess, onScanFailure])
+
+  useEffect(() => {
+    if (!scannerRef.current) return
+    try {
+      if (isPaused) {
+        scannerRef.current.pause(true)
+      } else {
+        scannerRef.current.resume()
+      }
+    } catch (e) {
+      // Ignore if scanner isn't running or paused yet
+    }
+  }, [isPaused])
 
   return (
     <div className="w-full overflow-hidden relative">

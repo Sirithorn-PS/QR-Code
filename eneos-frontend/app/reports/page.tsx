@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { fetchTransactions, StockTransaction } from '@/lib/auth'
+import { ArrowLeft } from 'lucide-react'
 
 function statusLabel(status: StockTransaction['status']) {
   if (status === 'confirmed') return 'ยืนยันแล้ว'
@@ -54,8 +55,9 @@ export default function ReportsPage() {
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <Link href="/" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
-              กลับหน้าหลัก
+            <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-[#BE1111] transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+              <span>กลับหน้าหลัก</span>
             </Link>
             <h1 className="mt-2 text-3xl font-bold text-slate-900">รายงานธุรกรรม</h1>
           </div>

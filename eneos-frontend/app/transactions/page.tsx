@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { confirmTransaction, fetchTransactions, rejectTransaction, StockTransaction } from '@/lib/auth'
+import { ArrowLeft } from 'lucide-react'
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<StockTransaction[]>([])
@@ -63,8 +64,9 @@ export default function TransactionsPage() {
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-8">
       <div className="mx-auto max-w-6xl">
-        <Link href="/" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
-          กลับหน้าหลัก
+        <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-[#BE1111] transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+          <span>กลับหน้าหลัก</span>
         </Link>
         <h1 className="mt-2 text-3xl font-bold text-slate-900">รายการรอการยืนยัน</h1>
 

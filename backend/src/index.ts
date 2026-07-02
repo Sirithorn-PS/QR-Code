@@ -276,6 +276,58 @@ app.post('/products', authenticate, async (req, res) => {
   }
 })
 
+app.patch('/products/:id/quantity', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const id = Number(req.params.id)
+    const quantity = Number(req.body.quantity)
+
+    if (isNaN(id) || isNaN(quantity) || !Number.isInteger(quantity) || quantity < 0) {
+      return res.status(400).json({ error: 'จำนวนสต็อกต้องเป็นตัวเลขจำนวนเต็มที่ไม่ติดลบ' })
+    }
+
+    const product = await prisma.product.findUnique({ where: { id } })
+    if (!product) {
+      return res.status(404).json({ error: 'ไม่พบสินค้ารายการนี้ในระบบ' })
+    }
+
+    if (product.quantity === quantity) {
+      return res.json(productSnapshot(product))
+    }
+
+    const diff = quantity - product.quantity
+    const type = diff > 0 ? 'receive' : 'issue'
+    const absDiff = Math.abs(diff)
+
+    const updatedProduct = await prisma.$transaction(async (tx) => {
+      const p = await tx.product.update({
+        where: { id },
+        data: { quantity },
+      })
+
+      await tx.transaction.create({
+        data: {
+          productId: id,
+          type,
+          quantity: absDiff,
+          status: 'confirmed',
+          note: `ปรับปรุงสต็อก (เดิม ${product.quantity.toLocaleString()} -> ใหม่ ${quantity.toLocaleString()})`,
+          itemSnapshot: productSnapshot(p),
+          createdById: req.user!.id,
+          approvedById: req.user!.id,
+          confirmedAt: new Date(),
+        },
+      })
+
+      return p
+    })
+
+    return res.json(productSnapshot(updatedProduct))
+  } catch (error) {
+    console.error('Error updating product quantity:', error)
+    return res.status(500).json({ error: 'อัปเดตจำนวนสต็อกไม่สำเร็จ' })
+  }
+})
+
 app.delete('/products/:id', authenticate, async (req, res) => {
   try {
     const id = Number(req.params.id)

@@ -163,6 +163,13 @@ export function createProduct(data: {
   })
 }
 
+export function updateProductQuantity(id: number, quantity: number) {
+  return apiRequest<Product>(`/products/${id}/quantity`, {
+    method: 'PATCH',
+    body: JSON.stringify({ quantity }),
+  })
+}
+
 export function deleteProduct(id: number) {
   return apiRequest<{ success: boolean }>(`/products/${id}`, {
     method: 'DELETE',

@@ -301,8 +301,33 @@ app.delete('/products/:id', authenticate, async (req, res) => {
 
 app.get('/transactions', authenticate, async (req, res) => {
   const status = normalizeText(req.query.status)
+  const startDate = normalizeText(req.query.startDate)
+  const endDate = normalizeText(req.query.endDate)
+  
+  const whereClause: {
+    status?: string
+    createdAt?: { gte: Date; lte: Date }
+  } = {}
+
+  if (status) {
+    whereClause.status = status
+  }
+  
+  if (startDate && endDate) {
+    const start = new Date(startDate)
+    start.setHours(0, 0, 0, 0)
+    
+    const end = new Date(endDate)
+    end.setHours(23, 59, 59, 999)
+    
+    whereClause.createdAt = {
+      gte: start,
+      lte: end,
+    }
+  }
+
   const transactions = await prisma.transaction.findMany({
-    where: status ? { status } : undefined,
+    where: Object.keys(whereClause).length > 0 ? whereClause : undefined,
     include: {
       product: true,
       createdBy: {

@@ -169,9 +169,14 @@ export function deleteProduct(id: number) {
   })
 }
 
-export function fetchTransactions(status = '') {
-  const params = status ? `?status=${encodeURIComponent(status)}` : ''
-  return apiRequest<StockTransaction[]>(`/transactions${params}`)
+export function fetchTransactions(status = '', startDate = '', endDate = '') {
+  const params = new URLSearchParams()
+  if (status) params.append('status', status)
+  if (startDate) params.append('startDate', startDate)
+  if (endDate) params.append('endDate', endDate)
+  
+  const queryString = params.toString() ? `?${params.toString()}` : ''
+  return apiRequest<StockTransaction[]>(`/transactions${queryString}`)
 }
 
 export function createTransaction(data: {

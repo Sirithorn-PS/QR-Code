@@ -14,14 +14,21 @@ function statusLabel(status: StockTransaction['status']) {
 export default function ReportsPage() {
   const [transactions, setTransactions] = useState<StockTransaction[]>([])
   const [status, setStatus] = useState('')
+  const [dateFilterType, setDateFilterType] = useState('all')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
 
-  const loadTransactions = async (nextStatus = status) => {
+  const loadTransactions = async (
+    nextStatus = status,
+    nextStartDate = startDate,
+    nextEndDate = endDate
+  ) => {
     setError('')
     setLoading(true)
     try {
-      setTransactions(await fetchTransactions(nextStatus))
+      setTransactions(await fetchTransactions(nextStatus, nextStartDate, nextEndDate))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'โหลดรายงานไม่สำเร็จ')
     } finally {
@@ -29,12 +36,47 @@ export default function ReportsPage() {
     }
   }
 
+  const handleDateFilterChange = (type: string) => {
+    setDateFilterType(type)
+    
+    let nextStart = ''
+    let nextEnd = ''
+    const now = new Date()
+    
+    if (type === 'today') {
+      nextStart = now.toISOString().split('T')[0]
+      nextEnd = nextStart
+    } else if (type === 'this_week') {
+      const firstDay = new Date(now.setDate(now.getDate() - now.getDay()))
+      // Reset `now` to current date so it doesn't carry over the previous mutation
+      const now2 = new Date()
+      const lastDay = new Date(now2.setDate(now2.getDate() - now2.getDay() + 6))
+      nextStart = firstDay.toISOString().split('T')[0]
+      nextEnd = lastDay.toISOString().split('T')[0]
+    } else if (type === 'this_month') {
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+      nextStart = firstDay.toISOString().split('T')[0]
+      nextEnd = lastDay.toISOString().split('T')[0]
+    } else if (type === 'all') {
+      nextStart = ''
+      nextEnd = ''
+    } else if (type === 'custom') {
+      nextStart = startDate
+      nextEnd = endDate
+    }
+
+    setStartDate(nextStart)
+    setEndDate(nextEnd)
+    loadTransactions(status, nextStart, nextEnd)
+  }
+
   useEffect(() => {
     let isMounted = true
 
     async function loadInitialTransactions() {
       try {
-        const initialTransactions = await fetchTransactions('')
+        const initialTransactions = await fetchTransactions('', '', '')
         if (isMounted) setTransactions(initialTransactions)
       } catch (err) {
         if (isMounted) setError(err instanceof Error ? err.message : 'โหลดรายงานไม่สำเร็จ')
@@ -61,19 +103,58 @@ export default function ReportsPage() {
             </Link>
             <h1 className="mt-2 text-3xl font-bold text-slate-900">รายงานธุรกรรม</h1>
           </div>
-          <select
-            value={status}
-            onChange={(event) => {
-              setStatus(event.target.value)
-              loadTransactions(event.target.value)
-            }}
-            className="w-56 rounded-lg border border-slate-300 px-4 py-2 text-slate-900"
-          >
-            <option value="">ทั้งหมด</option>
-            <option value="pending">รอการยืนยัน</option>
-            <option value="confirmed">ยืนยันแล้ว</option>
-            <option value="rejected">ปฏิเสธแล้ว</option>
-          </select>
+          
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {dateFilterType === 'custom' && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value)
+                    loadTransactions(status, e.target.value, endDate)
+                  }}
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white"
+                />
+                <span className="text-slate-500">-</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value)
+                    loadTransactions(status, startDate, e.target.value)
+                  }}
+                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white"
+                />
+              </div>
+            )}
+            
+            <select
+              value={dateFilterType}
+              onChange={(e) => handleDateFilterChange(e.target.value)}
+              className="w-full sm:w-40 rounded-lg border border-slate-300 px-4 py-2 text-slate-900 text-sm bg-white"
+            >
+              <option value="all">ทุกช่วงเวลา</option>
+              <option value="today">วันนี้</option>
+              <option value="this_week">สัปดาห์นี้</option>
+              <option value="this_month">เดือนนี้</option>
+              <option value="custom">กำหนดเอง</option>
+            </select>
+
+            <select
+              value={status}
+              onChange={(event) => {
+                setStatus(event.target.value)
+                loadTransactions(event.target.value, startDate, endDate)
+              }}
+              className="w-full sm:w-40 rounded-lg border border-slate-300 px-4 py-2 text-slate-900 text-sm bg-white"
+            >
+              <option value="">ทุกสถานะ</option>
+              <option value="pending">รอการยืนยัน</option>
+              <option value="confirmed">ยืนยันแล้ว</option>
+              <option value="rejected">ปฏิเสธแล้ว</option>
+            </select>
+          </div>
         </div>
 
         {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">{error}</div>}

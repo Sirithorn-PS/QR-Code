@@ -39,25 +39,31 @@ export default function ReportsPage() {
   const handleDateFilterChange = (type: string) => {
     setDateFilterType(type)
     
+    const formatLocalYYYYMMDD = (date: Date) => {
+      const yyyy = date.getFullYear()
+      const mm = String(date.getMonth() + 1).padStart(2, '0')
+      const dd = String(date.getDate()).padStart(2, '0')
+      return `${yyyy}-${mm}-${dd}`
+    }
+
     let nextStart = ''
     let nextEnd = ''
     const now = new Date()
     
     if (type === 'today') {
-      nextStart = now.toISOString().split('T')[0]
+      nextStart = formatLocalYYYYMMDD(now)
       nextEnd = nextStart
     } else if (type === 'this_week') {
       const firstDay = new Date(now.setDate(now.getDate() - now.getDay()))
-      // Reset `now` to current date so it doesn't carry over the previous mutation
       const now2 = new Date()
       const lastDay = new Date(now2.setDate(now2.getDate() - now2.getDay() + 6))
-      nextStart = firstDay.toISOString().split('T')[0]
-      nextEnd = lastDay.toISOString().split('T')[0]
+      nextStart = formatLocalYYYYMMDD(firstDay)
+      nextEnd = formatLocalYYYYMMDD(lastDay)
     } else if (type === 'this_month') {
       const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
       const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-      nextStart = firstDay.toISOString().split('T')[0]
-      nextEnd = lastDay.toISOString().split('T')[0]
+      nextStart = formatLocalYYYYMMDD(firstDay)
+      nextEnd = formatLocalYYYYMMDD(lastDay)
     } else if (type === 'all') {
       nextStart = ''
       nextEnd = ''
@@ -97,11 +103,11 @@ export default function ReportsPage() {
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-[#BE1111] transition-colors">
+            <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-[#BE1111] transition-colors mb-2">
               <ArrowLeft className="w-4 h-4" />
               <span>กลับหน้าหลัก</span>
             </Link>
-            <h1 className="mt-2 text-3xl font-bold text-slate-900">รายงานธุรกรรม</h1>
+            <h1 className="text-2xl md:text-3xl font-display font-bold text-gray-900 tracking-tight">รายงานธุรกรรม</h1>
           </div>
           
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -114,9 +120,9 @@ export default function ReportsPage() {
                     setStartDate(e.target.value)
                     loadTransactions(status, e.target.value, endDate)
                   }}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white"
+                  className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white shadow-sm transition-all"
                 />
-                <span className="text-slate-500">-</span>
+                <span className="text-gray-500">-</span>
                 <input
                   type="date"
                   value={endDate}
@@ -124,7 +130,7 @@ export default function ReportsPage() {
                     setEndDate(e.target.value)
                     loadTransactions(status, startDate, e.target.value)
                   }}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white"
+                  className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white shadow-sm transition-all"
                 />
               </div>
             )}
@@ -132,7 +138,7 @@ export default function ReportsPage() {
             <select
               value={dateFilterType}
               onChange={(e) => handleDateFilterChange(e.target.value)}
-              className="w-full sm:w-40 rounded-lg border border-slate-300 px-4 py-2 text-slate-900 text-sm bg-white"
+              className="w-full sm:w-44 rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white shadow-sm transition-all cursor-pointer"
             >
               <option value="all">ทุกช่วงเวลา</option>
               <option value="today">วันนี้</option>
@@ -147,7 +153,7 @@ export default function ReportsPage() {
                 setStatus(event.target.value)
                 loadTransactions(event.target.value, startDate, endDate)
               }}
-              className="w-full sm:w-40 rounded-lg border border-slate-300 px-4 py-2 text-slate-900 text-sm bg-white"
+              className="w-full sm:w-44 rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white shadow-sm transition-all cursor-pointer"
             >
               <option value="">ทุกสถานะ</option>
               <option value="pending">รอการยืนยัน</option>

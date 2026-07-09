@@ -20,24 +20,46 @@ model User {
 }
 
 model Product {
-  id           Int           @id @default(autoincrement())
-  itemCode     String        @unique
-  productId    String?
-  description  String
-  unit         String
-  warehouse    String
-  location     String
-  quantity     Int
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  transactions Transaction[]
+  id            Int            @id @default(autoincrement())
+  itemCode      String         @unique
+  productId     String?
+  description   String
+  unit          String
+  warehouse     String
+  location      String
+  quantity      Float
+  itemType      String         @default("FG")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  transactions  Transaction[]
+
+  @@index([itemCode])
+  @@index([itemType])
+}
+
+model BillOfMaterial {
+  id                Int      @id @default(autoincrement())
+  parentItemCode    String
+  componentItemCode String
+  description       String
+  uom               String
+  quantity          Float
+  warehouse         String
+  depth             Int
+  bomType           String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([parentItemCode])
+  @@index([componentItemCode])
+  @@index([parentItemCode, depth])
 }
 
 model Transaction {
   id            Int       @id @default(autoincrement())
   productId     Int
   type          String
-  quantity      Int
+  quantity      Float
   status        String    @default("pending")
   itemSnapshot  Json
   note          String?

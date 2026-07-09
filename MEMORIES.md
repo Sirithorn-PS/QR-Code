@@ -1,5 +1,12 @@
 # บันทึกการทำงาน (Memories)
 
+## 9 ก.ค. 2026
+- **ออกแบบและอัปเดตฐานข้อมูลรองรับสูตรการผลิต (BOM จาก SAP Sheet 3)**:
+  - วิเคราะห์และออกแบบโครงสร้างฐานข้อมูลสำหรับเก็บสูตรการผลิต `Bill of Materials Report ( YAMALUBE ).xlsx` (ชีต `Sheet3`) ของ SAP
+  - ผ่านกระบวนการสัมภาษณ์ความต้องการของผู้ใช้ (`/grill-me`) ได้ข้อสรุป: 1) สร้างตาราง `BillOfMaterial` แยกเก็บรหัสสินค้าหลัก (`parentItemCode`) คู่กับส่วนประกอบ (`componentItemCode`) ทุกชั้น (`Depth 1-3`) แบบ Flat structure ตาม Sheet 3 2) ออกแบบความสัมพันธ์แบบยืดหยุ่น (ไม่บังคับ Strict Foreign Key Relation) เพื่อให้สามารถ Import สูตร BOM ได้ทันทีแม้รหัสวัตถุดิบ/บรรจุภัณฑ์บางตัวยังไม่ถูกสร้างในตาราง `Product` 3) ปรับ `quantity` ของ `Product`, `Transaction` และ `BillOfMaterial` เป็น `Float` รองรับทศนิยมของวัตถุดิบ และ 4) เพิ่มคอลัมน์ `itemType` ใน `Product` เพื่อแยกระหว่าง `FG`, `Bulk`, `Raw Material`, และ `Packaging`
+  - อัปเดตไฟล์ `backend/prisma/schema.prisma` ตามที่ออกแบบ และรันคำสั่ง `npx prisma db push --accept-data-loss` สำเร็จ
+  - สร้างและรันสคริปต์ `backend/src/importBom.ts` สำหรับอ่านไฟล์ `Bill of Materials Report ( YAMALUBE ).xlsx` (ชีต `Sheet3`) โดยใช้วิธีลบ BOM เดิมของสินค้าหลักที่กำลัง Import ก่อนเพิ่มข้อมูลใหม่ (`Replace by parentItemCode`) นำเข้าข้อมูลสินค้าหลักสำเร็จ 12 รายการ รวมส่วนประกอบทั้งสิ้น 115 แถวลงในฐานข้อมูล Supabase เรียบร้อย
+
 ## 2 ก.ค. 2026
 - **เพิ่มฟีเจอร์คัดกรองข้อมูลตามวันที่ในรายงานธุรกรรม**:
   - ปรับแก้ Backend API `GET /transactions` ให้รองรับ Query Parameter `startDate` และ `endDate` สำหรับคัดกรองข้อมูลจากฟิลด์ `createdAt`

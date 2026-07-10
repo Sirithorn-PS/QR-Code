@@ -13,6 +13,8 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(true)
 
   const [activeTab, setActiveTab] = useState('ALL')
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<'grouped' | 'flat'>('grouped')
   const [selectedParentCode, setSelectedParentCode] = useState<string | null>(null)
   const [expandedParents, setExpandedParents] = useState<Record<string, boolean>>({})
   const [selectedBomProduct, setSelectedBomProduct] = useState<Product | null>(null)
@@ -287,105 +289,114 @@ export default function InventoryPage() {
           </div>
         )}
 
-        {/* Modern Vector Icon Filter Tabs & View Mode Switcher */}
-        <div className="mb-6 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 bg-white/95 backdrop-blur-md p-3 rounded-2xl border border-gray-200/80 shadow-xs transition-all">
-          <div className="flex flex-wrap items-center gap-2">
-            {[
-              {
-                id: 'ALL',
-                label: 'ทั้งหมด',
-                count: products.length,
-                icon: LayoutGrid,
-                activeBg: 'from-slate-900 via-slate-800 to-slate-900 border-slate-700/80 shadow-slate-900/20 text-white ring-1 ring-slate-900/20',
-                iconContainerActive: 'bg-white/15 text-white shadow-inner',
-                iconContainerInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900',
-                badgeActive: 'bg-white text-slate-900 shadow-2xs font-black',
-                badgeInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900 font-extrabold'
-              },
-              {
-                id: 'FG',
-                label: 'FG (สินค้าหลัก)',
-                count: products.filter(p => p.itemType === 'FG').length,
-                icon: Crown,
-                activeBg: 'from-slate-900 via-slate-800 to-slate-900 border-slate-700/80 shadow-slate-900/20 text-white ring-1 ring-slate-900/20',
-                iconContainerActive: 'bg-white/15 text-amber-300 shadow-inner',
-                iconContainerInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900',
-                badgeActive: 'bg-white text-slate-900 shadow-2xs font-black',
-                badgeInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900 font-extrabold'
-              },
-              {
-                id: 'Bulk',
-                label: 'Bulk (กึ่งสำเร็จรูป)',
-                count: products.filter(p => p.itemType === 'Bulk').length,
-                icon: Droplets,
-                activeBg: 'from-slate-900 via-slate-800 to-slate-900 border-slate-700/80 shadow-slate-900/20 text-white ring-1 ring-slate-900/20',
-                iconContainerActive: 'bg-white/15 text-white shadow-inner',
-                iconContainerInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900',
-                badgeActive: 'bg-white text-slate-900 shadow-2xs font-black',
-                badgeInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900 font-extrabold'
-              },
-              {
-                id: 'Packaging',
-                label: 'Packaging (บรรจุภัณฑ์)',
-                count: products.filter(p => p.itemType === 'Packaging').length,
-                icon: Box,
-                activeBg: 'from-slate-900 via-slate-800 to-slate-900 border-slate-700/80 shadow-slate-900/20 text-white ring-1 ring-slate-900/20',
-                iconContainerActive: 'bg-white/15 text-white shadow-inner',
-                iconContainerInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900',
-                badgeActive: 'bg-white text-slate-900 shadow-2xs font-black',
-                badgeInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900 font-extrabold'
-              },
-              {
-                id: 'Raw Material',
-                label: 'Raw Material (วัตถุดิบ)',
-                count: products.filter(p => p.itemType === 'Raw Material').length,
-                icon: FlaskConical,
-                activeBg: 'from-slate-900 via-slate-800 to-slate-900 border-slate-700/80 shadow-slate-900/20 text-white ring-1 ring-slate-900/20',
-                iconContainerActive: 'bg-white/15 text-white shadow-inner',
-                iconContainerInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900',
-                badgeActive: 'bg-white text-slate-900 shadow-2xs font-black',
-                badgeInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900 font-extrabold'
-              },
-            ].map((tab) => {
-              const IconComp = tab.icon
-              const isActive = activeTab === tab.id
+        {/* Dropdown Selectors: Category Filter & View Mode Switcher */}
+        {/* Custom Modern Vector-Only Category Dropdown Selector (No Emojis!) */}
+        <div className="mb-6 relative w-full sm:max-w-xl">
+          {(() => {
+            const categoryOptions = [
+              { id: 'ALL', label: 'ทั้งหมด', count: products.length, icon: LayoutGrid, desc: 'All Categories' },
+              { id: 'FG', label: 'FG (สินค้าหลัก)', count: products.filter(p => p.itemType === 'FG').length, icon: Crown, desc: 'Finished Goods' },
+              { id: 'Bulk', label: 'Bulk (กึ่งสำเร็จรูป)', count: products.filter(p => p.itemType === 'Bulk').length, icon: Droplets, desc: 'Semi-Finished' },
+              { id: 'Packaging', label: 'Packaging (บรรจุภัณฑ์)', count: products.filter(p => p.itemType === 'Packaging').length, icon: Box, desc: 'Packaging Materials' },
+              { id: 'Raw Material', label: 'Raw Material (วัตถุดิบ)', count: products.filter(p => p.itemType === 'Raw Material').length, icon: FlaskConical, desc: 'Raw Ingredients' },
+            ]
+            const currentOpt = categoryOptions.find(o => o.id === activeTab) || categoryOptions[0]
+            const CurrentIcon = currentOpt.icon
 
-              return (
+            return (
+              <>
                 <button
-                  key={tab.id}
                   type="button"
-                  onClick={() => {
-                    setActiveTab(tab.id)
-                    setSelectedParentCode(null)
-                  }}
-                  className={`group relative inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 border cursor-pointer select-none ${
-                    isActive
-                      ? `bg-gradient-to-r ${tab.activeBg} shadow-md scale-[1.01]`
-                      : 'bg-white text-slate-700 border-gray-200/90 hover:border-slate-300 hover:bg-slate-50/80 shadow-2xs'
-                  }`}
+                  onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                  className="w-full flex items-center justify-between gap-3 bg-white/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-gray-200/80 shadow-xs hover:border-gray-300 transition-all text-left cursor-pointer group"
                 >
-                  <div className={`flex items-center justify-center p-1.5 rounded-lg transition-all duration-200 ${
-                    isActive ? tab.iconContainerActive : tab.iconContainerInactive
-                  }`}>
-                    <IconComp className="w-4 h-4 shrink-0" />
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white shadow-xs group-hover:scale-105 transition-transform">
+                      <CurrentIcon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-semibold text-slate-400 tracking-wider uppercase">หมวดหมู่สินค้า (Category Filter)</div>
+                      <div className="text-xs sm:text-sm font-black text-slate-800 tracking-tight">
+                        {currentOpt.label} ({currentOpt.count} รายการ)
+                      </div>
+                    </div>
                   </div>
-
-                  <span className="tracking-tight">{tab.label}</span>
-
-                  <span className={`px-2 py-0.5 rounded-full text-[11px] transition-all duration-200 ${
-                    isActive ? tab.badgeActive : tab.badgeInactive
-                  }`}>
-                    {tab.count}
-                  </span>
+                  <div className="flex items-center gap-2 pr-1">
+                    <span className="hidden sm:inline-block text-xs font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-lg">
+                      เปลี่ยนหมวดหมู่
+                    </span>
+                    <div className={`p-1.5 rounded-lg bg-slate-100 text-slate-600 transition-transform duration-200 ${isCategoryDropdownOpen ? 'rotate-180 bg-slate-200 text-slate-900 font-black' : 'group-hover:bg-slate-200 group-hover:text-slate-900'}`}>
+                      <ChevronDown className="w-4 h-4" />
+                    </div>
+                  </div>
                 </button>
-              )
-            })}
-          </div>
 
-          <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100/90 text-slate-700 border border-slate-200/90 font-extrabold text-xs shrink-0 shadow-2xs">
-            <FolderTree className="w-4 h-4 text-slate-500 shrink-0" />
-            <span>มุมมอง: จัดกลุ่มตามรหัสหลัก (Item 1 / Formula Group)</span>
-          </div>
+                {/* Floating Dropdown Menu Card */}
+                {isCategoryDropdownOpen && (
+                  <>
+                    {/* Transparent Click-Outside Backdrop */}
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsCategoryDropdownOpen(false)}
+                    />
+
+                    {/* Popover Menu List */}
+                    <div className="absolute left-0 top-full mt-2 w-full z-50 rounded-2xl border border-gray-200/90 bg-white/98 backdrop-blur-xl p-2 shadow-xl animate-in fade-in zoom-in-95 duration-150 divide-y divide-gray-100/80">
+                      {categoryOptions.map((opt) => {
+                        const IconComp = opt.icon
+                        const isSelected = activeTab === opt.id
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveTab(opt.id)
+                              setSelectedParentCode(null)
+                              setIsCategoryDropdownOpen(false)
+                            }}
+                            className={`w-full flex items-center justify-between gap-3 p-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                              isSelected
+                                ? 'bg-slate-900 text-white shadow-md font-black'
+                                : 'hover:bg-slate-100/80 text-slate-700 font-extrabold'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                                isSelected
+                                  ? 'bg-white/15 text-white shadow-inner'
+                                  : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900'
+                              }`}>
+                                <IconComp className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <div className={`text-xs sm:text-sm font-bold tracking-tight ${isSelected ? 'text-white' : 'text-slate-800'}`}>
+                                  {opt.label}
+                                </div>
+                                <div className={`text-[10px] sm:text-[11px] ${isSelected ? 'text-slate-300' : 'text-slate-400'}`}>
+                                  {opt.desc}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${
+                                isSelected
+                                  ? 'bg-white text-slate-900 shadow-2xs'
+                                  : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900'
+                              }`}>
+                                {opt.count} รายการ
+                              </span>
+                              {isSelected && <Check className="w-4 h-4 text-white shrink-0" />}
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </>
+                )}
+              </>
+            )
+          })()}
         </div>
 
         {/* Quick Filter Banner if parent selected */}
@@ -415,8 +426,9 @@ export default function InventoryPage() {
           </div>
         )}
 
-        {/* View Mode Content: Grouped View (`จัดกลุ่มตามรหัสหลัก / Parent Formula Cards`) */}
-        <div className="space-y-6">
+        {/* View Mode Content: Switch between Grouped and Flat views */}
+        {viewMode === 'grouped' ? (
+          <div className="space-y-6">
           {/* Dedicated Category Summary Table & Dashboard when tab is Bulk, Packaging, or Raw Material */}
           {activeTab !== 'ALL' && activeTab !== 'FG' && (() => {
             const categoryItems = products.filter(p => p.itemType === activeTab)
@@ -816,6 +828,138 @@ export default function InventoryPage() {
             )
           })()}
         </div>
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-md animate-in fade-in duration-300">
+            <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-5 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-700/60">
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white border border-white/20 shadow-inner">
+                  <LayoutGrid className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-display font-black text-lg tracking-wide flex items-center gap-2 text-white">
+                    <span>รายการสินค้าทั้งหมด (แบบแยกรายการ / Flat List Mode)</span>
+                  </h3>
+                  <p className="text-xs text-slate-300">
+                    แสดงรายการสินค้าทั้งหมดตามตัวกรองที่เลือก โดยไม่จัดกลุ่มตามรหัสหลัก (Item 1)
+                  </p>
+                </div>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-3.5 py-2 text-xs font-bold text-white border border-white/15">
+                <span>จำนวนทั้งสิ้น: <strong className="text-amber-300">{(() => {
+                  const filtered = displayedProducts.filter(p => activeTab === 'ALL' || p.itemType === activeTab)
+                  return filtered.length
+                })()}</strong> รายการ</span>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left text-sm">
+                <thead className="bg-gray-50/80 text-gray-600 font-bold border-b border-gray-200/80 text-xs uppercase tracking-wider">
+                  <tr>
+                    <th className="px-4 py-3.5">Item Code</th>
+                    <th className="px-4 py-3.5">ประเภท</th>
+                    <th className="px-4 py-3.5">ชื่อสินค้า</th>
+                    <th className="px-4 py-3.5">คลังสินค้า / ตำแหน่ง</th>
+                    <th className="px-4 py-3.5 text-right">จำนวนคงเหลือ</th>
+                    <th className="px-4 py-3.5 text-center">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {(() => {
+                    const filteredFlat = displayedProducts.filter(p => activeTab === 'ALL' || p.itemType === activeTab)
+                    if (filteredFlat.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-12 text-center text-gray-500 font-medium">
+                            ไม่พบรายการสินค้าในหมวดหมู่นี้
+                          </td>
+                        </tr>
+                      )
+                    }
+                    return filteredFlat.map((item) => {
+                      const currentVal = editQuantities[item.id] !== undefined ? editQuantities[item.id] : String(item.quantity)
+                      const isChanged = currentVal !== String(item.quantity)
+
+                      return (
+                        <tr key={item.id} className="hover:bg-gray-50/60 transition-colors">
+                          <td className="px-4 py-3.5 font-mono font-bold text-gray-900">
+                            <div className="flex items-center gap-2">
+                              <span>{item.itemCode}</span>
+                              {item.itemType === 'FG' && (
+                                <button
+                                  type="button"
+                                  onClick={() => openBomModal(item)}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-50 text-[#BE1111] font-extrabold text-[10px] border border-red-200/80 hover:bg-[#BE1111] hover:text-white transition-all shadow-2xs cursor-pointer"
+                                >
+                                  <span>สูตร BOM</span>
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${
+                              item.itemType === 'FG' ? 'bg-red-50 text-[#BE1111] border-red-200' :
+                              item.itemType === 'Bulk' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                              item.itemType === 'Packaging' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                              'bg-purple-50 text-purple-700 border-purple-200'
+                            }`}>
+                              {item.itemType || 'General'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 font-medium text-gray-800">{item.name}</td>
+                          <td className="px-4 py-3.5 text-gray-600">{item.warehouse} ({item.location || '-'})</td>
+                          <td className="px-4 py-3.5 text-right">
+                            <div className="inline-flex items-center justify-end gap-1.5">
+                              <input
+                                type="text"
+                                value={currentVal}
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/[^0-9]/g, '')
+                                  setEditQuantities(prev => ({ ...prev, [item.id]: val }))
+                                }}
+                                className={`w-24 text-right rounded-lg border px-2.5 py-1.5 text-xs font-bold transition-all shadow-2xs focus:outline-none focus:ring-1 ${
+                                  isChanged 
+                                    ? 'border-[#BE1111] bg-red-50 text-[#BE1111]' 
+                                    : 'border-gray-200 bg-gray-50 text-gray-800 focus:bg-white focus:border-[#BE1111]'
+                                }`}
+                              />
+                              <span className="text-gray-500 w-10 text-left font-medium">{item.unit}</span>
+                              {isChanged && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const parsed = Number(currentVal)
+                                    if (!isNaN(parsed) && parsed >= 0) {
+                                      setConfirmTarget({ product: item, newQty: parsed })
+                                    }
+                                  }}
+                                  className="p-1.5 rounded-lg bg-[#BE1111] text-white hover:bg-[#A00F0F] transition-all shadow-2xs animate-pulse cursor-pointer"
+                                  title="บันทึกจำนวนสต็อก"
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3.5 text-center">
+                            <button
+                              type="button"
+                              onClick={() => setDeleteTarget(item)}
+                              className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer"
+                              title="ลบรายการสินค้า"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  })()}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {confirmTarget && (

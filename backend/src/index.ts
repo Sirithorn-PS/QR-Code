@@ -5,7 +5,15 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
 const app = express()
-const prisma = new PrismaClient()
+
+// Global Singleton PrismaClient to prevent Supabase connection pool exhaustion during dev / hot reloads
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
+const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+  })
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
 const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000'
 const isProduction = process.env.NODE_ENV === 'production'
@@ -693,6 +701,21 @@ app.post(
 )
 
 const port = process.env.PORT || 4000
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Backend listening on ${port}`)
+})
+
+// Graceful shutdown: Disconnect Prisma completely when restarting or exiting to release Supabase connection pool
+const gracefulShutdown = async (signal: string) => {
+  console.log(`Received ${signal}. Gracefully shutting down backend and releasing database connections...`)
+  server.close(async () => {
+    await prisma.$disconnect()
+    process.exit(0)
+  })
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
+process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+process.on('beforeExit', async () => {
+  await prisma.$disconnect()
 })

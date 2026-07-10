@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { fetchProducts, updateProductQuantity, createProduct, deleteProduct, fetchProductBom, Product, BillOfMaterial } from '@/lib/auth'
 import QRCode from 'react-qr-code'
-import { Search, Package, ArrowLeft, Layers, Download, Check, History, Plus, X, Trash2, FileText, FolderTree, ChevronDown, ChevronRight } from 'lucide-react'
+import { Search, Package, ArrowLeft, Layers, Download, Check, History, Plus, X, Trash2, FileText, FolderTree, ChevronDown, ChevronRight, LayoutGrid, Crown, Droplets, Box, FlaskConical } from 'lucide-react'
 
 export default function InventoryPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -182,11 +182,11 @@ export default function InventoryPage() {
     }
   }
 
-  const loadProducts = async (query = search, tab = activeTab) => {
+  const loadProducts = async (query = search) => {
     setError('')
     setLoading(true)
     try {
-      setProducts(await fetchProducts(query, tab))
+      setProducts(await fetchProducts(query, 'ALL'))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'โหลดข้อมูลสต็อกไม่สำเร็จ')
     } finally {
@@ -195,7 +195,6 @@ export default function InventoryPage() {
   }
 
   useEffect(() => {
-    loadProducts(search, activeTab)
     setSelectedParentCode(null)
   }, [activeTab])
 
@@ -204,7 +203,7 @@ export default function InventoryPage() {
 
     async function loadInitialProducts() {
       try {
-        const initialProducts = await fetchProducts('', activeTab)
+        const initialProducts = await fetchProducts('', 'ALL')
         if (isMounted) setProducts(initialProducts)
       } catch (err) {
         if (isMounted) setError(err instanceof Error ? err.message : 'โหลดข้อมูลสต็อกไม่สำเร็จ')
@@ -288,37 +287,104 @@ export default function InventoryPage() {
           </div>
         )}
 
-        {/* Item Type Filter Tabs & View Mode Switcher */}
-        <div className="mb-6 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-xs">
-          <div className="flex flex-wrap gap-2">
+        {/* Modern Vector Icon Filter Tabs & View Mode Switcher */}
+        <div className="mb-6 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 bg-white/95 backdrop-blur-md p-3 rounded-2xl border border-gray-200/80 shadow-xs transition-all">
+          <div className="flex flex-wrap items-center gap-2">
             {[
-              { id: 'ALL', label: `ทั้งหมด (${products.length})` },
-              { id: 'FG', label: '👑 FG (สินค้าหลัก)' },
-              { id: 'Bulk', label: '🛢️ Bulk (กึ่งสำเร็จรูป)' },
-              { id: 'Packaging', label: '📦 Packaging (บรรจุภัณฑ์)' },
-              { id: 'Raw Material', label: '🧪 Raw Material (วัตถุดิบ)' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  setActiveTab(tab.id)
-                  setSelectedParentCode(null)
-                }}
-                className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-2xs ${
-                  activeTab === tab.id
-                    ? 'bg-[#BE1111] text-white shadow-md shadow-[#BE1111]/20 scale-[1.02]'
-                    : 'bg-gray-50/80 text-gray-600 border border-gray-200/80 hover:bg-gray-100'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+              {
+                id: 'ALL',
+                label: 'ทั้งหมด',
+                count: products.length,
+                icon: LayoutGrid,
+                activeBg: 'from-slate-900 via-slate-800 to-slate-900 border-slate-700/80 shadow-slate-900/20 text-white ring-1 ring-slate-900/20',
+                iconContainerActive: 'bg-white/15 text-white shadow-inner',
+                iconContainerInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900',
+                badgeActive: 'bg-white text-slate-900 shadow-2xs font-black',
+                badgeInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900 font-extrabold'
+              },
+              {
+                id: 'FG',
+                label: 'FG (สินค้าหลัก)',
+                count: products.filter(p => p.itemType === 'FG').length,
+                icon: Crown,
+                activeBg: 'from-slate-900 via-slate-800 to-slate-900 border-slate-700/80 shadow-slate-900/20 text-white ring-1 ring-slate-900/20',
+                iconContainerActive: 'bg-white/15 text-amber-300 shadow-inner',
+                iconContainerInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900',
+                badgeActive: 'bg-white text-slate-900 shadow-2xs font-black',
+                badgeInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900 font-extrabold'
+              },
+              {
+                id: 'Bulk',
+                label: 'Bulk (กึ่งสำเร็จรูป)',
+                count: products.filter(p => p.itemType === 'Bulk').length,
+                icon: Droplets,
+                activeBg: 'from-slate-900 via-slate-800 to-slate-900 border-slate-700/80 shadow-slate-900/20 text-white ring-1 ring-slate-900/20',
+                iconContainerActive: 'bg-white/15 text-white shadow-inner',
+                iconContainerInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900',
+                badgeActive: 'bg-white text-slate-900 shadow-2xs font-black',
+                badgeInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900 font-extrabold'
+              },
+              {
+                id: 'Packaging',
+                label: 'Packaging (บรรจุภัณฑ์)',
+                count: products.filter(p => p.itemType === 'Packaging').length,
+                icon: Box,
+                activeBg: 'from-slate-900 via-slate-800 to-slate-900 border-slate-700/80 shadow-slate-900/20 text-white ring-1 ring-slate-900/20',
+                iconContainerActive: 'bg-white/15 text-white shadow-inner',
+                iconContainerInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900',
+                badgeActive: 'bg-white text-slate-900 shadow-2xs font-black',
+                badgeInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900 font-extrabold'
+              },
+              {
+                id: 'Raw Material',
+                label: 'Raw Material (วัตถุดิบ)',
+                count: products.filter(p => p.itemType === 'Raw Material').length,
+                icon: FlaskConical,
+                activeBg: 'from-slate-900 via-slate-800 to-slate-900 border-slate-700/80 shadow-slate-900/20 text-white ring-1 ring-slate-900/20',
+                iconContainerActive: 'bg-white/15 text-white shadow-inner',
+                iconContainerInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900',
+                badgeActive: 'bg-white text-slate-900 shadow-2xs font-black',
+                badgeInactive: 'bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-900 font-extrabold'
+              },
+            ].map((tab) => {
+              const IconComp = tab.icon
+              const isActive = activeTab === tab.id
+
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveTab(tab.id)
+                    setSelectedParentCode(null)
+                  }}
+                  className={`group relative inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 border cursor-pointer select-none ${
+                    isActive
+                      ? `bg-gradient-to-r ${tab.activeBg} shadow-md scale-[1.01]`
+                      : 'bg-white text-slate-700 border-gray-200/90 hover:border-slate-300 hover:bg-slate-50/80 shadow-2xs'
+                  }`}
+                >
+                  <div className={`flex items-center justify-center p-1.5 rounded-lg transition-all duration-200 ${
+                    isActive ? tab.iconContainerActive : tab.iconContainerInactive
+                  }`}>
+                    <IconComp className="w-4 h-4 shrink-0" />
+                  </div>
+
+                  <span className="tracking-tight">{tab.label}</span>
+
+                  <span className={`px-2 py-0.5 rounded-full text-[11px] transition-all duration-200 ${
+                    isActive ? tab.badgeActive : tab.badgeInactive
+                  }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              )
+            })}
           </div>
 
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-red-50 to-orange-50 text-[#BE1111] border border-red-200/80 font-extrabold text-xs shrink-0 shadow-2xs">
-            <FolderTree className="w-4 h-4 text-[#BE1111]" />
-            <span>🗂️ มุมมอง: จัดกลุ่มตามรหัสหลัก (Item 1 / Formula Group)</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100/90 text-slate-700 border border-slate-200/90 font-extrabold text-xs shrink-0 shadow-2xs">
+            <FolderTree className="w-4 h-4 text-slate-500 shrink-0" />
+            <span>มุมมอง: จัดกลุ่มตามรหัสหลัก (Item 1 / Formula Group)</span>
           </div>
         </div>
 
@@ -351,11 +417,158 @@ export default function InventoryPage() {
 
         {/* View Mode Content: Grouped View (`จัดกลุ่มตามรหัสหลัก / Parent Formula Cards`) */}
         <div className="space-y-6">
+          {/* Dedicated Category Summary Table & Dashboard when tab is Bulk, Packaging, or Raw Material */}
+          {activeTab !== 'ALL' && activeTab !== 'FG' && (() => {
+            const categoryItems = products.filter(p => p.itemType === activeTab)
+            const CategoryIcon = activeTab === 'Bulk' ? Droplets : activeTab === 'Packaging' ? Box : FlaskConical
+            const categoryTitle = activeTab === 'Bulk' ? 'Bulk (กึ่งสำเร็จรูป / สารผสม)' : activeTab === 'Packaging' ? 'Packaging (บรรจุภัณฑ์ / วัสดุห่อหุ้ม)' : 'Raw Material (วัตถุดิบตั้งต้น / เคมีภัณฑ์)'
+
+            return (
+              <div className="mb-8 overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-md animate-in fade-in duration-300">
+                <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-5 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-700/60">
+                  <div className="flex items-center gap-3.5">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white border border-white/20 shadow-inner">
+                      <CategoryIcon className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-display font-black text-lg tracking-wide flex items-center gap-2 text-white">
+                        <span>รายการ {categoryTitle} ทั้งหมด</span>
+                      </h3>
+                      <p className="text-xs text-slate-300 mt-0.5">
+                        สรุปรายการสินค้าในหมวดหมู่ {activeTab} พร้อมระบุรหัสหลัก Item 1 (สูตรสินค้าสำเร็จรูป) ที่ใช้งานชิ้นส่วนนี้อยู่
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    <span className="px-3.5 py-1.5 rounded-full bg-[#BE1111] text-xs font-extrabold text-white shadow-sm border border-red-400/40">
+                      รวม {categoryItems.length} รายการ
+                    </span>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto p-4">
+                  {categoryItems.length === 0 ? (
+                    <div className="p-12 text-center text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                      <p className="text-sm font-semibold">ไม่พบข้อมูลสินค้าประเภท {activeTab}</p>
+                    </div>
+                  ) : (
+                    <table className="w-full border-collapse text-left text-xs">
+                      <thead className="bg-slate-100 text-slate-700 font-bold border-b border-gray-200 uppercase">
+                        <tr>
+                          <th className="px-4 py-3.5 font-semibold">Item Code</th>
+                          <th className="px-4 py-3.5 font-semibold">ชื่อรายการ ({activeTab})</th>
+                          <th className="px-4 py-3.5 font-semibold">คลัง / โซน</th>
+                          <th className="px-4 py-3.5 font-semibold">👑 สูตรสินค้าหลัก Item 1 ที่ใช้งาน</th>
+                          <th className="px-4 py-3.5 font-semibold text-right">คงเหลือ</th>
+                          <th className="px-4 py-3.5 font-semibold text-center">จัดการ</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {categoryItems.map(item => {
+                          const currentVal = editQuantities[item.id] !== undefined ? editQuantities[item.id] : String(item.quantity)
+                          const isChanged = currentVal !== String(item.quantity)
+                          const linkedParents = item.parentItemCodes || []
+
+                          return (
+                            <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                              <td className="px-4 py-3.5 font-mono font-bold text-gray-900">{item.itemCode}</td>
+                              <td className="px-4 py-3.5 font-medium text-gray-800">{item.name}</td>
+                              <td className="px-4 py-3.5 text-gray-600">
+                                <span className="font-semibold text-gray-800">{item.warehouse}</span>
+                                {item.location && <span className="text-gray-400 ml-1">({item.location})</span>}
+                              </td>
+                              <td className="px-4 py-3.5">
+                                {linkedParents.length === 0 ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-100 text-gray-600 text-[11px] font-semibold border border-gray-200">
+                                    📦 รายการทั่วไป (ไม่ระบุสูตร)
+                                  </span>
+                                ) : (
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {linkedParents.map(parentCode => (
+                                      <button
+                                        key={parentCode}
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedParentCode(parentCode)
+                                          setActiveTab('ALL')
+                                        }}
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-50 text-[#BE1111] text-[11px] font-bold border border-red-200/80 hover:bg-[#BE1111] hover:text-white transition-all shadow-2xs active:scale-95 cursor-pointer group/btn"
+                                        title={`คลิกเพื่อดูสูตรหลัก ${parentCode}`}
+                                      >
+                                        <Crown className="w-3.5 h-3.5 text-[#BE1111] group-hover/btn:text-amber-300 shrink-0 transition-colors" />
+                                        <span>{parentCode}</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="px-4 py-3.5 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={currentVal}
+                                    onChange={(e) => {
+                                      const val = e.target.value.replace(/[^0-9]/g, '')
+                                      setEditQuantities(prev => ({ ...prev, [item.id]: val }))
+                                    }}
+                                    className={`w-24 text-right rounded-lg border px-2.5 py-1.5 text-xs font-bold transition-all shadow-2xs focus:outline-none focus:ring-1 ${
+                                      isChanged 
+                                        ? 'border-[#BE1111] bg-red-50 text-[#BE1111]' 
+                                        : 'border-gray-200 bg-gray-50 text-gray-800 focus:bg-white focus:border-[#BE1111]'
+                                    }`}
+                                  />
+                                  <span className="text-gray-500 w-10 text-left font-medium">{item.unit}</span>
+                                  {isChanged && (
+                                    <button
+                                      onClick={() => {
+                                        const parsed = Number(currentVal)
+                                        if (!isNaN(parsed) && parsed >= 0) {
+                                          setConfirmTarget({ product: item, newQty: parsed })
+                                        }
+                                      }}
+                                      className="p-1.5 rounded-lg bg-[#BE1111] text-white hover:bg-[#A00F0F] transition-all shadow-2xs animate-pulse cursor-pointer"
+                                      title="บันทึกจำนวนสต็อก"
+                                    >
+                                      <Check className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3.5 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => setDeleteTarget(item)}
+                                  className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer"
+                                  title="ลบรายการสินค้า"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+
+          {activeTab !== 'ALL' && activeTab !== 'FG' && (
+            <div className="flex items-center gap-2.5 pt-2 pb-1 text-slate-800 font-extrabold text-sm sm:text-base border-b border-gray-200/80">
+              <FolderTree className="w-5 h-5 text-[#BE1111]" />
+              <span>แยกรายการตามสูตรสินค้าหลัก Item 1 ที่มีการใช้ชิ้นส่วน {activeTab}</span>
+            </div>
+          )}
+
           {/* 1. Group Cards for each Parent FG (Item 1) */}
           {products
             .filter(p => p.itemType === 'FG' && (!selectedParentCode || p.itemCode === selectedParentCode))
             .map(fg => {
-              const components = products.filter(p => p.parentItemCodes?.includes(fg.itemCode))
+              const components = products.filter(p => p.parentItemCodes?.includes(fg.itemCode) && (activeTab === 'ALL' || activeTab === 'FG' ? true : p.itemType === activeTab))
+              if (activeTab !== 'ALL' && activeTab !== 'FG' && components.length === 0) return null
               const isExpanded = expandedParents[fg.itemCode] ?? true
               return (
                 <div key={fg.id} className="overflow-hidden rounded-2xl border-2 border-red-200/80 bg-white shadow-md transition-all">
@@ -367,8 +580,9 @@ export default function InventoryPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="px-2.5 py-0.5 rounded-full bg-white/20 text-white font-mono font-bold text-xs tracking-wider border border-white/30 backdrop-blur-xs">
-                            👑 รหัสหลัก (FG Item 1)
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/20 text-white font-mono font-bold text-xs tracking-wider border border-white/30 backdrop-blur-xs">
+                            <Crown className="w-3.5 h-3.5 text-amber-300" />
+                            <span>รหัสหลัก (FG Item 1)</span>
                           </span>
                           <span className="text-red-100 text-xs font-medium font-mono">
                             {fg.itemCode}
@@ -534,7 +748,12 @@ export default function InventoryPage() {
                 assignedOrParentCodes.add(p.itemCode)
               }
             })
-            const unassignedProducts = products.filter(p => !assignedOrParentCodes.has(p.itemCode))
+            const unassignedProducts = products.filter(p => {
+              if (assignedOrParentCodes.has(p.itemCode)) return false
+              if (activeTab === 'ALL') return p.itemType !== 'FG'
+              if (activeTab === 'FG') return false
+              return p.itemType === activeTab
+            })
 
             if (unassignedProducts.length === 0 || selectedParentCode) return null
 

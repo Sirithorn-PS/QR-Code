@@ -14,14 +14,14 @@ export function Navigation({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setMounted(true)
     const userStr = localStorage.getItem('user')
-    if (userStr) {
+    const token = localStorage.getItem('token')
+    if (userStr && token && token !== 'undefined' && token !== 'null') {
       try {
         setUser(JSON.parse(userStr))
       } catch (e) {
         console.error(e)
       }
     } else if (pathname !== '/login' && pathname !== '/register') {
-      // Auto-redirect if no user and trying to access protected route
       router.push('/login')
     }
   }, [pathname, router])

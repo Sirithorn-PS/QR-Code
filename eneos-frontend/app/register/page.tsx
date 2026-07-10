@@ -37,9 +37,9 @@ export default function RegisterPage() {
     setLoading(true)
 
     try {
-      const data = await register({ username, password, fullName })
-      setAuthData(data.token, data.user)
-      router.push('/')
+      await register({ username, password, fullName })
+      // หลังจากลงทะเบียนเสร็จสิ้น ให้ไปที่หน้า login เพื่อให้ผู้ใช้ทำการเข้าสู่ระบบด้วยตนเองตามที่กำหนด
+      router.push(`/login?registered=${encodeURIComponent(username)}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาด ลองใหม่อีกครั้ง')
       console.error(err)

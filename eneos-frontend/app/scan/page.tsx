@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { FormEvent, useState, useCallback, useEffect } from 'react'
-import { createTransaction, fetchProduct, Product } from '@/lib/auth'
+import { createTransaction, fetchProduct, fetchProductBom, Product, BillOfMaterial } from '@/lib/auth'
 import { motion, AnimatePresence } from 'framer-motion'
 import QRScanner from '@/components/QRScanner'
+import { Layers, FileText, ChevronDown, ChevronUp } from 'lucide-react'
 
 export default function ScanPage() {
   const [itemCode, setItemCode] = useState('')
@@ -17,6 +18,9 @@ export default function ScanPage() {
   const [loading, setLoading] = useState(false)
   const [scanCooldown, setScanCooldown] = useState(false)
   const [user, setUser] = useState<{ fullName: string } | null>(null)
+
+  const [bomList, setBomList] = useState<BillOfMaterial[]>([])
+  const [showBom, setShowBom] = useState(false)
 
   useEffect(() => {
     const userStr = localStorage.getItem('user')
@@ -36,10 +40,17 @@ export default function ScanPage() {
     setLoading(true)
 
     try {
-      setProduct(await fetchProduct(decodedText.trim()))
+      const p = await fetchProduct(decodedText.trim())
+      setProduct(p)
       setMessage('สแกนสำเร็จ!')
+      if (p.itemType === 'FG' || p.itemType === 'Bulk') {
+        fetchProductBom(p.itemCode).then(boms => setBomList(boms)).catch(() => setBomList([]))
+      } else {
+        setBomList([])
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'ไม่พบสินค้า')
+      setBomList([])
     } finally {
       setLoading(false)
     }
@@ -56,9 +67,16 @@ export default function ScanPage() {
 
     setLoading(true)
     try {
-      setProduct(await fetchProduct(itemCode.trim()))
+      const p = await fetchProduct(itemCode.trim())
+      setProduct(p)
+      if (p.itemType === 'FG' || p.itemType === 'Bulk') {
+        fetchProductBom(p.itemCode).then(boms => setBomList(boms)).catch(() => setBomList([]))
+      } else {
+        setBomList([])
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'ไม่พบสินค้า')
+      setBomList([])
     } finally {
       setLoading(false)
     }
@@ -67,6 +85,8 @@ export default function ScanPage() {
   const closeModalWithCooldown = () => {
     setProduct(null)
     setItemCode('')
+    setBomList([])
+    setShowBom(false)
     setScanCooldown(true)
     setTimeout(() => {
       setScanCooldown(false)
@@ -188,41 +208,87 @@ export default function ScanPage() {
               {/* Scrollable Inner Content */}
               <div className="overflow-y-auto overflow-x-hidden flex-1 pr-1 -mr-1">
                 <div className="flex items-start justify-between mb-5">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700">
-                    <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
-                    สแกนพบสินค้า
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700">
+                        <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        สแกนพบสินค้า
+                      </div>
+                      {product.itemType && (
+                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${
+                          product.itemType === 'FG' ? 'bg-red-50 text-red-700 border-red-200' :
+                          product.itemType === 'Bulk' ? 'bg-amber-50 text-amber-800 border-amber-200' :
+                          product.itemType === 'Packaging' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                          'bg-purple-50 text-purple-700 border-purple-200'
+                        }`}>
+                          {product.itemType}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mt-2">{product.name}</h3>
+                    <p className="text-xs font-mono text-gray-400 mt-0.5">{product.itemCode}</p>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mt-2">{product.name}</h3>
-                  <p className="text-xs font-mono text-gray-400 mt-0.5">{product.itemCode}</p>
+                  <button
+                    onClick={closeModalWithCooldown}
+                    className="rounded-full bg-gray-100 p-1.5 text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-colors"
+                  >
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
-                <button
-                  onClick={closeModalWithCooldown}
-                  className="rounded-full bg-gray-100 p-1.5 text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-colors"
-                >
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
 
               {/* Product Metadata Info Board */}
-              <div className="grid grid-cols-3 gap-3 mb-6 bg-gray-50/70 p-3.5 rounded-2xl border border-gray-100">
+              <div className="grid grid-cols-3 gap-3 mb-4 bg-gray-50/70 p-3.5 rounded-2xl border border-gray-100">
                 <div className="text-center md:text-left">
                   <span className="block text-[11px] font-medium text-gray-400 uppercase tracking-wider">หน่วยนับ</span>
                   <span className="text-sm font-semibold text-gray-700 mt-0.5 block">{product.unit}</span>
                 </div>
                 <div className="text-center md:text-left border-x border-gray-200/50">
                   <span className="block text-[11px] font-medium text-gray-400 uppercase tracking-wider">คลังจัดเก็บ</span>
-                  <span className="text-sm font-semibold text-gray-700 mt-0.5 block truncate">{product.location || 'ไม่มี'}</span>
+                  <span className="text-sm font-semibold text-gray-700 mt-0.5 block truncate">{product.warehouse || product.location || 'ไม่มี'}</span>
                 </div>
                 <div className="text-center md:text-left">
                   <span className="block text-[11px] font-medium text-gray-400 uppercase tracking-wider">ยอดคงเหลือ</span>
                   <span className="text-sm font-bold text-gray-800 mt-0.5 block">{product.quantity}</span>
                 </div>
               </div>
+
+              {/* SAP BOM Expandable Section */}
+              {bomList.length > 0 && (
+                <div className="mb-5 rounded-2xl border border-red-100 bg-red-50/40 p-3.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowBom(!showBom)}
+                    className="w-full flex items-center justify-between text-xs font-bold text-[#BE1111]"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <FileText className="w-4 h-4" />
+                      <span>📑 สูตรการผลิต SAP BOM ({bomList.length} รายการส่วนประกอบ)</span>
+                    </div>
+                    {showBom ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+
+                  {showBom && (
+                    <div className="mt-3 pt-3 border-t border-red-100/80 max-h-48 overflow-y-auto space-y-2">
+                      {bomList.map((c) => (
+                        <div key={c.id} className="flex items-center justify-between text-xs bg-white p-2 rounded-xl border border-gray-100 shadow-2xs">
+                          <div>
+                            <span className="font-mono font-bold text-gray-800 mr-1.5">[{c.componentItemCode}]</span>
+                            <span className="text-gray-700 font-medium">{c.description}</span>
+                          </div>
+                          <div className="shrink-0 ml-2 text-right">
+                            <span className="font-bold text-[#BE1111]">{c.quantity}</span>
+                            <span className="text-[10px] text-gray-400 ml-1 font-mono">{c.uom} ({c.warehouse})</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Status alerts */}
               {error && (

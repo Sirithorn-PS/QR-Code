@@ -1,10 +1,29 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { login, setAuthData } from '@/lib/auth'
 import { Package } from 'lucide-react'
+
+function LoginAlert({ onRegistered }: { onRegistered: (u: string) => void }) {
+  const searchParams = useSearchParams()
+  const registered = searchParams.get('registered')
+
+  useEffect(() => {
+    if (registered) {
+      onRegistered(registered)
+    }
+  }, [registered, onRegistered])
+
+  if (!registered) return null
+
+  return (
+    <div className="mb-6 p-4 rounded-xl text-sm font-medium text-green-800 bg-green-50 border border-green-200 flex items-start gap-2 shadow-sm">
+      <span>✅ ลงทะเบียนบัญชี <b>{registered}</b> สำเร็จแล้ว กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบได้เลยครับ</span>
+    </div>
+  )
+}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -48,6 +67,10 @@ export default function LoginPage() {
 
         {/* Card */}
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
+          <Suspense fallback={null}>
+            <LoginAlert onRegistered={(u) => setUsername(prev => prev || u)} />
+          </Suspense>
+
           {/* Error Message */}
           {error && (
             <div className="mb-6 p-4 rounded-xl text-sm font-medium text-red-800 bg-red-50 border border-red-100">

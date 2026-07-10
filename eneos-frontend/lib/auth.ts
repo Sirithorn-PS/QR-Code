@@ -30,6 +30,20 @@ export interface Product {
   warehouse: string
   location: string
   quantity: number
+  itemType?: string
+  parentItemCodes?: string[]
+}
+
+export interface BillOfMaterial {
+  id: number
+  parentItemCode: string
+  componentItemCode: string
+  description: string
+  uom: string
+  quantity: number
+  warehouse: string
+  depth: number
+  bomType: string
 }
 
 export interface StockTransaction {
@@ -61,14 +75,19 @@ export interface StockTransaction {
 
 async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getToken()
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init.headers,
-    },
-  })
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...init.headers,
+      },
+    })
+  } catch (err) {
+    throw new Error('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ Backend (พอร์ต 4000) ได้ กรุณาตรวจสอบการเปิดใช้งานระบบ')
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }))
@@ -79,13 +98,18 @@ async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export async function register(data: RegisterData): Promise<AuthResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/register`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  })
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+  } catch (err) {
+    throw new Error('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ Backend (พอร์ต 4000) ได้ กรุณาตรวจสอบการเปิดใช้งานระบบ')
+  }
 
   if (!response.ok) {
     const error = await response.json()
@@ -96,13 +120,18 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
 }
 
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(credentials),
-  })
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
+    })
+  } catch (err) {
+    throw new Error('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ Backend (พอร์ต 4000) ได้ กรุณาตรวจสอบการเปิดใช้งานระบบ')
+  }
 
   if (!response.ok) {
     const error = await response.json()
@@ -140,13 +169,20 @@ export function isAuthenticated(): boolean {
   return !!localStorage.getItem('token')
 }
 
-export function fetchProducts(search = '') {
-  const params = search ? `?search=${encodeURIComponent(search)}` : ''
-  return apiRequest<Product[]>(`/products${params}`)
+export function fetchProducts(search = '', itemType = '') {
+  const params = new URLSearchParams()
+  if (search) params.append('search', search)
+  if (itemType && itemType !== 'ALL') params.append('itemType', itemType)
+  const queryString = params.toString() ? `?${params.toString()}` : ''
+  return apiRequest<Product[]>(`/products${queryString}`)
 }
 
 export function fetchProduct(itemCode: string) {
   return apiRequest<Product>(`/products/${encodeURIComponent(itemCode)}`)
+}
+
+export function fetchProductBom(itemCode: string) {
+  return apiRequest<BillOfMaterial[]>(`/products/${encodeURIComponent(itemCode)}/bom`)
 }
 
 export function createProduct(data: {

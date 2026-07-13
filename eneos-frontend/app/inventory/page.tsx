@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { fetchProducts, updateProductQuantity, createProduct, deleteProduct, fetchProductBom, Product, BillOfMaterial } from '@/lib/auth'
 import QRCode from 'react-qr-code'
-import { Search, Package, ArrowLeft, Layers, Download, Check, History, Plus, X, Trash2, FileText, FolderTree, ChevronDown, ChevronRight, LayoutGrid, Crown, Droplets, Box, FlaskConical, QrCode } from 'lucide-react'
+import { Search, Package, ArrowLeft, Layers, Download, Check, History, Plus, X, Trash2, FileText, FolderTree, ChevronDown, ChevronRight, LayoutGrid, Crown, Droplets, Box, FlaskConical, QrCode, Filter, Tag } from 'lucide-react'
 
 export default function InventoryPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -14,6 +14,8 @@ export default function InventoryPage() {
 
   const [activeTab, setActiveTab] = useState('ALL')
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
+  const [selectedUnit, setSelectedUnit] = useState('ALL')
+  const [isUnitDropdownOpen, setIsUnitDropdownOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'grouped' | 'flat'>('grouped')
   const [selectedParentCode, setSelectedParentCode] = useState<string | null>(null)
   const [expandedParents, setExpandedParents] = useState<Record<string, boolean>>({})
@@ -200,7 +202,7 @@ export default function InventoryPage() {
 
   useEffect(() => {
     setSelectedParentCode(null)
-  }, [activeTab])
+  }, [activeTab, selectedUnit])
 
   useEffect(() => {
     let isMounted = true
@@ -223,10 +225,13 @@ export default function InventoryPage() {
     }
   }, [])
 
+  const matchesUnit = (unit?: string) => selectedUnit === 'ALL' || (unit && Boolean(unit.toLowerCase() === selectedUnit.toLowerCase()))
+
   const displayedProducts = products.filter(product => {
+    if (!matchesUnit(product.unit)) return false
     if (!selectedParentCode) return true
     if (product.itemCode === selectedParentCode && product.itemType === 'FG') return true
-    return product.parentItemCodes?.includes(selectedParentCode)
+    return Boolean(product.parentItemCodes?.includes(selectedParentCode))
   })
 
   return (
@@ -291,111 +296,224 @@ export default function InventoryPage() {
           </div>
         )}
 
-        {/* Dropdown Selectors: Category Filter & View Mode Switcher */}
-        {/* Custom Modern Vector-Only Category Dropdown Selector (No Emojis!) */}
-        <div className="mb-6 relative w-full sm:max-w-xl">
-          {(() => {
-            const categoryOptions = [
-              { id: 'ALL', label: 'ทั้งหมด', count: products.length, icon: LayoutGrid, desc: 'All Categories' },
-              { id: 'FG', label: 'FG (สินค้าหลัก)', count: products.filter(p => p.itemType === 'FG').length, icon: Crown, desc: 'Finished Goods' },
-              { id: 'Bulk', label: 'Bulk (กึ่งสำเร็จรูป)', count: products.filter(p => p.itemType === 'Bulk').length, icon: Droplets, desc: 'Semi-Finished' },
-              { id: 'Packaging', label: 'Packaging (บรรจุภัณฑ์)', count: products.filter(p => p.itemType === 'Packaging').length, icon: Box, desc: 'Packaging Materials' },
-              { id: 'Raw Material', label: 'Raw Material (วัตถุดิบ)', count: products.filter(p => p.itemType === 'Raw Material').length, icon: FlaskConical, desc: 'Raw Ingredients' },
-            ]
-            const currentOpt = categoryOptions.find(o => o.id === activeTab) || categoryOptions[0]
-            const CurrentIcon = currentOpt.icon
+        {/* Dropdown Selectors: Category Filter & Unit Filter */}
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-4xl">
+          {/* Custom Modern Vector-Only Category Dropdown Selector (No Emojis!) */}
+          <div className="relative w-full">
+            {(() => {
+              const categoryOptions = [
+                { id: 'ALL', label: 'ทั้งหมด', count: products.length, icon: LayoutGrid, desc: 'All Categories' },
+                { id: 'FG', label: 'FG (สินค้าหลัก)', count: products.filter(p => p.itemType === 'FG').length, icon: Crown, desc: 'Finished Goods' },
+                { id: 'Bulk', label: 'Bulk (กึ่งสำเร็จรูป)', count: products.filter(p => p.itemType === 'Bulk').length, icon: Droplets, desc: 'Semi-Finished' },
+                { id: 'Packaging', label: 'Packaging (บรรจุภัณฑ์)', count: products.filter(p => p.itemType === 'Packaging').length, icon: Box, desc: 'Packaging Materials' },
+                { id: 'Raw Material', label: 'Raw Material (วัตถุดิบ)', count: products.filter(p => p.itemType === 'Raw Material').length, icon: FlaskConical, desc: 'Raw Ingredients' },
+              ]
+              const currentOpt = categoryOptions.find(o => o.id === activeTab) || categoryOptions[0]
+              const CurrentIcon = currentOpt.icon
 
-            return (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-                  className="w-full flex items-center justify-between gap-3 bg-white/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-gray-200 shadow-xs hover:border-gray-300 transition-all text-left cursor-pointer group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-800 shadow-xs group-hover:bg-red-50 group-hover:text-[#BE1111] transition-colors">
-                      <CurrentIcon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="text-[11px] font-semibold text-gray-400 tracking-wider uppercase font-mono">หมวดหมู่สินค้า (Category Filter)</div>
-                      <div className="text-xs sm:text-sm font-black text-gray-900 tracking-tight">
-                        {currentOpt.label} ({currentOpt.count} รายการ)
+              return (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCategoryDropdownOpen(!isCategoryDropdownOpen)
+                      if (isUnitDropdownOpen) setIsUnitDropdownOpen(false)
+                    }}
+                    className="w-full flex items-center justify-between gap-3 bg-white/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-gray-200 shadow-xs hover:border-gray-300 transition-all text-left cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-800 shadow-xs group-hover:bg-red-50 group-hover:text-[#BE1111] transition-colors">
+                        <CurrentIcon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="text-[11px] font-semibold text-gray-400 tracking-wider uppercase font-mono">หมวดหมู่สินค้า (Category Filter)</div>
+                        <div className="text-xs sm:text-sm font-black text-gray-900 tracking-tight">
+                          {currentOpt.label} ({currentOpt.count} รายการ)
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 pr-1">
-                    <span className="text-xs font-bold text-[#BE1111] bg-red-50 px-2.5 py-1 rounded-lg border border-red-100 font-mono">
-                      {activeTab}
-                    </span>
-                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isCategoryDropdownOpen ? 'rotate-180 text-gray-800' : ''}`} />
-                  </div>
-                </button>
-
-                {/* Popover Backdrop */}
-                {isCategoryDropdownOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setIsCategoryDropdownOpen(false)}
-                    />
-
-                    {/* Popover Menu List */}
-                    <div className="absolute left-0 top-full mt-2 w-full z-50 rounded-2xl border border-gray-200/90 bg-white/98 backdrop-blur-xl p-2 shadow-xl animate-in fade-in zoom-in-95 duration-150 divide-y divide-gray-100/80">
-                      {categoryOptions.map((opt) => {
-                        const IconComp = opt.icon
-                        const isSelected = activeTab === opt.id
-                        return (
-                          <button
-                            key={opt.id}
-                            type="button"
-                            onClick={() => {
-                              setActiveTab(opt.id)
-                              setSelectedParentCode(null)
-                              setIsCategoryDropdownOpen(false)
-                            }}
-                            className={`w-full flex items-center justify-between gap-3 p-2.5 rounded-xl transition-all text-left cursor-pointer group ${
-                              isSelected
-                                ? 'bg-gray-100/90 text-gray-900 shadow-2xs font-black border border-gray-200/80'
-                                : 'hover:bg-gray-50 text-gray-600 font-extrabold'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                                isSelected
-                                  ? 'bg-white text-[#BE1111] shadow-2xs border border-gray-200/80'
-                                  : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200 group-hover:text-gray-900'
-                              }`}>
-                                <IconComp className="w-4 h-4" />
-                              </div>
-                              <div>
-                                <div className={`text-xs sm:text-sm font-bold tracking-tight ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>
-                                  {opt.label}
-                                </div>
-                                <div className={`text-[10px] sm:text-[11px] ${isSelected ? 'text-gray-500 font-medium' : 'text-gray-400'}`}>
-                                  {opt.desc}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              <span className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold ${
-                                isSelected
-                                  ? 'bg-red-50 text-[#BE1111] border border-red-200/80'
-                                  : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
-                              }`}>
-                                {opt.count} รายการ
-                              </span>
-                              {isSelected && <Check className="w-4 h-4 text-white shrink-0" />}
-                            </div>
-                          </button>
-                        )
-                      })}
+                    <div className="flex items-center gap-2 pr-1">
+                      <span className="text-xs font-bold text-[#BE1111] bg-red-50 px-2.5 py-1 rounded-lg border border-red-100 font-mono">
+                        {activeTab}
+                      </span>
+                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isCategoryDropdownOpen ? 'rotate-180 text-gray-800' : ''}`} />
                     </div>
-                  </>
-                )}
-              </>
-            )
-          })()}
+                  </button>
+
+                  {/* Popover Backdrop */}
+                  {isCategoryDropdownOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setIsCategoryDropdownOpen(false)}
+                      />
+
+                      {/* Popover Menu List */}
+                      <div className="absolute left-0 top-full mt-2 w-full z-50 rounded-2xl border border-gray-200/90 bg-white/98 backdrop-blur-xl p-2 shadow-xl animate-in fade-in zoom-in-95 duration-150 divide-y divide-gray-100/80">
+                        {categoryOptions.map((opt) => {
+                          const IconComp = opt.icon
+                          const isSelected = activeTab === opt.id
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => {
+                                setActiveTab(opt.id)
+                                setSelectedParentCode(null)
+                                setIsCategoryDropdownOpen(false)
+                              }}
+                              className={`w-full flex items-center justify-between gap-3 p-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                                isSelected
+                                  ? 'bg-gray-100/90 text-gray-900 shadow-2xs font-black border border-gray-200/80'
+                                  : 'hover:bg-gray-50 text-gray-600 font-extrabold'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                                  isSelected
+                                    ? 'bg-white text-[#BE1111] shadow-2xs border border-gray-200/80'
+                                    : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200 group-hover:text-gray-900'
+                                }`}>
+                                  <IconComp className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <div className={`text-xs sm:text-sm font-bold tracking-tight ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>
+                                    {opt.label}
+                                  </div>
+                                  <div className={`text-[10px] sm:text-[11px] ${isSelected ? 'text-gray-500 font-medium' : 'text-gray-400'}`}>
+                                    {opt.desc}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold ${
+                                  isSelected
+                                    ? 'bg-red-50 text-[#BE1111] border border-red-200/80'
+                                    : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
+                                }`}>
+                                  {opt.count} รายการ
+                                </span>
+                                {isSelected && <Check className="w-4 h-4 text-white shrink-0" />}
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </>
+                  )}
+                </>
+              )
+            })()}
+          </div>
+
+          {/* Custom Modern Unit Filter Dropdown Selector */}
+          <div className="relative w-full">
+            {(() => {
+              const unitOptions = [
+                { id: 'ALL', label: 'All Units (ทุกหน่วยนับ)', desc: 'แสดงทุกหน่วยนับ' },
+                { id: 'Pail20L', label: 'Pail20L', desc: 'ถัง 20 ลิตร' },
+                { id: 'Litre', label: 'Litre', desc: 'ลิตร (L)' },
+                { id: 'Kilogram', label: 'Kilogram', desc: 'กิโลกรัม (Kg)' },
+                { id: 'Label18L', label: 'Label18L', desc: 'ป้ายฉลาก 18L' },
+              ]
+              const currentUnitOpt = unitOptions.find(o => o.id.toLowerCase() === selectedUnit.toLowerCase()) || unitOptions[0]
+
+              return (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsUnitDropdownOpen(!isUnitDropdownOpen)
+                      if (isCategoryDropdownOpen) setIsCategoryDropdownOpen(false)
+                    }}
+                    className="w-full flex items-center justify-between gap-3 bg-white/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-gray-200 shadow-xs hover:border-gray-300 transition-all text-left cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-800 shadow-xs group-hover:bg-red-50 group-hover:text-[#BE1111] transition-colors">
+                        <Filter className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="text-[11px] font-semibold text-gray-400 tracking-wider uppercase font-mono">หน่วยนับ (Unit Filter)</div>
+                        <div className="text-xs sm:text-sm font-black text-gray-900 tracking-tight">
+                          {currentUnitOpt.label}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 pr-1">
+                      <span className="text-xs font-bold text-[#BE1111] bg-red-50 px-2.5 py-1 rounded-lg border border-red-100 font-mono">
+                        {selectedUnit === 'ALL' ? 'ALL' : currentUnitOpt.id}
+                      </span>
+                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isUnitDropdownOpen ? 'rotate-180 text-gray-800' : ''}`} />
+                    </div>
+                  </button>
+
+                  {/* Popover Backdrop */}
+                  {isUnitDropdownOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setIsUnitDropdownOpen(false)}
+                      />
+
+                      {/* Popover Menu List */}
+                      <div className="absolute left-0 top-full mt-2 w-full z-50 rounded-2xl border border-gray-200/90 bg-white/98 backdrop-blur-xl p-2 shadow-xl animate-in fade-in zoom-in-95 duration-150 divide-y divide-gray-100/80">
+                        {unitOptions.map((opt) => {
+                          const isSelected = selectedUnit.toLowerCase() === opt.id.toLowerCase()
+                          const count = products.filter(p => opt.id === 'ALL' ? true : Boolean(p.unit && p.unit.toLowerCase() === opt.id.toLowerCase())).length
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedUnit(opt.id)
+                                setSelectedParentCode(null)
+                                setIsUnitDropdownOpen(false)
+                              }}
+                              className={`w-full flex items-center justify-between gap-3 p-2.5 rounded-xl transition-all text-left cursor-pointer group ${
+                                isSelected
+                                  ? 'bg-gray-100/90 text-gray-900 shadow-2xs font-black border border-gray-200/80'
+                                  : 'hover:bg-gray-50 text-gray-600 font-extrabold'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                                  isSelected
+                                    ? 'bg-white text-[#BE1111] shadow-2xs border border-gray-200/80'
+                                    : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200 group-hover:text-gray-900'
+                                }`}>
+                                  <Tag className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <div className={`text-xs sm:text-sm font-bold tracking-tight ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>
+                                    {opt.label}
+                                  </div>
+                                  <div className={`text-[10px] sm:text-[11px] ${isSelected ? 'text-gray-500 font-medium' : 'text-gray-400'}`}>
+                                    {opt.desc}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold ${
+                                  isSelected
+                                    ? 'bg-red-50 text-[#BE1111] border border-red-200/80'
+                                    : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
+                                }`}>
+                                  {count} รายการ
+                                </span>
+                                {isSelected && <Check className="w-4 h-4 text-white shrink-0" />}
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </>
+                  )}
+                </>
+              )
+            })()}
+          </div>
         </div>
 
         {/* Quick Filter Banner if parent selected */}
@@ -430,7 +548,7 @@ export default function InventoryPage() {
           <div className="space-y-6">
           {/* Dedicated Category Summary Table & Dashboard when tab is Bulk, Packaging, or Raw Material */}
           {activeTab !== 'ALL' && activeTab !== 'FG' && (() => {
-            const categoryItems = products.filter(p => p.itemType === activeTab)
+            const categoryItems = products.filter(p => p.itemType === activeTab && matchesUnit(p.unit))
             const CategoryIcon = activeTab === 'Bulk' ? Droplets : activeTab === 'Packaging' ? Box : FlaskConical
             const categoryTitle = activeTab === 'Bulk' ? 'Bulk (กึ่งสำเร็จรูป / สารผสม)' : activeTab === 'Packaging' ? 'Packaging (บรรจุภัณฑ์ / วัสดุห่อหุ้ม)' : 'Raw Material (วัตถุดิบตั้งต้น / เคมีภัณฑ์)'
 
@@ -593,8 +711,11 @@ export default function InventoryPage() {
           {products
             .filter(p => p.itemType === 'FG' && (!selectedParentCode || p.itemCode === selectedParentCode))
             .map(fg => {
-              const components = products.filter(p => p.parentItemCodes?.includes(fg.itemCode) && (activeTab === 'ALL' || activeTab === 'FG' ? true : p.itemType === activeTab))
+              const fgMatchesUnit = matchesUnit(fg.unit)
+              const components = products.filter(p => p.itemCode !== fg.itemCode && p.parentItemCodes?.includes(fg.itemCode) && (activeTab === 'ALL' || activeTab === 'FG' ? true : p.itemType === activeTab) && matchesUnit(p.unit))
+              if (activeTab === 'FG' && !fgMatchesUnit) return null
               if (activeTab !== 'ALL' && activeTab !== 'FG' && components.length === 0) return null
+              if (activeTab === 'ALL' && !fgMatchesUnit && components.length === 0) return null
               const isExpanded = expandedParents[fg.itemCode] ?? false
               return (
                 <div key={fg.id} className="space-y-6 animate-in fade-in duration-300">
@@ -897,6 +1018,7 @@ export default function InventoryPage() {
               }
             })
             const unassignedProducts = products.filter(p => {
+              if (!matchesUnit(p.unit)) return false
               if (assignedOrParentCodes.has(p.itemCode)) return false
               if (activeTab === 'ALL') return p.itemType !== 'FG'
               if (activeTab === 'FG') return false
@@ -1399,7 +1521,7 @@ export default function InventoryPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {bomList.map((comp) => (
+                      {bomList.filter(comp => comp.componentItemCode !== comp.parentItemCode).map((comp) => (
                         <tr key={comp.id} className="hover:bg-gray-50/60 transition-colors">
                           <td className="px-4 py-2.5 text-center font-mono font-bold text-gray-500">
                             <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${

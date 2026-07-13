@@ -5,7 +5,7 @@ import { FormEvent, useState, useCallback, useEffect } from 'react'
 import { createTransaction, fetchProduct, fetchProductBom, Product, BillOfMaterial } from '@/lib/auth'
 import { motion, AnimatePresence } from 'framer-motion'
 import QRScanner from '@/components/QRScanner'
-import { Layers, FileText, ChevronDown, ChevronUp } from 'lucide-react'
+import { Layers, FileText, ChevronDown, ChevronUp, Droplets, Box, FlaskConical, ExternalLink } from 'lucide-react'
 
 export default function ScanPage() {
   const [itemCode, setItemCode] = useState('')
@@ -21,6 +21,7 @@ export default function ScanPage() {
 
   const [bomList, setBomList] = useState<BillOfMaterial[]>([])
   const [showBom, setShowBom] = useState(false)
+  const [expandedBomSubgroups, setExpandedBomSubgroups] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     const userStr = localStorage.getItem('user')
@@ -58,36 +59,12 @@ export default function ScanPage() {
     return text.trim()
   }, [])
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      const codeParam = params.get('code')
-      if (codeParam) {
-        const cleaned = extractItemCode(codeParam)
-        setItemCode(cleaned)
-        setLoading(true)
-        fetchProduct(cleaned)
-          .then(p => {
-            setProduct(p)
-            setMessage('ดึงข้อมูลสินค้าสำเร็จ!')
-            if (p.itemType === 'FG' || p.itemType === 'Bulk') {
-              fetchProductBom(p.itemCode).then(boms => setBomList(boms)).catch(() => setBomList([]))
-            } else {
-              setBomList([])
-            }
-          })
-          .catch(err => {
-            setError(err instanceof Error ? err.message : 'ไม่พบสินค้า')
-            setBomList([])
-          })
-          .finally(() => setLoading(false))
-      }
+  const loadProductByCode = useCallback(async (code: string, successMsg = 'สแกนสำเร็จ!') => {
+    const cleanedCode = extractItemCode(code)
+    if (!cleanedCode) {
+      setError('กรุณากรอก Item Code หรือข้อมูลจาก QR')
+      return
     }
-  }, [extractItemCode])
-
-  // Handle Scan Success from Camera
-  const handleScanSuccess = useCallback(async (decodedText: string) => {
-    const cleanedCode = extractItemCode(decodedText)
     setItemCode(cleanedCode)
     setError('')
     setMessage('')
@@ -97,45 +74,50 @@ export default function ScanPage() {
     try {
       const p = await fetchProduct(cleanedCode)
       setProduct(p)
-      setMessage('สแกนสำเร็จ!')
-      if (p.itemType === 'FG' || p.itemType === 'Bulk') {
-        fetchProductBom(p.itemCode).then(boms => setBomList(boms)).catch(() => setBomList([]))
-      } else {
+      setMessage(successMsg)
+      try {
+        const boms = await fetchProductBom(p.itemCode)
+        if (boms && boms.length > 0) {
+          setBomList(boms)
+          setShowBom(true)
+        } else {
+          setBomList([])
+          setShowBom(false)
+        }
+      } catch {
         setBomList([])
+        setShowBom(false)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'ไม่พบสินค้า')
       setBomList([])
+      setShowBom(false)
     } finally {
       setLoading(false)
     }
   }, [extractItemCode])
 
-  const lookupProduct = async () => {
-    setError('')
-    setMessage('')
-    setProduct(null)
-    const cleanedCode = extractItemCode(itemCode)
-    if (!cleanedCode) {
-      setError('กรุณากรอก Item Code หรือข้อมูลจาก QR')
-      return
-    }
-
-    setLoading(true)
-    try {
-      const p = await fetchProduct(cleanedCode)
-      setProduct(p)
-      if (p.itemType === 'FG' || p.itemType === 'Bulk') {
-        fetchProductBom(p.itemCode).then(boms => setBomList(boms)).catch(() => setBomList([]))
-      } else {
-        setBomList([])
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const codeParam = params.get('code')
+      if (codeParam) {
+        loadProductByCode(codeParam, 'ดึงข้อมูลสินค้าสำเร็จ!')
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'ไม่พบสินค้า')
-      setBomList([])
-    } finally {
-      setLoading(false)
     }
+  }, [loadProductByCode])
+
+  // Handle Scan Success from Camera
+  const handleScanSuccess = useCallback(async (decodedText: string) => {
+    await loadProductByCode(decodedText, 'สแกนสำเร็จ!')
+  }, [loadProductByCode])
+
+  const lookupProduct = async () => {
+    await loadProductByCode(itemCode, 'ค้นหาสินค้าสำเร็จ!')
+  }
+
+  const handleSelectBomComponent = (componentItemCode: string) => {
+    loadProductByCode(componentItemCode, `สลับไปยังชิ้นส่วน [${componentItemCode}] สำเร็จ`)
   }
 
   const closeModalWithCooldown = () => {
@@ -188,6 +170,31 @@ export default function ScanPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const getBomComponentGroup = (c: BillOfMaterial): 'Bulk' | 'Packaging' | 'Raw Material' => {
+    const code = c.componentItemCode.toLowerCase()
+    const desc = c.description.toLowerCase()
+    const uom = (c.uom || '').toUpperCase()
+
+    // 1. Packaging (บรรจุภัณฑ์ / กล่อง / แกลลอน / ป้าย / ฟอยล์ / ถัง)
+    if (
+      code.startsWith('pk') || code.startsWith('box') || code.startsWith('lbl') || code.startsWith('cap') || code.startsWith('gal') || code.startsWith('foil') || code.startsWith('75') ||
+      desc.includes('box') || desc.includes('label') || desc.includes('cap') || desc.includes('pail') || desc.includes('drum') || desc.includes('carton') || desc.includes('gallon') || desc.includes('foil') || desc.includes('sticker') || desc.includes('กล่อง') || desc.includes('ฉลาก') || desc.includes('ฝา') || desc.includes('ถัง') || desc.includes('แกลลอน') || desc.includes('ฟอยล์') ||
+      uom.includes('BOX') || uom.includes('GALLON') || uom.includes('PAIL') || uom.includes('DRUM') || uom === 'PC' || uom === 'PCS' || uom === 'EA' || uom === 'SET' || uom === 'RL'
+    ) {
+      return 'Packaging'
+    }
+
+    // 2. Bulk (สารผสม / น้ำมันเบลนด์ / กึ่งสำเร็จรูป)
+    if (
+      c.bomType === 'Production' || desc.includes('bulk') || desc.includes('premix') || code.startsWith('i-') || code.startsWith('blk-') || code.startsWith('200')
+    ) {
+      return 'Bulk'
+    }
+
+    // 3. Raw Material (วัตถุดิบตั้งต้น / Base oil / Additives)
+    return 'Raw Material'
   }
 
   return (
@@ -314,33 +321,85 @@ export default function ScanPage() {
 
               {/* SAP BOM Expandable Section */}
               {bomList.length > 0 && (
-                <div className="mb-5 rounded-2xl border border-red-100 bg-red-50/40 p-3.5">
+                <div className="mb-5 rounded-2xl border border-red-100 bg-red-50/40 p-4 transition-all">
                   <button
                     type="button"
                     onClick={() => setShowBom(!showBom)}
-                    className="w-full flex items-center justify-between text-xs font-bold text-[#BE1111]"
+                    className="w-full flex items-center justify-between text-xs sm:text-sm font-bold text-[#BE1111] cursor-pointer"
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                       <FileText className="w-4 h-4" />
-                      <span>📑 สูตรการผลิต SAP BOM ({bomList.length} รายการส่วนประกอบ)</span>
+                      <span>📑 สูตรการผลิต SAP BOM ({bomList.filter(c => c.componentItemCode !== c.parentItemCode).length} รายการส่วนประกอบ)</span>
                     </div>
                     {showBom ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
 
                   {showBom && (
-                    <div className="mt-3 pt-3 border-t border-red-100/80 max-h-48 overflow-y-auto space-y-2">
-                      {bomList.map((c) => (
-                        <div key={c.id} className="flex items-center justify-between text-xs bg-white p-2 rounded-xl border border-gray-100 shadow-2xs">
-                          <div>
-                            <span className="font-mono font-bold text-gray-800 mr-1.5">[{c.componentItemCode}]</span>
-                            <span className="text-gray-700 font-medium">{c.description}</span>
+                    <div className="mt-3 pt-3 border-t border-red-100/80 space-y-3">
+                      {(['Bulk', 'Packaging', 'Raw Material'] as const).map((subType) => {
+                        const subComponents = bomList.filter(c => c.componentItemCode !== c.parentItemCode && getBomComponentGroup(c) === subType)
+                        const subExpanded = expandedBomSubgroups[subType] ?? true
+                        const SubIcon = subType === 'Bulk' ? Droplets : subType === 'Packaging' ? Box : FlaskConical
+                        const subTitle = subType === 'Bulk' ? 'Bulk (สารผสม/กึ่งสำเร็จรูป)' : subType === 'Packaging' ? 'Packaging (บรรจุภัณฑ์)' : 'Raw Material (วัตถุดิบ)'
+
+                        return (
+                          <div key={subType} className="rounded-xl border border-gray-200/80 bg-white/80 overflow-hidden shadow-2xs">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedBomSubgroups(prev => ({ ...prev, [subType]: !subExpanded }))}
+                              className="w-full bg-slate-50/90 px-3.5 py-2.5 flex items-center justify-between hover:bg-slate-100/80 transition-colors cursor-pointer border-b border-gray-100"
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-700 shadow-2xs">
+                                  <SubIcon className="w-3.5 h-3.5" />
+                                </div>
+                                <span className="text-xs font-bold text-gray-800">{subTitle}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-700 font-mono">
+                                  {subComponents.length} รายการ
+                                </span>
+                                {subExpanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
+                              </div>
+                            </button>
+
+                            {subExpanded && (
+                              <div className="p-2 space-y-1.5 max-h-52 overflow-y-auto">
+                                {subComponents.length === 0 ? (
+                                  <div className="py-3 text-center text-gray-400 text-[11px]">
+                                    ไม่มีรายการในหมวดหมู่นี้
+                                  </div>
+                                ) : (
+                                  subComponents.map((c) => (
+                                    <div
+                                      key={c.id}
+                                      onClick={() => handleSelectBomComponent(c.componentItemCode)}
+                                      className="group/item flex items-center justify-between text-xs bg-white hover:bg-red-50/60 p-2.5 rounded-lg border border-gray-150 hover:border-red-200 shadow-2xs transition-all cursor-pointer active:scale-[0.99]"
+                                      title={`คลิกเพื่อสลับไปดูและทำรายการรับ/จ่ายสำหรับชิ้นส่วน [${c.componentItemCode}]`}
+                                    >
+                                      <div className="flex items-center gap-2 overflow-hidden">
+                                        <div className="shrink-0 font-mono font-bold text-[#BE1111] bg-red-50 group-hover/item:bg-white px-2 py-0.5 rounded border border-red-100/80">
+                                          {c.componentItemCode}
+                                        </div>
+                                        <div className="truncate text-gray-700 font-medium group-hover/item:text-gray-900">
+                                          {c.description}
+                                        </div>
+                                      </div>
+                                      <div className="shrink-0 ml-2 flex items-center gap-2">
+                                        <div className="text-right">
+                                          <span className="font-bold text-gray-900 group-hover/item:text-[#BE1111]">{c.quantity}</span>
+                                          <span className="text-[10px] text-gray-400 ml-1 font-mono">{c.uom}</span>
+                                        </div>
+                                        <ExternalLink className="w-3.5 h-3.5 text-gray-300 group-hover/item:text-[#BE1111] transition-colors" />
+                                      </div>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            )}
                           </div>
-                          <div className="shrink-0 ml-2 text-right">
-                            <span className="font-bold text-[#BE1111]">{c.quantity}</span>
-                            <span className="text-[10px] text-gray-400 ml-1 font-mono">{c.uom} ({c.warehouse})</span>
-                          </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )}
                 </div>

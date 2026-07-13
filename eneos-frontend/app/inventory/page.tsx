@@ -595,7 +595,7 @@ export default function InventoryPage() {
             .map(fg => {
               const components = products.filter(p => p.parentItemCodes?.includes(fg.itemCode) && (activeTab === 'ALL' || activeTab === 'FG' ? true : p.itemType === activeTab))
               if (activeTab !== 'ALL' && activeTab !== 'FG' && components.length === 0) return null
-              const isExpanded = expandedParents[fg.itemCode] ?? true
+              const isExpanded = expandedParents[fg.itemCode] ?? false
               return (
                 <div key={fg.id} className="space-y-6 animate-in fade-in duration-300">
                   {/* 👑 Header ด้านบน: กล่องแสดงข้อมูลสินค้าหลัก (FG) แยกออกจากรายการ BOM อย่างชัดเจนในดีไซน์มินิมอล (White Card with Soft Slate Border) */}

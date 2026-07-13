@@ -316,11 +316,8 @@ app.get('/products', authenticate, async (req, res) => {
       whereClause.itemType = itemType
     }
 
-    const [products, boms] = await Promise.all([
-      prisma.product.findMany({
-        where: Object.keys(whereClause).length > 0 ? whereClause : undefined,
-        take: 500,
-      }),
+    const [allProducts, boms] = await Promise.all([
+      prisma.product.findMany({ take: 2000 }),
       prisma.billOfMaterial.findMany({
         select: { parentItemCode: true, componentItemCode: true }
       })
@@ -336,7 +333,50 @@ app.get('/products', authenticate, async (req, res) => {
     })
 
     // กรองสินค้าให้เอาเฉพาะรหัสที่มีอยู่ในตาราง BillOfMaterial เท่านั้น
-    const validProducts = products.filter(p => bomItemCodes.has(p.itemCode.trim()))
+    let validProducts = allProducts.filter(p => bomItemCodes.has(p.itemCode.trim()))
+
+    if (search || (itemType && itemType !== 'ALL')) {
+      const matchedSet = new Set<string>()
+      validProducts.forEach(p => {
+        let matchesSearch = true
+        if (search) {
+          const s = search.toLowerCase()
+          const code = (p.itemCode || '').toLowerCase()
+          const desc = (p.description || '').toLowerCase()
+          const loc = (p.location || '').toLowerCase()
+          if (!code.includes(s) && !desc.includes(s) && !loc.includes(s)) {
+            matchesSearch = false
+          }
+        }
+        let matchesType = true
+        if (itemType && itemType !== 'ALL') {
+          if (p.itemType !== itemType) matchesType = false
+        }
+        if (matchesSearch && matchesType) {
+          matchedSet.add(p.itemCode.trim())
+        }
+      })
+
+      const requiredCodes = new Set<string>(matchedSet)
+      boms.forEach(b => {
+        const parent = b.parentItemCode.trim()
+        const comp = b.componentItemCode.trim()
+        if (matchedSet.has(parent)) {
+          requiredCodes.add(comp)
+        }
+        if (matchedSet.has(comp)) {
+          requiredCodes.add(parent)
+          boms.forEach(b2 => {
+            if (b2.parentItemCode.trim() === parent) {
+              requiredCodes.add(b2.componentItemCode.trim())
+            }
+          })
+        }
+      })
+
+      validProducts = validProducts.filter(p => requiredCodes.has(p.itemCode.trim()))
+    }
+
 
     // Sort: FG (👑 สินค้าสำเร็จรูป / รหัสหลัก Item 1) comes first, then Bulk, Packaging, Raw Material
     const typePriority: Record<string, number> = {

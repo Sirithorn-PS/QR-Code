@@ -70,6 +70,7 @@ async function main() {
     unit: string;
     warehouse: string;
     itemType: string;
+    quantity: number;
   }>();
 
   // สร้าง Map สำหรับจัดกลุ่ม BOM ตาม parentItemCode
@@ -120,7 +121,8 @@ async function main() {
         description,
         unit: uom,
         warehouse,
-        itemType
+        itemType,
+        quantity: quantity || 0
       });
     }
 
@@ -164,7 +166,7 @@ async function main() {
           unit: prod.unit,
           warehouse: prod.warehouse,
           location: '-', // ค่าเริ่มต้น
-          quantity: 0,   // ค่าเริ่มต้นสต็อกสินค้า
+          quantity: prod.quantity || 0,   // ค่าเริ่มต้นสต็อกสินค้า
           itemType: prod.itemType
         }
       });

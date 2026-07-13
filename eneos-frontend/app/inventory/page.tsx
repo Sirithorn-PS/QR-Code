@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { fetchProducts, updateProductQuantity, createProduct, deleteProduct, fetchProductBom, Product, BillOfMaterial } from '@/lib/auth'
 import QRCode from 'react-qr-code'
-import { Search, Package, ArrowLeft, Layers, Download, Check, History, Plus, X, Trash2, FileText, FolderTree, ChevronDown, ChevronRight, LayoutGrid, Crown, Droplets, Box, FlaskConical } from 'lucide-react'
+import { Search, Package, ArrowLeft, Layers, Download, Check, History, Plus, X, Trash2, FileText, FolderTree, ChevronDown, ChevronRight, LayoutGrid, Crown, Droplets, Box, FlaskConical, QrCode } from 'lucide-react'
 
 export default function InventoryPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -18,6 +18,7 @@ export default function InventoryPage() {
   const [selectedParentCode, setSelectedParentCode] = useState<string | null>(null)
   const [expandedParents, setExpandedParents] = useState<Record<string, boolean>>({})
   const [selectedBomProduct, setSelectedBomProduct] = useState<Product | null>(null)
+  const [selectedQrProduct, setSelectedQrProduct] = useState<Product | null>(null)
   const [bomList, setBomList] = useState<BillOfMaterial[]>([])
   const [bomLoading, setBomLoading] = useState(false)
 
@@ -97,7 +98,7 @@ export default function InventoryPage() {
   const downloadQRCodeAsPNG = (itemCode: string) => {
     try {
       // Find container by checking both possible IDs or searching DOM
-      let container = document.getElementById(`qr-group-${itemCode}`) || document.getElementById(`qr-${itemCode}`)
+      let container = document.getElementById(`qr-modal-${itemCode}`) || document.getElementById(`qr-group-${itemCode}`) || document.getElementById(`qr-${itemCode}`)
       if (!container) {
         // Fallback: search any element whose ID ends with itemCode
         const found = Array.from(document.querySelectorAll('[id^="qr-"]')).find(el => el.id.endsWith(itemCode))
@@ -483,7 +484,22 @@ export default function InventoryPage() {
 
                           return (
                             <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                              <td className="px-4 py-3.5 font-mono font-bold text-gray-900">{item.itemCode}</td>
+                              <td className="px-4 py-3.5 font-mono font-bold text-gray-900">
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedQrProduct(item)}
+                                    className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-red-50 border border-gray-200/80 hover:border-red-200 text-gray-800 hover:text-[#BE1111] transition-all shadow-2xs cursor-pointer shrink-0"
+                                    title={`คลิกเพื่อดูและดาวน์โหลด QR Code สำหรับ ${item.itemCode}`}
+                                  >
+                                    <QrCode className="w-3.5 h-3.5 text-[#BE1111] group-hover:scale-110 transition-transform" />
+                                    <span>{item.itemCode}</span>
+                                  </button>
+                                  <div id={`qr-${item.itemCode}`} className="hidden">
+                                    <QRCode value={item.itemCode} size={64} />
+                                  </div>
+                                </div>
+                              </td>
                               <td className="px-4 py-3.5 font-medium text-gray-800">{item.name}</td>
                               <td className="px-4 py-3.5 text-gray-600">
                                 <span className="font-semibold text-gray-800">{item.warehouse}</span>
@@ -675,7 +691,22 @@ export default function InventoryPage() {
                             <tbody className="divide-y divide-gray-100">
                               {components.map(comp => (
                                 <tr key={comp.id} className="hover:bg-slate-50 transition-colors">
-                                  <td className="px-4 py-3 font-mono font-bold text-gray-900">{comp.itemCode}</td>
+                                  <td className="px-4 py-3 font-mono font-bold text-gray-900">
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => setSelectedQrProduct(comp)}
+                                        className="group inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-100 hover:bg-red-50 border border-gray-200/80 hover:border-red-200 text-gray-800 hover:text-[#BE1111] transition-all shadow-2xs cursor-pointer shrink-0"
+                                        title={`คลิกเพื่อดูและดาวน์โหลด QR Code สำหรับ ${comp.itemCode}`}
+                                      >
+                                        <QrCode className="w-3.5 h-3.5 text-[#BE1111] group-hover:scale-110 transition-transform" />
+                                        <span>{comp.itemCode}</span>
+                                      </button>
+                                      <div id={`qr-${comp.itemCode}`} className="hidden">
+                                        <QRCode value={comp.itemCode} size={64} />
+                                      </div>
+                                    </div>
+                                  </td>
                                   <td className="px-4 py-3">
                                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
                                       comp.itemType === 'Bulk' ? 'bg-amber-50 text-amber-800 border-amber-200' :
@@ -799,7 +830,22 @@ export default function InventoryPage() {
                     <tbody className="divide-y divide-gray-100">
                       {unassignedProducts.map(item => (
                         <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-4 py-3 font-mono font-bold text-gray-900">{item.itemCode}</td>
+                          <td className="px-4 py-3 font-mono font-bold text-gray-900">
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedQrProduct(item)}
+                                className="group inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-100 hover:bg-red-50 border border-gray-200/80 hover:border-red-200 text-gray-800 hover:text-[#BE1111] transition-all shadow-2xs cursor-pointer shrink-0"
+                                title={`คลิกเพื่อดูและดาวน์โหลด QR Code สำหรับ ${item.itemCode}`}
+                              >
+                                <QrCode className="w-3.5 h-3.5 text-[#BE1111] group-hover:scale-110 transition-transform" />
+                                <span>{item.itemCode}</span>
+                              </button>
+                              <div id={`qr-${item.itemCode}`} className="hidden">
+                                <QRCode value={item.itemCode} size={64} />
+                              </div>
+                            </div>
+                          </td>
                           <td className="px-4 py-3">
                             <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-gray-100 text-gray-700 border border-gray-200">
                               {item.itemType || 'General'}
@@ -884,7 +930,18 @@ export default function InventoryPage() {
                         <tr key={item.id} className="hover:bg-gray-50/60 transition-colors">
                           <td className="px-4 py-3.5 font-mono font-bold text-gray-900">
                             <div className="flex items-center gap-2">
-                              <span>{item.itemCode}</span>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedQrProduct(item)}
+                                className="group inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-100 hover:bg-red-50 border border-gray-200/80 hover:border-red-200 text-gray-800 hover:text-[#BE1111] transition-all shadow-2xs cursor-pointer shrink-0"
+                                title={`คลิกเพื่อดูและดาวน์โหลด QR Code สำหรับ ${item.itemCode}`}
+                              >
+                                <QrCode className="w-3.5 h-3.5 text-[#BE1111] group-hover:scale-110 transition-transform" />
+                                <span>{item.itemCode}</span>
+                              </button>
+                              <div id={`qr-${item.itemCode}`} className="hidden">
+                                <QRCode value={item.itemCode} size={64} />
+                              </div>
                               {item.itemType === 'FG' && (
                                 <button
                                   type="button"
@@ -1247,7 +1304,25 @@ export default function InventoryPage() {
                               {comp.depth}
                             </span>
                           </td>
-                          <td className="px-4 py-2.5 font-mono font-semibold text-gray-900">{comp.componentItemCode}</td>
+                          <td className="px-4 py-2.5 font-mono font-semibold text-gray-900">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedQrProduct({
+                                id: comp.id,
+                                itemCode: comp.componentItemCode,
+                                name: comp.description,
+                                unit: comp.uom,
+                                quantity: comp.quantity,
+                                warehouse: comp.warehouse || '',
+                                itemType: comp.depth === 1 ? 'FG' : comp.depth === 2 ? 'Bulk' : 'Raw Material'
+                              })}
+                              className="group inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-red-50 border border-gray-200 hover:border-red-200 text-gray-800 hover:text-[#BE1111] transition-all shadow-2xs cursor-pointer"
+                              title="คลิกเพื่อดูและดาวน์โหลด QR Code"
+                            >
+                              <QrCode className="w-3.5 h-3.5 text-[#BE1111]" />
+                              <span>{comp.componentItemCode}</span>
+                            </button>
+                          </td>
                           <td className="px-4 py-2.5 text-gray-800 font-medium">{comp.description}</td>
                           <td className="px-4 py-2.5 text-right font-bold text-[#BE1111]">{comp.quantity}</td>
                           <td className="px-4 py-2.5 text-gray-600">{comp.uom}</td>
@@ -1267,6 +1342,86 @@ export default function InventoryPage() {
                 className="rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 transition-colors shadow-sm"
               >
                 ปิดหน้าต่าง
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QR Code Quick View & Download Modal for Individual Item Code */}
+      {selectedQrProduct && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          onClick={() => setSelectedQrProduct(null)}
+        >
+          <div
+            className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl border border-gray-100 p-6 text-center animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setSelectedQrProduct(null)}
+              className="absolute right-4 top-4 rounded-full bg-gray-100 p-2 text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition-colors cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-red-50 px-3.5 py-1 text-xs font-bold text-[#BE1111] border border-red-100">
+              <QrCode className="w-3.5 h-3.5" />
+              <span>QR Code ประจำรหัสสินค้า (Item Code)</span>
+            </div>
+
+            <div id={`qr-modal-${selectedQrProduct.itemCode}`} className="mx-auto my-4 inline-block rounded-2xl bg-white p-5 shadow-inner border border-gray-200/80">
+              <QRCode value={selectedQrProduct.itemCode} size={200} />
+            </div>
+
+            <div className="mb-6 space-y-1.5 px-4">
+              <div className="flex items-center justify-center gap-2">
+                <span className={`px-2 py-0.5 rounded-md text-[11px] font-extrabold border ${
+                  selectedQrProduct.itemType === 'FG' ? 'bg-red-50 text-red-700 border-red-200' :
+                  selectedQrProduct.itemType === 'Bulk' ? 'bg-amber-50 text-amber-800 border-amber-200' :
+                  selectedQrProduct.itemType === 'Packaging' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                  'bg-purple-50 text-purple-700 border-purple-200'
+                }`}>
+                  {selectedQrProduct.itemType || 'General'}
+                </span>
+                <span className="font-mono text-base font-black text-gray-900 tracking-wide">
+                  {selectedQrProduct.itemCode}
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-gray-800 leading-snug">
+                {selectedQrProduct.name}
+              </h3>
+              <div className="grid grid-cols-2 gap-2 mt-3 bg-gray-50 p-3 rounded-xl border border-gray-100 text-left">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">คลังสินค้า / โซน</span>
+                  <span className="text-xs font-semibold text-gray-700 block truncate mt-0.5">
+                    {selectedQrProduct.warehouse || 'ไม่มี'} {selectedQrProduct.location ? `(${selectedQrProduct.location})` : ''}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">คงเหลือปัจจุบัน</span>
+                  <span className="text-xs font-bold text-gray-900 block mt-0.5">
+                    {Number(selectedQrProduct.quantity || 0).toLocaleString()} <span className="font-normal text-gray-500">{selectedQrProduct.unit}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => downloadQRCodeAsPNG(selectedQrProduct.itemCode)}
+                className="flex-1 rounded-xl bg-[#BE1111] hover:bg-[#A00F0F] py-3 text-sm font-bold text-white shadow-md shadow-[#BE1111]/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+              >
+                <Download className="w-4 h-4" />
+                <span>ดาวน์โหลดรูปภาพ PNG</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedQrProduct(null)}
+                className="rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 px-5 py-3 text-sm font-bold text-gray-700 transition-all cursor-pointer"
+              >
+                ปิด
               </button>
             </div>
           </div>

@@ -31,16 +31,71 @@ export default function ScanPage() {
     }
   }, [])
 
+  const extractItemCode = useCallback((raw: string): string => {
+    if (!raw) return ''
+    let text = raw.trim()
+    if (text.includes('?code=')) {
+      const parts = text.split('?code=')
+      text = decodeURIComponent(parts[1].split('&')[0])
+    } else if (text.startsWith('http://') || text.startsWith('https://')) {
+      try {
+        const url = new URL(text)
+        if (url.searchParams.has('code')) {
+          text = url.searchParams.get('code') || text
+        } else {
+          const segments = url.pathname.split('/')
+          text = decodeURIComponent(segments[segments.length - 1] || text)
+        }
+      } catch (e) {}
+    } else if (text.startsWith('{') && text.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(text)
+        if (parsed.itemCode || parsed.code) {
+          text = parsed.itemCode || parsed.code
+        }
+      } catch (e) {}
+    }
+    return text.trim()
+  }, [])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const codeParam = params.get('code')
+      if (codeParam) {
+        const cleaned = extractItemCode(codeParam)
+        setItemCode(cleaned)
+        setLoading(true)
+        fetchProduct(cleaned)
+          .then(p => {
+            setProduct(p)
+            setMessage('ดึงข้อมูลสินค้าสำเร็จ!')
+            if (p.itemType === 'FG' || p.itemType === 'Bulk') {
+              fetchProductBom(p.itemCode).then(boms => setBomList(boms)).catch(() => setBomList([]))
+            } else {
+              setBomList([])
+            }
+          })
+          .catch(err => {
+            setError(err instanceof Error ? err.message : 'ไม่พบสินค้า')
+            setBomList([])
+          })
+          .finally(() => setLoading(false))
+      }
+    }
+  }, [extractItemCode])
+
   // Handle Scan Success from Camera
   const handleScanSuccess = useCallback(async (decodedText: string) => {
-    setItemCode(decodedText)
+    const cleanedCode = extractItemCode(decodedText)
+    setItemCode(cleanedCode)
     setError('')
     setMessage('')
     setProduct(null)
     setLoading(true)
 
     try {
-      const p = await fetchProduct(decodedText.trim())
+      const p = await fetchProduct(cleanedCode)
       setProduct(p)
       setMessage('สแกนสำเร็จ!')
       if (p.itemType === 'FG' || p.itemType === 'Bulk') {
@@ -54,20 +109,21 @@ export default function ScanPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [extractItemCode])
 
   const lookupProduct = async () => {
     setError('')
     setMessage('')
     setProduct(null)
-    if (!itemCode.trim()) {
+    const cleanedCode = extractItemCode(itemCode)
+    if (!cleanedCode) {
       setError('กรุณากรอก Item Code หรือข้อมูลจาก QR')
       return
     }
 
     setLoading(true)
     try {
-      const p = await fetchProduct(itemCode.trim())
+      const p = await fetchProduct(cleanedCode)
       setProduct(p)
       if (p.itemType === 'FG' || p.itemType === 'Bulk') {
         fetchProductBom(p.itemCode).then(boms => setBomList(boms)).catch(() => setBomList([]))

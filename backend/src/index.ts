@@ -281,73 +281,89 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
 app.get('/health', (req, res) => res.json({ status: 'ok' }))
 
 app.get('/users', authenticate, async (req, res) => {
-  const users = await prisma.user.findMany({
-    select: {
-      id: true,
-      username: true,
-      fullName: true,
-      role: true,
-      createdAt: true,
-    },
-    orderBy: { createdAt: 'desc' },
-  })
-  return res.json(users)
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        username: true,
+        fullName: true,
+        role: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+    return res.json(users)
+  } catch (error) {
+    console.error('Error fetching users:', error)
+    return res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลผู้ใช้งานได้ชั่วคราว' })
+  }
 })
 
 app.get('/products', authenticate, async (req, res) => {
-  const search = normalizeText(req.query.search)
-  const itemType = normalizeText(req.query.itemType)
+  try {
+    const search = normalizeText(req.query.search)
+    const itemType = normalizeText(req.query.itemType)
 
-  const whereClause: Record<string, unknown> = {}
-  if (search) {
-    whereClause.OR = [
-      { itemCode: { contains: search, mode: 'insensitive' } },
-      { description: { contains: search, mode: 'insensitive' } },
-      { location: { contains: search, mode: 'insensitive' } },
-    ]
-  }
-  if (itemType && itemType !== 'ALL') {
-    whereClause.itemType = itemType
-  }
+    const whereClause: Record<string, unknown> = {}
+    if (search) {
+      whereClause.OR = [
+        { itemCode: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { location: { contains: search, mode: 'insensitive' } },
+      ]
+    }
+    if (itemType && itemType !== 'ALL') {
+      whereClause.itemType = itemType
+    }
 
-  const [products, boms] = await Promise.all([
-    prisma.product.findMany({
-      where: Object.keys(whereClause).length > 0 ? whereClause : undefined,
-      take: 200,
-    }),
-    prisma.billOfMaterial.findMany({
-      select: { parentItemCode: true, componentItemCode: true }
+    const [products, boms] = await Promise.all([
+      prisma.product.findMany({
+        where: Object.keys(whereClause).length > 0 ? whereClause : undefined,
+        take: 500,
+      }),
+      prisma.billOfMaterial.findMany({
+        select: { parentItemCode: true, componentItemCode: true }
+      })
+    ])
+
+    const parentMap = new Map<string, Set<string>>()
+    const bomItemCodes = new Set<string>()
+    boms.forEach(b => {
+      if (b.parentItemCode) bomItemCodes.add(b.parentItemCode.trim())
+      if (b.componentItemCode) bomItemCodes.add(b.componentItemCode.trim())
+      if (!parentMap.has(b.componentItemCode)) parentMap.set(b.componentItemCode, new Set())
+      parentMap.get(b.componentItemCode)!.add(b.parentItemCode)
     })
-  ])
 
-  const parentMap = new Map<string, Set<string>>()
-  boms.forEach(b => {
-    if (!parentMap.has(b.componentItemCode)) parentMap.set(b.componentItemCode, new Set())
-    parentMap.get(b.componentItemCode)!.add(b.parentItemCode)
-  })
+    // กรองสินค้าให้เอาเฉพาะรหัสที่มีอยู่ในตาราง BillOfMaterial เท่านั้น
+    const validProducts = products.filter(p => bomItemCodes.has(p.itemCode.trim()))
 
-  // Sort: FG (👑 สินค้าสำเร็จรูป / รหัสหลัก Item 1) comes first, then Bulk, Packaging, Raw Material
-  const typePriority: Record<string, number> = {
-    'FG': 1,
-    'Bulk': 2,
-    'Packaging': 3,
-    'Raw Material': 4
-  }
+    // Sort: FG (👑 สินค้าสำเร็จรูป / รหัสหลัก Item 1) comes first, then Bulk, Packaging, Raw Material
+    const typePriority: Record<string, number> = {
+      'FG': 1,
+      'Bulk': 2,
+      'Packaging': 3,
+      'Raw Material': 4
+    }
 
-  products.sort((a, b) => {
-    const pA = typePriority[a.itemType || 'FG'] || 99
-    const pB = typePriority[b.itemType || 'FG'] || 99
-    if (pA !== pB) return pA - pB
-    return a.itemCode.localeCompare(b.itemCode)
-  })
-
-  return res.json(products.map(p => {
-    const parents = parentMap.get(p.itemCode)
-    return productSnapshot({
-      ...p,
-      parentItemCodes: parents ? Array.from(parents) : (p.itemType === 'FG' ? [p.itemCode] : [])
+    validProducts.sort((a, b) => {
+      const pA = typePriority[a.itemType || 'FG'] || 99
+      const pB = typePriority[b.itemType || 'FG'] || 99
+      if (pA !== pB) return pA - pB
+      return a.itemCode.localeCompare(b.itemCode)
     })
-  }))
+
+    return res.json(validProducts.map(p => {
+      const parents = parentMap.get(p.itemCode)
+      return productSnapshot({
+        ...p,
+        parentItemCodes: parents ? Array.from(parents) : (p.itemType === 'FG' ? [p.itemCode] : [])
+      })
+    }))
+  } catch (error) {
+    console.error('Error fetching products:', error)
+    return res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลสต็อกสินค้าได้ชั่วคราว กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่อีกครั้ง' })
+  }
 })
 
 app.get('/products/:itemCode/bom', authenticate, async (req, res) => {
@@ -383,15 +399,31 @@ app.get('/boms', authenticate, async (req, res) => {
 })
 
 app.get('/products/:itemCode', authenticate, async (req, res) => {
-  const product = await prisma.product.findUnique({
-    where: { itemCode: req.params.itemCode },
-  })
+  try {
+    const itemCode = req.params.itemCode
+    const [product, bomExists] = await Promise.all([
+      prisma.product.findUnique({
+        where: { itemCode },
+      }),
+      prisma.billOfMaterial.findFirst({
+        where: {
+          OR: [
+            { parentItemCode: itemCode },
+            { componentItemCode: itemCode }
+          ]
+        }
+      })
+    ])
 
-  if (!product) {
-    return res.status(404).json({ error: 'ไม่พบสินค้ารหัสนี้ในระบบ' })
+    if (!product || !bomExists) {
+      return res.status(404).json({ error: 'ไม่พบสินค้ารหัสนี้ในระบบ (หรือไม่ได้อยู่ในตารางสูตร BOM)' })
+    }
+
+    return res.json(productSnapshot(product))
+  } catch (error) {
+    console.error('Error fetching single product:', error)
+    return res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลสินค้ารายการนี้ได้ชั่วคราว' })
   }
-
-  return res.json(productSnapshot(product))
 })
 
 app.post('/products', authenticate, async (req, res) => {
@@ -505,47 +537,52 @@ app.delete('/products/:id', authenticate, async (req, res) => {
 })
 
 app.get('/transactions', authenticate, async (req, res) => {
-  const status = normalizeText(req.query.status)
-  const startDate = normalizeText(req.query.startDate)
-  const endDate = normalizeText(req.query.endDate)
-  
-  const whereClause: {
-    status?: string
-    createdAt?: { gte: Date; lte: Date }
-  } = {}
+  try {
+    const status = normalizeText(req.query.status)
+    const startDate = normalizeText(req.query.startDate)
+    const endDate = normalizeText(req.query.endDate)
+    
+    const whereClause: {
+      status?: string
+      createdAt?: { gte: Date; lte: Date }
+    } = {}
 
-  if (status) {
-    whereClause.status = status
-  }
-  
-  if (startDate && endDate) {
-    const start = new Date(startDate)
-    start.setHours(0, 0, 0, 0)
-    
-    const end = new Date(endDate)
-    end.setHours(23, 59, 59, 999)
-    
-    whereClause.createdAt = {
-      gte: start,
-      lte: end,
+    if (status) {
+      whereClause.status = status
     }
-  }
+    
+    if (startDate && endDate) {
+      const start = new Date(startDate)
+      start.setHours(0, 0, 0, 0)
+      
+      const end = new Date(endDate)
+      end.setHours(23, 59, 59, 999)
+      
+      whereClause.createdAt = {
+        gte: start,
+        lte: end,
+      }
+    }
 
-  const transactions = await prisma.transaction.findMany({
-    where: Object.keys(whereClause).length > 0 ? whereClause : undefined,
-    include: {
-      product: true,
-      createdBy: {
-        select: { id: true, username: true, fullName: true, role: true },
+    const transactions = await prisma.transaction.findMany({
+      where: Object.keys(whereClause).length > 0 ? whereClause : undefined,
+      include: {
+        product: true,
+        createdBy: {
+          select: { id: true, username: true, fullName: true, role: true },
+        },
+        approvedBy: {
+          select: { id: true, username: true, fullName: true, role: true },
+        },
       },
-      approvedBy: {
-        select: { id: true, username: true, fullName: true, role: true },
-      },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 200,
-  })
-  return res.json(transactions)
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    })
+    return res.json(transactions)
+  } catch (error) {
+    console.error('Error fetching transactions:', error)
+    return res.status(500).json({ error: 'ไม่สามารถดึงประวัติการทำรายการได้ชั่วคราว' })
+  }
 })
 
 app.post('/transactions', authenticate, async (req: AuthenticatedRequest, res: Response) => {
@@ -699,6 +736,22 @@ app.post(
     }
   },
 )
+
+app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
+  console.error('Unhandled API Error:', err)
+  if (res.headersSent) {
+    return next(err)
+  }
+  return res.status(500).json({ error: 'ไม่สามารถเชื่อมต่อฐานข้อมูลหรือเกิดข้อผิดพลาดที่เซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้ง' })
+})
+
+process.on('unhandledRejection', (reason: unknown) => {
+  console.error('Unhandled Promise Rejection (Preventing Server Crash):', reason)
+})
+
+process.on('uncaughtException', (error: Error) => {
+  console.error('Uncaught Exception (Preventing Server Crash):', error)
+})
 
 const port = process.env.PORT || 4000
 const server = app.listen(port, () => {

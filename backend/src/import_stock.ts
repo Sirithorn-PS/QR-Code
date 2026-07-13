@@ -41,8 +41,11 @@ async function main() {
     const description = row['Dscription'] ? String(row['Dscription']).trim() : '';
     const unit = row['Unit'] ? String(row['Unit']).trim() : '';
     
-    // ค้นหา key ที่มีคำว่า Total เพราะบางครั้ง Excel มีช่องว่างเช่น ' Total '
-    const totalKey = Object.keys(row).find(k => k.trim().toLowerCase() === 'total');
+    // ค้นหา key ที่มีคำว่า Total หรือ Quantity
+    const totalKey = Object.keys(row).find(k => {
+      const lower = k.trim().toLowerCase();
+      return lower === 'total' || lower === 'quantity';
+    });
     const quantity = totalKey ? Number(row[totalKey]) || 0 : 0;
 
     if (productMap.has(itemCode)) {

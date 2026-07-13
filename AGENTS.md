@@ -49,7 +49,7 @@ QR-Code/
 ├── backend/           ← Express + Prisma API
 │   ├── prisma/        ← Database schema
 │   └── src/           ← Source code
-├── QRcodeWebapp/      ← Next.js frontend
+├── frontend/          ← Next.js frontend
 │   ├── app/           ← Pages & layouts
 │   └── lib/           ← Shared utilities
 └── scripts/           ← Utility scripts & data files
@@ -84,9 +84,22 @@ QR-Code/
 - ใช้ RESTful pattern
 - ทุก endpoint ที่ต้องการ auth ให้ส่ง `Authorization: Bearer <token>` header
 - Response format: JSON เสมอ
-### 10. บันทึกการทำงาน
+### 11. 📝 บันทึกการทำงาน
 - ทุกครั้งที่แก้ไขโค้ด จะต้องบันทึกข้อมูลการทำงาน ในไฟล์ MEMORIES.md
 - ข้อมูลการทำงานจะต้องบันทึกเป็นภาษาไทย 
+
+### 12. ⚙️ Engineering Workflow & AI Skills
+ในการพัฒนาฟีเจอร์ใหม่หรือแก้ปัญหา ให้ AI Agents เรียกใช้ Skills ในโฟลเดอร์ `.skill/` เพื่อควบคุมคุณภาพโค้ดตามมาตรฐานวิศวกรรมซอฟต์แวร์:
+- **Planning & Architecture:** ก่อนเริ่มฟีเจอร์ใหญ่ ให้ใช้สกิล `to-spec` เพื่อเขียน PRD (Product Requirements Document) และใช้ `codebase-design` หรือ `improve-codebase-architecture` เพื่อออกแบบ/รีวิวสถาปัตยกรรมโค้ด
+- **Test-Driven Development (TDD):** ใช้สกิล `tdd` เพื่อบังคับกระบวนการ Red-Green-Refactor (เขียนเทสต์ให้เฟล -> เขียนโค้ดให้ผ่าน -> จัดระเบียบ) ทุกครั้งที่มีการสร้างฟีเจอร์หรือแก้ไข Logic สำคัญ
+- **Bug Diagnosing:** เมื่อเจอบั๊ก ห้ามเดาและแก้ทันที ให้ใช้สกิล `diagnosing-bugs` เพื่อจำลองปัญหา ตั้งสมมติฐาน และพิสูจน์ก่อน
+- **Code Review:** ก่อนส่งมอบงาน AI ต้องใช้สกิล `code-review` ตรวจทานโค้ดตัวเองทุกครั้ง เพื่อให้มั่นใจว่าตรงตามกฎ (เช่น ห้ามใช้ `any`) และมีความปลอดภัย
+- **Domain Modeling:** ใช้สกิล `grill-with-docs` เมื่อต้องการสัมภาษณ์เพื่อเจาะลึกโครงสร้างระบบ และอัปเดตเอกสารอัตโนมัติ
+
+### 13. 🎨 UI/UX Design & Impeccable Standards
+- **อ้างอิง Design System:** ทุกครั้งที่มีการสร้างหรือแก้ไขหน้าจอ (UI) AI ต้องอ้างอิงไฟล์ `DESIGN.md` และ `PRODUCT.md` เป็นหลัก
+- **ห้ามละเมิด Anti-patterns:** ห้ามใช้ดีไซน์ที่เป็น "AI Slop" (เช่น ฟอนต์ Inter, สี Gradients ม่วงฟ้า, การ์ดซ้อนการ์ด, เงาดำเข้ม) ตามกฎ Impeccable ที่ระบุใน `DESIGN.md` อย่างเด็ดขาด
+- **รันตรวจสอบ (Lint):** หากไม่แน่ใจในโครงสร้าง UI ให้แนะนำให้ User หรือรันคำสั่ง `npm run lint:ui` เพื่อตรวจสอบคุณภาพโค้ด
 
 ---
 

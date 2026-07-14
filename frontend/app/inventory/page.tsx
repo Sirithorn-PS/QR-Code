@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { fetchProducts, updateProductQuantity, createProduct, deleteProduct, fetchProductBom, Product, BillOfMaterial } from '@/lib/auth'
 import QRCode from 'react-qr-code'
-import { Search, Package, ArrowLeft, Layers, Download, Check, History, X, Trash2, FileText, LayoutGrid, Crown, Droplets, Box, FlaskConical, QrCode } from 'lucide-react'
+import { Search, Package, ArrowLeft, Layers, Download, Check, History, X, Trash2, FileText, LayoutGrid, Crown, Droplets, Box, FlaskConical, QrCode, Star, Copy } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function InventoryPage() {
@@ -20,6 +20,7 @@ export default function InventoryPage() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [viewMode, setViewMode] = useState<'grouped' | 'flat'>('grouped')
   const [selectedParentCode, setSelectedParentCode] = useState<string | null>(null)
+
   const [selectedBomProduct, setSelectedBomProduct] = useState<Product | null>(null)
   const [selectedQrProduct, setSelectedQrProduct] = useState<Product | null>(null)
   const [bomList, setBomList] = useState<BillOfMaterial[]>([])
@@ -358,14 +359,14 @@ export default function InventoryPage() {
                     setActiveTab(opt.id)
                     setSelectedParentCode(null)
                   }}
-                  className={`group flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 cursor-pointer shadow-[0_2px_10px_rgb(0,0,0,0.02)] active:scale-95 ${
+                  className={`group flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 cursor-pointer shadow-[0_2px_10px_rgb(0,0,0,0.02)] active:scale-95 font-display ${
                     isSelected
                       ? 'bg-gray-900 text-white border border-gray-900'
                       : 'bg-white text-gray-600 border border-gray-200/80 hover:bg-gray-50 hover:border-gray-300 hover:shadow-sm'
                   }`}
                 >
                   <IconComp className={`w-4 h-4 transition-transform duration-300 ${isSelected ? 'scale-110' : 'group-hover:scale-110'}`} />
-                  <span className="text-sm font-bold tracking-tight">{opt.label}</span>
+                  <span className="text-sm font-bold tracking-tight font-display">{opt.label}</span>
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-display font-bold ml-0.5 ${
                     isSelected
                       ? 'bg-white/20 text-white'
@@ -409,21 +410,21 @@ export default function InventoryPage() {
         {/* View Mode Content: Switch between Grouped and Flat views */}
         {viewMode === 'grouped' ? (
           <div className="space-y-6">
-          {/* Dedicated Category Summary Table & Dashboard when tab is Bulk, Packaging, or Raw Material */}
-          {activeTab !== 'ALL' && activeTab !== 'FG' && (() => {
+          {/* Dedicated Category Summary Table for Bulk, Raw Material & Packaging */}
+          {(activeTab === 'Bulk' || activeTab === 'Raw Material' || activeTab === 'Packaging') && (() => {
             const categoryItems = products.filter(p => p.itemType === activeTab && matchesUnit(p.unit))
             const CategoryIcon = activeTab === 'Bulk' ? Droplets : activeTab === 'Packaging' ? Box : FlaskConical
             const categoryTitle = activeTab === 'Bulk' ? 'Bulk (กึ่งสำเร็จรูป / สารผสม)' : activeTab === 'Packaging' ? 'Packaging (บรรจุภัณฑ์ / วัสดุห่อหุ้ม)' : 'Raw Material (วัตถุดิบตั้งต้น / เคมีภัณฑ์)'
 
             return (
-              <div className="mb-8 overflow-hidden rounded-3xl border border-gray-200/80 bg-white shadow-[0_4px_20px_rgb(0,0,0,0.03)] animate-in fade-in duration-300">
+              <div className="mb-8 overflow-hidden rounded-3xl border border-gray-200/80 bg-white shadow-[0_4px_20px_rgb(0,0,0,0.03)] animate-in fade-in duration-300 font-display">
                 <div className="bg-slate-50 p-5 text-gray-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-200/90">
                   <div className="flex items-center gap-3.5">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-gray-800 border border-gray-200 shadow-2xs">
                       <CategoryIcon className="w-5 h-5 text-gray-700" />
                     </div>
                     <div>
-                      <h3 className="font-display font-black text-lg tracking-wide flex items-center gap-2 text-gray-900">
+                      <h3 className="font-black text-lg tracking-wide flex items-center gap-2 text-gray-900">
                         <span>รายการ {categoryTitle} ทั้งหมด</span>
                       </h3>
                       <p className="text-xs text-gray-500 mt-0.5">
@@ -563,161 +564,157 @@ export default function InventoryPage() {
             )
           })()}
 
-          {/* 1. Group Cards for each Parent FG (Item 1): แยกข้อมูลสินค้าหลัก (FG) ด้านบน ออกจากรายการ BOM ด้านล่าง */}
-          {displayedProducts
-            .filter(p => p.itemType === 'FG' && (!selectedParentCode || p.itemCode === selectedParentCode))
-            .map(fg => {
-              if (activeTab !== 'ALL' && activeTab !== 'FG') return null
-              const fgMatchesUnit = matchesUnit(fg.unit)
-              const components = displayedProducts.filter(p => p.itemCode !== fg.itemCode && p.parentItemCodes?.includes(fg.itemCode) && matchesUnit(p.unit))
-              if (activeTab === 'FG' && !fgMatchesUnit) return null
-              if (activeTab === 'ALL' && !fgMatchesUnit && components.length === 0) return null
-              return (
-                <div key={fg.id} className="space-y-6 animate-in fade-in duration-300">
-                  {/* 👑 Header ด้านบน: กล่องแสดงข้อมูลสินค้าหลัก (FG) แยกออกจากรายการ BOM อย่างชัดเจนในดีไซน์มินิมอล (White Card with Soft Slate Border) */}
-                  <div className="overflow-hidden rounded-3xl border border-gray-200/90 bg-white p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] relative transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-gray-300">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-                      {/* Left: QR Code + Item Code + Name + Warehouse info */}
-                      <div className="flex items-start sm:items-center gap-5">
+          {/* 1. Group Cards for each Parent FG (Item 1): จัดเรียงแบบแถบแนวนอนยาวตามรูปที่แนบ โดยคงฟอนต์และโทนสีเดิมไว้ทั้งหมด */}
+          <div className="flex flex-col gap-5 animate-in fade-in duration-300">
+            {displayedProducts
+              .filter(p => p.itemType === 'FG' && (!selectedParentCode || p.itemCode === selectedParentCode))
+              .map(fg => {
+                if (activeTab !== 'ALL' && activeTab !== 'FG') return null
+                const fgMatchesUnit = matchesUnit(fg.unit)
+                const components = displayedProducts.filter(p => p.itemCode !== fg.itemCode && p.parentItemCodes?.includes(fg.itemCode) && matchesUnit(p.unit))
+                if (activeTab === 'FG' && !fgMatchesUnit) return null
+                if (activeTab === 'ALL' && !fgMatchesUnit && components.length === 0) return null
+                return (
+                  <div key={fg.id} className="w-full rounded-3xl border border-gray-200/90 bg-white p-5 sm:p-6 shadow-[0_2px_15px_rgb(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-gray-300 transition-all flex flex-col justify-between gap-4 relative group/card font-display">
+                    {/* ปุ่ม Star ไอคอนมุมขวาบนตามดีไซน์ */}
+                    <div className="absolute top-5 sm:top-6 right-5 sm:right-6 text-gray-300 hover:text-amber-500 transition-colors cursor-pointer z-10" title="รายการโปรด">
+                      <Star className="w-5 h-5" />
+                    </div>
+
+                    {/* Main Row Content: แถบแนวนอน 3 คอลัมน์ (QR Code | ข้อมูลสินค้า | Stock & Actions) */}
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                      {/* Col 1: QR Code Box พร้อมกรอบมุมสีแดง/ส้มตามดีไซน์ */}
+                      <div className="w-full md:w-auto shrink-0 flex justify-center md:justify-start">
                         <div 
                           onClick={() => setSelectedQrProduct(fg)}
-                          className="p-2.5 bg-gray-50 rounded-2xl shadow-xs border border-gray-200 shrink-0 cursor-pointer hover:scale-105 transition-transform group/qr relative"
-                          title="คลิกเพื่อดูและดาวน์โหลด QR Code สำหรับสินค้าหลักนี้"
+                          className="w-28 sm:w-36 h-28 sm:h-36 rounded-2xl bg-white border border-gray-100 shadow-2xs flex items-center justify-center p-3 relative cursor-pointer group/qr transition-all hover:border-red-200 hover:shadow-sm"
+                          title="คลิกเพื่อดูและขยาย QR Code"
                         >
-                          <QRCode value={fg.itemCode} size={80} />
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/qr:opacity-100 rounded-2xl flex items-center justify-center transition-opacity text-white text-[10px] font-bold text-center p-1 leading-tight backdrop-blur-2xs">
-                            📱<br/>ขยาย QR
+                          {/* กรอบมุม reticle ทั้ง 4 มุม */}
+                          <div className="absolute top-2.5 left-2.5 w-3 h-3 border-t-2 border-l-2 border-[#BE1111] rounded-tl-xs pointer-events-none" />
+                          <div className="absolute top-2.5 right-2.5 w-3 h-3 border-t-2 border-r-2 border-[#BE1111] rounded-tr-xs pointer-events-none" />
+                          <div className="absolute bottom-2.5 left-2.5 w-3 h-3 border-b-2 border-l-2 border-[#BE1111] rounded-bl-xs pointer-events-none" />
+                          <div className="absolute bottom-2.5 right-2.5 w-3 h-3 border-b-2 border-r-2 border-[#BE1111] rounded-br-xs pointer-events-none" />
+
+                          <QRCode value={fg.itemCode} size={110} />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/qr:opacity-100 rounded-2xl flex flex-col items-center justify-center transition-opacity text-white text-xs font-bold text-center p-2 leading-tight backdrop-blur-2xs">
+                            <span className="text-lg mb-1">📱</span>
+                            <span>คลิกขยาย QR</span>
                           </div>
                           <div id={`qr-group-${fg.itemCode}`} className="hidden">
                             <QRCode value={fg.itemCode} size={150} />
                           </div>
                         </div>
+                      </div>
 
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-800 font-display font-bold text-xs border border-slate-200">
-                              Item Code: {fg.itemCode}
-                            </span>
+                      {/* Col 2: รายละเอียดสินค้า (Badge -> ชื่อสินค้า -> รหัสสินค้า -> คลัง & ส่วนประกอบ) */}
+                      <div className="flex-1 min-w-0 space-y-2 pr-6 md:pr-4 w-full">
+                        <div>
+                          <span className="px-3 py-1 rounded-full bg-red-50 text-[#BE1111] font-bold text-xs border border-red-100/80 inline-block shadow-2xs">
+                            FG (สินค้าหลัก)
+                          </span>
+                        </div>
+
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight leading-snug truncate" title={fg.name}>
+                          {fg.name}
+                        </h3>
+
+                        <div className="flex items-center gap-1.5 text-xs text-gray-600 font-medium pt-0.5">
+                          <span>Item Code:</span>
+                          <strong className="text-gray-800 font-bold">{fg.itemCode}</strong>
+                          <button 
+                            type="button" 
+                            onClick={() => navigator.clipboard?.writeText(fg.itemCode)} 
+                            className="p-1 text-gray-400 hover:text-gray-700 transition-colors cursor-pointer rounded hover:bg-gray-100" 
+                            title="คัดลอก Item Code"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1 text-xs">
+                          <div className="flex items-center gap-1.5 bg-gray-50 text-gray-600 px-3 py-1.5 rounded-xl border border-gray-200/80 font-medium">
+                            <span>📍 คลังจัดเก็บ:</span>
+                            <strong className="text-gray-900 font-bold ml-0.5">{fg.warehouse || 'WFG-JX'} {fg.location && `(${fg.location})`}</strong>
                           </div>
-
-                          <h3 className="text-base sm:text-lg font-display font-bold text-gray-900 tracking-tight leading-snug pt-0.5">
-                            {fg.name}
-                          </h3>
-
-                          <div className="flex flex-wrap items-center gap-2.5 text-xs text-gray-600 font-medium pt-1">
-                            <span className="flex items-center gap-1.5 bg-gray-50 text-gray-700 px-3 py-1 rounded-lg border border-gray-200 font-display font-semibold">
-                              📍 คลังจัดเก็บ: <strong className="text-gray-900 font-display font-bold">{fg.warehouse || 'WFG-JX'}</strong> {fg.location && `(${fg.location})`}
-                            </span>
-                            <span className="flex items-center gap-1.5 bg-gray-50 text-gray-700 px-3 py-1 rounded-lg border border-gray-200 font-display font-semibold">
-                              📦 ส่วนประกอบในสูตร: <strong className="text-[#BE1111] font-display font-bold">{components.length} รายการ</strong>
-                            </span>
+                          <div className="flex items-center gap-1.5 bg-gray-50 text-gray-600 px-3 py-1.5 rounded-xl border border-gray-200/80 font-medium">
+                            <span>📦 ส่วนประกอบในสูตร:</span>
+                            <strong className="text-[#BE1111] font-bold ml-0.5">{components.length} รายการ</strong>
                           </div>
                         </div>
                       </div>
 
-                      {/* Right: Stock คงเหลือ + Action Buttons */}
-                      <div className="flex flex-row md:flex-col items-center md:items-end justify-between gap-4 border-t md:border-t-0 pt-4 md:pt-0 border-gray-100 shrink-0">
-                        <div className="text-left md:text-right bg-red-50/60 px-5 py-3.5 rounded-2xl border border-red-100 shadow-2xs">
-                          <div className="text-[11px] text-[#BE1111] font-bold uppercase tracking-wider font-display">
-                            <span>Stock คงเหลือปัจจุบัน</span>
-                          </div>
-                          <div className="text-3xl sm:text-4xl font-black font-display tracking-tight text-[#BE1111] mt-0.5 flex items-baseline gap-2">
-                            {fg.quantity.toLocaleString()} <span className="text-xs font-bold font-display text-gray-600">{fg.unit}</span>
+                      {/* Col 3: Stock Block + ปุ่ม Action ด้านขวา */}
+                      <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row items-stretch sm:items-center md:items-stretch lg:items-center gap-3 sm:gap-4 shrink-0 w-full md:w-auto mt-2 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-gray-100">
+                        <div className="bg-red-50/70 min-w-[140px] px-4 py-3 rounded-2xl border border-red-100/80 flex flex-col justify-center text-left sm:text-center shadow-2xs">
+                          <span className="text-[10px] sm:text-[11px] text-[#BE1111] font-bold uppercase tracking-wider">
+                            STOCK คงเหลือ
+                          </span>
+                          <div className="text-2xl sm:text-3xl font-black text-[#BE1111] flex items-baseline sm:justify-center gap-1.5 mt-0.5">
+                            {fg.quantity.toLocaleString()} <span className="text-xs font-bold text-gray-600">{fg.unit}</span>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col gap-2 shrink-0 min-w-[165px]">
                           <button
                             type="button"
                             onClick={() => downloadQRCodeAsPNG(fg.itemCode)}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs transition-all border border-gray-200 cursor-pointer active:scale-95 shadow-2xs"
+                            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs border border-gray-200 cursor-pointer shadow-2xs active:scale-95 transition-all"
                           >
-                            <Download className="w-4 h-4 text-gray-600" />
+                            <Download className="w-4 h-4 text-gray-600 shrink-0" />
                             <span>ดาวน์โหลด QR</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => openBomModal(fg)}
-                            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#BE1111] text-white font-extrabold text-xs hover:bg-[#A00F0F] transition-all shadow-xs active:scale-95 cursor-pointer"
+                            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#BE1111] hover:bg-[#A00F0F] text-white font-extrabold text-xs shadow-xs cursor-pointer active:scale-95 transition-all"
                           >
-                            <FileText className="w-4 h-4" />
-                            <span>ดูรายงานสูตร BOM</span>
+                            <FileText className="w-4 h-4 shrink-0" />
+                            <span>ดูรายละเอียด BOM</span>
                           </button>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* หากมีการค้นหา (search) และพบส่วนประกอบที่ตรงคำค้นหา ให้แสดงตารางส่วนประกอบนั้นภายใต้การ์ดสินค้าหลัก */}
-                  {search.trim() !== '' && components.length > 0 && (
-                    <div className="overflow-hidden rounded-3xl border border-red-200/80 bg-white shadow-sm mt-4 animate-in fade-in duration-300">
-                      <div className="bg-red-50/70 p-4 text-gray-800 flex items-center justify-between border-b border-red-100 font-display">
-                        <div className="flex items-center gap-2.5">
-                          <span className="p-1.5 rounded-lg bg-red-100 text-[#BE1111]">
-                            <Layers className="w-4 h-4" />
-                          </span>
-                          <span className="text-sm font-bold text-gray-900">
-                            📦 ส่วนประกอบในสูตรที่ตรงกับการค้นหา <span className="text-[#BE1111]">&quot;{search}&quot;</span> ({components.length} รายการ)
-                          </span>
+                    {/* หากมีการค้นหา (search) และพบส่วนประกอบที่ตรงคำค้นหา ให้แสดงตารางส่วนประกอบที่ตรงกันภายในการ์ดนี้ */}
+                    {search.trim() !== '' && components.length > 0 && (
+                      <div className="overflow-hidden rounded-2xl border border-red-200/80 bg-white shadow-xs mt-2 animate-in fade-in duration-300">
+                        <div className="bg-red-50/70 px-3.5 py-2 text-gray-800 flex items-center justify-between border-b border-red-100">
+                          <div className="flex items-center gap-2">
+                            <span className="p-1 rounded bg-red-100 text-[#BE1111]">
+                              <Layers className="w-3.5 h-3.5" />
+                            </span>
+                            <span className="text-xs font-bold text-gray-900">
+                              📦 ตรงคำค้นหา ({components.length})
+                            </span>
+                          </div>
+                        </div>
+                        <div className="overflow-x-auto max-h-44 overflow-y-auto">
+                          <table className="w-full text-left text-[11px]">
+                            <thead className="bg-gray-50 text-gray-500 font-bold border-b border-gray-200 uppercase">
+                              <tr>
+                                <th className="px-3 py-2">Item Code</th>
+                                <th className="px-3 py-2">ชื่อ</th>
+                                <th className="px-3 py-2 text-right">คงเหลือ</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                              {components.map(comp => (
+                                <tr key={comp.id} className="hover:bg-slate-50/80 transition-colors">
+                                  <td className="px-3 py-2 font-bold text-gray-900">{comp.itemCode}</td>
+                                  <td className="px-3 py-2 font-semibold text-gray-800 truncate max-w-[110px]" title={comp.name}>{comp.name}</td>
+                                  <td className="px-3 py-2 text-right font-bold text-gray-900">{comp.quantity.toLocaleString()} {comp.unit}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs sm:text-sm">
-                          <thead className="bg-gray-50/80 text-gray-500 font-bold border-b border-gray-200 uppercase text-[11px] font-display tracking-wider">
-                            <tr>
-                              <th className="px-5 py-3">Item Code ส่วนประกอบ</th>
-                              <th className="px-4 py-3">ประเภท</th>
-                              <th className="px-5 py-3">ชื่อสินค้า / ชิ้นส่วน</th>
-                              <th className="px-4 py-3">คลังจัดเก็บ / ตำแหน่ง</th>
-                              <th className="px-5 py-3 text-right">จำนวนคงเหลือ</th>
-                              <th className="px-4 py-3 text-center">จัดการ</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-100 font-display">
-                            {components.map(comp => (
-                              <tr key={comp.id} className="hover:bg-slate-50/80 transition-colors">
-                                <td className="px-5 py-3 font-bold text-gray-900">
-                                  <div className="flex items-center gap-2">
-                                    <span>{comp.itemCode}</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => setSelectedQrProduct(comp)}
-                                      className="p-1 rounded-md bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-[#BE1111] transition-colors cursor-pointer"
-                                      title="ดู QR Code"
-                                    >
-                                      <QrCode className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200/80">
-                                    {comp.itemType || 'General'}
-                                  </span>
-                                </td>
-                                <td className="px-5 py-3 font-semibold text-gray-800">{comp.name}</td>
-                                <td className="px-4 py-3 text-gray-600">{comp.warehouse} ({comp.location || '-'})</td>
-                                <td className="px-5 py-3 text-right font-bold text-gray-900">
-                                  {comp.quantity.toLocaleString()} <span className="font-normal text-gray-500 text-[11px]">{comp.unit}</span>
-                                </td>
-                                <td className="px-4 py-3 text-center">
-                                  <button
-                                    type="button"
-                                    onClick={() => setDeleteTarget(comp)}
-                                    className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+                    )}
+                  </div>
+                )
+              })}
+          </div>
 
           {/* 2. Unassigned Items Card (Items not linked as Parent or Component) */}
           {(() => {

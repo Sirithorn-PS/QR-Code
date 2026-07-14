@@ -362,15 +362,12 @@ app.get('/products', authenticate, async (req, res) => {
         const parent = b.parentItemCode.trim()
         const comp = b.componentItemCode.trim()
         if (matchedSet.has(parent)) {
+          // หากค้นหาเจอสินค้าหลัก (parent FG) ให้แสดงส่วนประกอบในสูตรทั้งหมดของสินค้าหลักนั้นด้วย
           requiredCodes.add(comp)
         }
         if (matchedSet.has(comp)) {
+          // หากค้นหาเจอชิ้นส่วน/ส่วนประกอบ (comp) ให้แสดงสินค้าหลัก (parent FG) ด้วย เพื่อให้เชื่อมโยงได้ว่าชิ้นส่วนนี้อยู่ในสูตรไหน
           requiredCodes.add(parent)
-          boms.forEach(b2 => {
-            if (b2.parentItemCode.trim() === parent) {
-              requiredCodes.add(b2.componentItemCode.trim())
-            }
-          })
         }
       })
 
@@ -581,14 +578,22 @@ app.get('/transactions', authenticate, async (req, res) => {
     const status = normalizeText(req.query.status)
     const startDate = normalizeText(req.query.startDate)
     const endDate = normalizeText(req.query.endDate)
+    const search = normalizeText(req.query.search)
     
     const whereClause: {
       status?: string
       createdAt?: { gte: Date; lte: Date }
+      product?: { itemCode: string }
     } = {}
 
     if (status) {
       whereClause.status = status
+    }
+    
+    if (search) {
+      whereClause.product = {
+        itemCode: search
+      }
     }
     
     if (startDate && endDate) {

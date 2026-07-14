@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { fetchProducts, updateProductQuantity, createProduct, deleteProduct, fetchProductBom, Product, BillOfMaterial } from '@/lib/auth'
 import QRCode from 'react-qr-code'
-import { Search, Package, ArrowLeft, Layers, Download, Check, History, X, Trash2, FileText, FolderTree, LayoutGrid, Crown, Droplets, Box, FlaskConical, QrCode } from 'lucide-react'
+import { Search, Package, ArrowLeft, Layers, Download, Check, History, X, Trash2, FileText, LayoutGrid, Crown, Droplets, Box, FlaskConical, QrCode } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function InventoryPage() {
@@ -228,6 +228,22 @@ export default function InventoryPage() {
 
   const displayedProducts = products.filter(product => {
     if (!matchesUnit(product.unit)) return false
+    if (search.trim() !== '') {
+      const s = search.trim().toLowerCase()
+      const code = (product.itemCode || '').toLowerCase()
+      const name = (product.name || '').toLowerCase()
+      const loc = (product.location || '').toLowerCase()
+      const wh = (product.warehouse || '').toLowerCase()
+      const selfMatches = code.includes(s) || name.includes(s) || loc.includes(s) || wh.includes(s)
+      
+      let familyMatches = false
+      if (product.itemType === 'FG') {
+        familyMatches = products.some(p => p.parentItemCodes?.includes(product.itemCode) && ((p.itemCode || '').toLowerCase().includes(s) || (p.name || '').toLowerCase().includes(s) || (p.location || '').toLowerCase().includes(s)))
+      } else if (product.parentItemCodes && product.parentItemCodes.length > 0) {
+        familyMatches = products.some(p => product.parentItemCodes?.includes(p.itemCode) && ((p.itemCode || '').toLowerCase().includes(s) || (p.name || '').toLowerCase().includes(s)))
+      }
+      if (!selfMatches && !familyMatches) return false
+    }
     if (!selectedParentCode) return true
     if (product.itemCode === selectedParentCode && product.itemType === 'FG') return true
     return Boolean(product.parentItemCodes?.includes(selectedParentCode))
@@ -273,10 +289,31 @@ export default function InventoryPage() {
                 <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  className="w-full sm:w-64 rounded-xl border border-gray-200 pl-10 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white shadow-sm transition-all"
+                  onChange={(event) => {
+                    const val = event.target.value
+                    setSearch(val)
+                    if (val.trim() === '') {
+                      setActiveTab('ALL')
+                      loadProducts('')
+                    }
+                  }}
+                  className="w-full sm:w-64 rounded-xl border border-gray-200 pl-10 pr-9 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white shadow-sm transition-all"
                   placeholder="ค้นหา item code / ชื่อ / location"
                 />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearch('')
+                      setActiveTab('ALL')
+                      loadProducts('')
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                    title="ล้างคำค้นหาและกลับสู่หน้า ทั้งหมด"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
               <button
                 type="submit"
@@ -329,7 +366,7 @@ export default function InventoryPage() {
                 >
                   <IconComp className={`w-4 h-4 transition-transform duration-300 ${isSelected ? 'scale-110' : 'group-hover:scale-110'}`} />
                   <span className="text-sm font-bold tracking-tight">{opt.label}</span>
-                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold ml-0.5 ${
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-display font-bold ml-0.5 ${
                     isSelected
                       ? 'bg-white/20 text-white'
                       : 'bg-gray-100 text-gray-500'
@@ -350,11 +387,11 @@ export default function InventoryPage() {
                 <Search className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-[#BE1111] flex items-center gap-1.5 font-mono">
+                <div className="text-xs font-bold uppercase tracking-wider text-[#BE1111] flex items-center gap-1.5 font-display">
                   <span>✨ กรองข้อมูลตามรหัสหลัก (Item 1 Quick Filter)</span>
                 </div>
                 <div className="text-sm font-semibold text-gray-800 mt-0.5">
-                  แสดงรายการและส่วนประกอบที่เชื่อมโยงกับรหัสหลัก: <span className="font-bold text-[#BE1111] font-mono underline decoration-[#BE1111]/40 decoration-2 underline-offset-4">{selectedParentCode}</span> ({displayedProducts.length} รายการ)
+                  แสดงรายการและส่วนประกอบที่เชื่อมโยงกับรหัสหลัก: <span className="font-bold text-[#BE1111] font-display underline decoration-[#BE1111]/40 decoration-2 underline-offset-4">{selectedParentCode}</span> ({displayedProducts.length} รายการ)
                 </div>
               </div>
             </div>
@@ -426,7 +463,7 @@ export default function InventoryPage() {
 
                           return (
                             <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                              <td className="px-4 py-3.5 font-mono font-bold text-gray-900">
+                              <td className="px-4 py-3.5 font-display font-bold text-gray-900">
                                 <div className="flex items-center gap-2">
                                   <button
                                     type="button"
@@ -526,21 +563,14 @@ export default function InventoryPage() {
             )
           })()}
 
-          {activeTab !== 'ALL' && activeTab !== 'FG' && (
-            <div className="flex items-center gap-2.5 pt-2 pb-1 text-slate-800 font-extrabold text-sm sm:text-base border-b border-gray-200/80">
-              <FolderTree className="w-5 h-5 text-[#BE1111]" />
-              <span>แยกรายการตามสูตรสินค้าหลัก Item 1 ที่มีการใช้ชิ้นส่วน {activeTab}</span>
-            </div>
-          )}
-
           {/* 1. Group Cards for each Parent FG (Item 1): แยกข้อมูลสินค้าหลัก (FG) ด้านบน ออกจากรายการ BOM ด้านล่าง */}
-          {products
+          {displayedProducts
             .filter(p => p.itemType === 'FG' && (!selectedParentCode || p.itemCode === selectedParentCode))
             .map(fg => {
+              if (activeTab !== 'ALL' && activeTab !== 'FG') return null
               const fgMatchesUnit = matchesUnit(fg.unit)
-              const components = products.filter(p => p.itemCode !== fg.itemCode && p.parentItemCodes?.includes(fg.itemCode) && (activeTab === 'ALL' || activeTab === 'FG' ? true : p.itemType === activeTab) && matchesUnit(p.unit))
+              const components = displayedProducts.filter(p => p.itemCode !== fg.itemCode && p.parentItemCodes?.includes(fg.itemCode) && matchesUnit(p.unit))
               if (activeTab === 'FG' && !fgMatchesUnit) return null
-              if (activeTab !== 'ALL' && activeTab !== 'FG' && components.length === 0) return null
               if (activeTab === 'ALL' && !fgMatchesUnit && components.length === 0) return null
               return (
                 <div key={fg.id} className="space-y-6 animate-in fade-in duration-300">
@@ -565,7 +595,7 @@ export default function InventoryPage() {
 
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-800 font-mono font-bold text-xs border border-slate-200">
+                            <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-800 font-display font-bold text-xs border border-slate-200">
                               Item Code: {fg.itemCode}
                             </span>
                           </div>
@@ -575,11 +605,11 @@ export default function InventoryPage() {
                           </h3>
 
                           <div className="flex flex-wrap items-center gap-2.5 text-xs text-gray-600 font-medium pt-1">
-                            <span className="flex items-center gap-1.5 bg-gray-50 text-gray-700 px-3 py-1 rounded-lg border border-gray-200 font-mono">
-                              📍 คลังจัดเก็บ: <strong className="text-gray-900 font-sans font-bold">{fg.warehouse || 'WFG-JX'}</strong> {fg.location && `(${fg.location})`}
+                            <span className="flex items-center gap-1.5 bg-gray-50 text-gray-700 px-3 py-1 rounded-lg border border-gray-200 font-display font-semibold">
+                              📍 คลังจัดเก็บ: <strong className="text-gray-900 font-display font-bold">{fg.warehouse || 'WFG-JX'}</strong> {fg.location && `(${fg.location})`}
                             </span>
-                            <span className="flex items-center gap-1.5 bg-gray-50 text-gray-700 px-3 py-1 rounded-lg border border-gray-200 font-mono">
-                              📦 ส่วนประกอบในสูตร: <strong className="text-[#BE1111] font-sans font-bold">{components.length} รายการ</strong>
+                            <span className="flex items-center gap-1.5 bg-gray-50 text-gray-700 px-3 py-1 rounded-lg border border-gray-200 font-display font-semibold">
+                              📦 ส่วนประกอบในสูตร: <strong className="text-[#BE1111] font-display font-bold">{components.length} รายการ</strong>
                             </span>
                           </div>
                         </div>
@@ -588,11 +618,11 @@ export default function InventoryPage() {
                       {/* Right: Stock คงเหลือ + Action Buttons */}
                       <div className="flex flex-row md:flex-col items-center md:items-end justify-between gap-4 border-t md:border-t-0 pt-4 md:pt-0 border-gray-100 shrink-0">
                         <div className="text-left md:text-right bg-red-50/60 px-5 py-3.5 rounded-2xl border border-red-100 shadow-2xs">
-                          <div className="text-[11px] text-[#BE1111] font-bold uppercase tracking-wider font-mono">
+                          <div className="text-[11px] text-[#BE1111] font-bold uppercase tracking-wider font-display">
                             <span>Stock คงเหลือปัจจุบัน</span>
                           </div>
-                          <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-[#BE1111] mt-0.5 flex items-baseline gap-2">
-                            {fg.quantity.toLocaleString()} <span className="text-xs font-bold font-sans text-gray-600">{fg.unit}</span>
+                          <div className="text-3xl sm:text-4xl font-black font-display tracking-tight text-[#BE1111] mt-0.5 flex items-baseline gap-2">
+                            {fg.quantity.toLocaleString()} <span className="text-xs font-bold font-display text-gray-600">{fg.unit}</span>
                           </div>
                         </div>
 
@@ -617,6 +647,74 @@ export default function InventoryPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* หากมีการค้นหา (search) และพบส่วนประกอบที่ตรงคำค้นหา ให้แสดงตารางส่วนประกอบนั้นภายใต้การ์ดสินค้าหลัก */}
+                  {search.trim() !== '' && components.length > 0 && (
+                    <div className="overflow-hidden rounded-3xl border border-red-200/80 bg-white shadow-sm mt-4 animate-in fade-in duration-300">
+                      <div className="bg-red-50/70 p-4 text-gray-800 flex items-center justify-between border-b border-red-100 font-display">
+                        <div className="flex items-center gap-2.5">
+                          <span className="p-1.5 rounded-lg bg-red-100 text-[#BE1111]">
+                            <Layers className="w-4 h-4" />
+                          </span>
+                          <span className="text-sm font-bold text-gray-900">
+                            📦 ส่วนประกอบในสูตรที่ตรงกับการค้นหา <span className="text-[#BE1111]">&quot;{search}&quot;</span> ({components.length} รายการ)
+                          </span>
+                        </div>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs sm:text-sm">
+                          <thead className="bg-gray-50/80 text-gray-500 font-bold border-b border-gray-200 uppercase text-[11px] font-display tracking-wider">
+                            <tr>
+                              <th className="px-5 py-3">Item Code ส่วนประกอบ</th>
+                              <th className="px-4 py-3">ประเภท</th>
+                              <th className="px-5 py-3">ชื่อสินค้า / ชิ้นส่วน</th>
+                              <th className="px-4 py-3">คลังจัดเก็บ / ตำแหน่ง</th>
+                              <th className="px-5 py-3 text-right">จำนวนคงเหลือ</th>
+                              <th className="px-4 py-3 text-center">จัดการ</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100 font-display">
+                            {components.map(comp => (
+                              <tr key={comp.id} className="hover:bg-slate-50/80 transition-colors">
+                                <td className="px-5 py-3 font-bold text-gray-900">
+                                  <div className="flex items-center gap-2">
+                                    <span>{comp.itemCode}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedQrProduct(comp)}
+                                      className="p-1 rounded-md bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-[#BE1111] transition-colors cursor-pointer"
+                                      title="ดู QR Code"
+                                    >
+                                      <QrCode className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200/80">
+                                    {comp.itemType || 'General'}
+                                  </span>
+                                </td>
+                                <td className="px-5 py-3 font-semibold text-gray-800">{comp.name}</td>
+                                <td className="px-4 py-3 text-gray-600">{comp.warehouse} ({comp.location || '-'})</td>
+                                <td className="px-5 py-3 text-right font-bold text-gray-900">
+                                  {comp.quantity.toLocaleString()} <span className="font-normal text-gray-500 text-[11px]">{comp.unit}</span>
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteTarget(comp)}
+                                    className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             })}
@@ -654,7 +752,7 @@ export default function InventoryPage() {
                       <p className="text-xs text-gray-500">สินค้าและบรรจุภัณฑ์ที่ไม่มีสถานะเป็นสูตรหลัก และยังไม่ได้ผูกกับสูตร BOM ใดๆ</p>
                     </div>
                   </div>
-                  <span className="px-3.5 py-1.5 rounded-full bg-white text-gray-800 text-xs font-bold border border-gray-200 shadow-2xs font-mono">
+                  <span className="px-3.5 py-1.5 rounded-full bg-white text-gray-800 text-xs font-bold border border-gray-200 shadow-2xs font-display">
                     {unassignedProducts.length} รายการ
                   </span>
                 </div>
@@ -674,7 +772,7 @@ export default function InventoryPage() {
                     <tbody className="divide-y divide-gray-100">
                       {unassignedProducts.map(item => (
                         <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-4 py-3 font-mono font-bold text-gray-900">
+                          <td className="px-4 py-3 font-display font-bold text-gray-900">
                             <div className="flex items-center gap-2">
                               <button
                                 type="button"
@@ -691,7 +789,7 @@ export default function InventoryPage() {
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200/80 font-mono">
+                            <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200/80 font-display">
                               {item.itemType || 'General'}
                             </span>
                           </td>
@@ -734,7 +832,7 @@ export default function InventoryPage() {
                   </p>
                 </div>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-gray-800 border border-gray-200 shadow-2xs font-mono">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-gray-800 border border-gray-200 shadow-2xs font-display">
                 <span>จำนวนทั้งสิ้น: <strong className="text-[#BE1111]">{(() => {
                   const filtered = displayedProducts.filter(p => activeTab === 'ALL' || p.itemType === activeTab)
                   return filtered.length
@@ -772,7 +870,7 @@ export default function InventoryPage() {
 
                       return (
                         <tr key={item.id} className="hover:bg-gray-50/60 transition-colors">
-                          <td className="px-4 py-3.5 font-mono font-bold text-gray-900">
+                          <td className="px-4 py-3.5 font-display font-bold text-gray-900">
                             <div className="flex items-center gap-2">
                               <button
                                 type="button"
@@ -798,8 +896,8 @@ export default function InventoryPage() {
                             </div>
                           </td>
                           <td className="px-4 py-3.5">
-                            <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold border font-mono ${
-                              item.itemType === 'FG' 
+                             <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold border font-display ${
+                               item.itemType === 'FG' 
                                 ? 'bg-red-50 text-[#BE1111] border-red-200 font-black' 
                                 : 'bg-slate-100 text-slate-700 border-slate-200/80'
                             }`}>
@@ -947,7 +1045,7 @@ export default function InventoryPage() {
               </div>
             </div>
             <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-              คุณต้องการลบสินค้า <span className="font-semibold text-gray-900">{deleteTarget.name}</span> (รหัส: <span className="font-mono font-bold text-gray-800">{deleteTarget.itemCode}</span>) ออกจากระบบใช่หรือไม่?
+              คุณต้องการลบสินค้า <span className="font-semibold text-gray-900">{deleteTarget.name}</span> (รหัส: <span className="font-display font-bold text-gray-800">{deleteTarget.itemCode}</span>) ออกจากระบบใช่หรือไม่?
             </p>
             <div className="flex gap-3">
               <button
@@ -1152,7 +1250,7 @@ export default function InventoryPage() {
                   👑 SAP Bill of Materials (BOM) Recipe
                 </div>
                 <h3 className="text-base sm:text-lg font-display font-bold text-gray-900 tracking-tight">{selectedBomProduct.name}</h3>
-                <p className="text-xs font-mono text-gray-500 mt-0.5">รหัสสินค้าหลัก: {selectedBomProduct.itemCode}</p>
+                <p className="text-xs font-display font-semibold text-gray-500 mt-0.5">รหัสสินค้าหลัก: {selectedBomProduct.itemCode}</p>
               </div>
               <button
                 type="button"
@@ -1189,7 +1287,7 @@ export default function InventoryPage() {
                     <tbody className="divide-y divide-gray-100">
                       {bomList.filter(comp => comp.componentItemCode !== comp.parentItemCode).map((comp) => (
                         <tr key={comp.id} className="hover:bg-gray-50/60 transition-colors">
-                          <td className="px-4 py-2.5 text-center font-mono font-bold text-gray-500">
+                          <td className="px-4 py-2.5 text-center font-display font-bold text-gray-500">
                             <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${
                               comp.depth === 1 ? 'bg-red-100 text-red-700' :
                               comp.depth === 2 ? 'bg-amber-100 text-amber-800' :
@@ -1198,7 +1296,7 @@ export default function InventoryPage() {
                               {comp.depth}
                             </span>
                           </td>
-                          <td className="px-4 py-2.5 font-mono font-semibold text-gray-900">
+                          <td className="px-4 py-2.5 font-display font-bold text-gray-900">
                             <button
                               type="button"
                               onClick={() => setSelectedQrProduct({
@@ -1222,7 +1320,7 @@ export default function InventoryPage() {
                           <td className="px-4 py-2.5 text-gray-800 font-medium">{comp.description}</td>
                           <td className="px-4 py-2.5 text-right font-bold text-[#BE1111]">{comp.quantity}</td>
                           <td className="px-4 py-2.5 text-gray-600">{comp.uom}</td>
-                          <td className="px-4 py-2.5 text-gray-600 font-mono">{comp.warehouse}</td>
+                          <td className="px-4 py-2.5 text-gray-600 font-display font-semibold">{comp.warehouse}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1289,7 +1387,7 @@ export default function InventoryPage() {
                 }`}>
                   {selectedQrProduct.itemType || 'General'}
                 </span>
-                <span className="font-mono text-base font-black text-gray-900 tracking-wide">
+                <span className="font-display text-base font-bold text-gray-900 tracking-tight">
                   {selectedQrProduct.itemCode}
                 </span>
               </div>
@@ -1316,17 +1414,10 @@ export default function InventoryPage() {
               <button
                 type="button"
                 onClick={() => downloadQRCodeAsPNG(selectedQrProduct.itemCode)}
-                className="flex-1 rounded-xl bg-[#BE1111] hover:bg-[#A00F0F] py-3 text-sm font-bold text-white shadow-md shadow-[#BE1111]/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                className="w-full rounded-xl bg-[#BE1111] hover:bg-[#A00F0F] py-3 text-sm font-bold text-white shadow-md shadow-[#BE1111]/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
               >
                 <Download className="w-4 h-4" />
                 <span>ดาวน์โหลดรูปภาพ PNG</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedQrProduct(null)}
-                className="rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 px-5 py-3 text-sm font-bold text-gray-700 transition-all cursor-pointer"
-              >
-                ปิด
               </button>
             </div>
             </motion.div>

@@ -212,11 +212,12 @@ export function deleteProduct(id: number) {
   })
 }
 
-export function fetchTransactions(status = '', startDate = '', endDate = '') {
+export function fetchTransactions(status = '', startDate = '', endDate = '', search = '') {
   const params = new URLSearchParams()
   if (status) params.append('status', status)
   if (startDate) params.append('startDate', startDate)
   if (endDate) params.append('endDate', endDate)
+  if (search) params.append('search', search)
   
   const queryString = params.toString() ? `?${params.toString()}` : ''
   return apiRequest<StockTransaction[]>(`/transactions${queryString}`)

@@ -4,10 +4,10 @@ import { FormEvent, useState, useCallback, useEffect } from 'react'
 import { createTransaction, fetchProduct, fetchProductBom, Product, BillOfMaterial } from '@/lib/auth'
 import { motion, AnimatePresence } from 'framer-motion'
 import QRScanner from '@/components/QRScanner'
-import { FileText, ChevronDown, ChevronUp, Droplets, Box, FlaskConical, ExternalLink } from 'lucide-react'
+import { FileText, ChevronDown, ChevronUp, Droplets, Box, FlaskConical, ExternalLink, ArrowLeft } from 'lucide-react'
 
 export default function ScanPage() {
-  const [itemCode, setItemCode] = useState('')
+  const [, setItemCode] = useState('')
   const [type, setType] = useState<'receive' | 'issue'>('receive')
   const [quantity, setQuantity] = useState<number | string>(1)
   const [note, setNote] = useState('')
@@ -21,6 +21,7 @@ export default function ScanPage() {
   const [bomList, setBomList] = useState<BillOfMaterial[]>([])
   const [showBom, setShowBom] = useState(false)
   const [expandedBomSubgroups, setExpandedBomSubgroups] = useState<Record<string, boolean>>({})
+  const [productHistory, setProductHistory] = useState<Product[]>([])
 
   useEffect(() => {
     const userStr = localStorage.getItem('user')
@@ -65,13 +66,18 @@ export default function ScanPage() {
     return text.trim()
   }, [])
 
-  const loadProductByCode = useCallback(async (code: string, successMsg = 'สแกนสำเร็จ!') => {
+  const loadProductByCode = useCallback(async (code: string, successMsg = 'สแกนสำเร็จ!', isDrillDown = false) => {
     const cleanedCode = extractItemCode(code)
     if (!cleanedCode) {
       setError('กรุณากรอก Item Code หรือข้อมูลจาก QR')
       return
     }
+    if (!isDrillDown) {
+      setProductHistory([])
+    }
     setItemCode(cleanedCode)
+    setQuantity(1)
+    setNote('')
     setError('')
     setMessage('')
     setProduct(null)
@@ -122,7 +128,17 @@ export default function ScanPage() {
   // Removed lookupProduct as it was unused
 
   const handleSelectBomComponent = (componentItemCode: string) => {
-    loadProductByCode(componentItemCode, `สลับไปยังชิ้นส่วน [${componentItemCode}] สำเร็จ`)
+    if (product) {
+      setProductHistory(prev => [...prev, product])
+    }
+    loadProductByCode(componentItemCode, `สลับไปยังชิ้นส่วน [${componentItemCode}] สำเร็จ`, true)
+  }
+
+  const handleBack = () => {
+    if (productHistory.length === 0) return
+    const prevProduct = productHistory[productHistory.length - 1]
+    setProductHistory(prev => prev.slice(0, -1))
+    loadProductByCode(prevProduct.itemCode, `ย้อนกลับมายัง [${prevProduct.itemCode}] สำเร็จ`, true)
   }
 
   const closeModalWithCooldown = () => {
@@ -130,6 +146,7 @@ export default function ScanPage() {
     setItemCode('')
     setBomList([])
     setShowBom(false)
+    setProductHistory([])
     setScanCooldown(true)
     setTimeout(() => {
       setScanCooldown(false)
@@ -275,6 +292,26 @@ export default function ScanPage() {
 
               {/* Scrollable Inner Content */}
               <div className="overflow-y-auto overflow-x-hidden flex-1 pr-1 -mr-1">
+                {/* ปุ่มย้อนกลับ (Back Button Banner) สำหรับนำทางกลับหน้าสินค้าหลัก/หน้าก่อนหน้า เมื่อกดสลับมาจากรายการ BOM */}
+                {productHistory.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    className="w-full mb-4 flex items-center justify-between bg-gray-100/90 hover:bg-red-50/70 p-3 rounded-2xl border border-gray-200/80 hover:border-red-200 transition-all shadow-2xs cursor-pointer group text-left"
+                    title={`ย้อนกลับไปหน้าสินค้า ${productHistory[productHistory.length - 1].name}`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white shadow-2xs border border-gray-200 group-hover:border-red-200 text-[#BE1111] transition-colors">
+                        <ArrowLeft className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] text-gray-500 font-semibold block uppercase tracking-wider leading-tight">ย้อนกลับไปสินค้าก่อนหน้า</span>
+                        <span className="truncate block text-gray-900 font-bold mt-0.5 group-hover:text-[#BE1111] transition-colors">{productHistory[productHistory.length - 1].name}</span>
+                      </div>
+                    </div>
+                  </button>
+                )}
+
                 <div className="flex items-start justify-between mb-5">
                   <div>
                     <div className="flex items-center gap-2">
@@ -298,14 +335,17 @@ export default function ScanPage() {
                     <h3 className="text-xl font-bold text-gray-900 mt-2">{product.name}</h3>
                     <p className="text-xs font-mono text-gray-400 mt-0.5">{product.itemCode}</p>
                   </div>
-                  <button
-                    onClick={closeModalWithCooldown}
-                    className="rounded-full bg-gray-100 p-2.5 text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-colors"
-                  >
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    <button
+                      onClick={closeModalWithCooldown}
+                      title="ปิดหน้าต่าง"
+                      className="rounded-full bg-gray-100 p-2.5 text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-colors cursor-pointer"
+                    >
+                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
               {/* Product Metadata Info Board */}

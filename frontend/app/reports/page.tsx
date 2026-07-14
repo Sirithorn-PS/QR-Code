@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { fetchTransactions, StockTransaction } from '@/lib/auth'
-import { ArrowLeft, FileText, Wrench, Filter, CheckCircle2, XCircle, Clock, Calendar } from 'lucide-react'
+import { ArrowLeft, FileText, Wrench, Filter, CheckCircle2, XCircle, Clock, Calendar, Search } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function ReportsPage() {
@@ -15,16 +15,19 @@ export default function ReportsPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [viewCategory, setViewCategory] = useState<'all' | 'adjust' | 'normal'>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [submittedSearch, setSubmittedSearch] = useState('')
 
   const loadTransactions = async (
     nextStatus = status,
     nextStartDate = startDate,
-    nextEndDate = endDate
+    nextEndDate = endDate,
+    nextSearchQuery = submittedSearch
   ) => {
     setError('')
     setLoading(true)
     try {
-      setTransactions(await fetchTransactions(nextStatus, nextStartDate, nextEndDate))
+      setTransactions(await fetchTransactions(nextStatus, nextStartDate, nextEndDate, nextSearchQuery))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'โหลดรายงานไม่สำเร็จ')
     } finally {
@@ -70,7 +73,7 @@ export default function ReportsPage() {
 
     setStartDate(nextStart)
     setEndDate(nextEnd)
-    loadTransactions(status, nextStart, nextEnd)
+    loadTransactions(status, nextStart, nextEnd, submittedSearch)
   }
 
   useEffect(() => {
@@ -103,6 +106,11 @@ export default function ReportsPage() {
   }, [])
 
   const filteredTransactions = transactions.filter((t) => {
+    if (submittedSearch.trim() !== '') {
+      const q = submittedSearch.trim().toLowerCase()
+      const code = (t.product?.itemCode || t.itemSnapshot?.itemCode || '').toLowerCase()
+      if (code !== q) return false
+    }
     const isAdjustment = t.note && t.note.includes('ปรับปรุงสต็อก')
     if (viewCategory === 'adjust') return isAdjustment
     if (viewCategory === 'normal') return !isAdjustment
@@ -123,7 +131,7 @@ export default function ReportsPage() {
     <main className="min-h-screen bg-slate-50 px-4 sm:px-6 py-8">
       <div className="mx-auto max-w-7xl">
         {/* Top Header */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-[#BE1111] transition-colors mb-2">
               <ArrowLeft className="w-4 h-4" />
@@ -132,7 +140,7 @@ export default function ReportsPage() {
             <h1 className="text-2xl md:text-3xl font-display font-bold text-gray-900 tracking-tight">รายงานธุรกรรม</h1>
           </div>
           
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap justify-end">
             {dateFilterType === 'custom' && (
               <motion.div 
                 initial={{ opacity: 0, x: 10 }}
@@ -144,7 +152,7 @@ export default function ReportsPage() {
                   value={startDate}
                   onChange={(e) => {
                     setStartDate(e.target.value)
-                    loadTransactions(status, e.target.value, endDate)
+                    loadTransactions(status, e.target.value, endDate, submittedSearch)
                   }}
                   className="rounded-2xl border border-gray-200/80 px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white/50 backdrop-blur-sm shadow-sm transition-all"
                 />
@@ -154,7 +162,7 @@ export default function ReportsPage() {
                   value={endDate}
                   onChange={(e) => {
                     setEndDate(e.target.value)
-                    loadTransactions(status, startDate, e.target.value)
+                    loadTransactions(status, startDate, e.target.value, submittedSearch)
                   }}
                   className="rounded-2xl border border-gray-200/80 px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white/50 backdrop-blur-sm shadow-sm transition-all"
                 />
@@ -180,7 +188,7 @@ export default function ReportsPage() {
               value={status}
               onChange={(event) => {
                 setStatus(event.target.value)
-                loadTransactions(event.target.value, startDate, endDate)
+                loadTransactions(event.target.value, startDate, endDate, submittedSearch)
               }}
               className="w-full sm:w-40 rounded-2xl border border-gray-200/80 px-4 py-2.5 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white/80 backdrop-blur-sm shadow-sm hover:border-gray-300 transition-all cursor-pointer"
             >
@@ -189,6 +197,48 @@ export default function ReportsPage() {
               <option value="confirmed">ยืนยันแล้ว</option>
               <option value="rejected">ปฏิเสธแล้ว</option>
             </select>
+
+            <form
+              className="flex gap-2 items-center w-full sm:w-auto"
+              onSubmit={(e) => {
+                e.preventDefault()
+                setSubmittedSearch(searchQuery)
+                loadTransactions(status, startDate, endDate, searchQuery)
+              }}
+            >
+              <div className="relative flex-1 sm:w-64 md:w-72">
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                  <Search className="w-4 h-4" />
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="ค้นหา component ItemCode"
+                  className="w-full sm:w-64 md:w-72 rounded-xl border border-gray-200 pl-10 pr-9 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white shadow-sm transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('')
+                      setSubmittedSearch('')
+                      loadTransactions(status, startDate, endDate, '')
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer p-0.5"
+                    title="ล้างค่าค้นหา"
+                  >
+                    <XCircle className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <button
+                type="submit"
+                className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 transition-colors shadow-sm shrink-0 cursor-pointer"
+              >
+                ค้นหา
+              </button>
+            </form>
           </div>
         </div>
 
@@ -263,8 +313,12 @@ export default function ReportsPage() {
                           <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-2">
                             <FileText className="w-6 h-6 text-gray-400" />
                           </div>
-                          <span className="font-semibold text-gray-700 text-base">ไม่พบรายการธุรกรรม</span>
-                          <span className="text-gray-400 text-sm">ลองเปลี่ยนหมวดหมู่หรือตัวกรองวันที่</span>
+                          <span className="font-semibold text-gray-700 text-base">
+                            {submittedSearch ? `ไม่พบรายการธุรกรรมของชิ้นส่วนรหัส "${submittedSearch}"` : 'ไม่พบรายการธุรกรรม'}
+                          </span>
+                          <span className="text-gray-400 text-sm">
+                            {submittedSearch ? 'กรุณาตรวจสอบความถูกต้องของรหัส componentItemCode อีกครั้งเพื่อป้องกันข้อผิดพลาด' : 'ลองเปลี่ยนหมวดหมู่หรือตัวกรองวันที่'}
+                          </span>
                         </div>
                       </td>
                     </motion.tr>

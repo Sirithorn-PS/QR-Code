@@ -1,6 +1,12 @@
 # บันทึกการทำงาน (Memories)
 
 ## 15 ก.ค. 2026
+- **เพิ่มคำสั่ง build ใน Root package.json (`package.json`)**: เพื่อแก้ไขปัญหา Error `Missing script: "build"` เมื่อรันจากโฟลเดอร์หลัก โดยเพิ่มสคริปต์สำหรับการ build:
+  - `npm run build:backend`: สั่ง build โฟลเดอร์ `backend` (`tsc`)
+  - `npm run build:frontend`: สั่ง build โฟลเดอร์ `frontend` (`next build`)
+  - `npm run build`: สั่ง build ทั้ง backend และ frontend พร้อมกันอย่างเป็นลำดับขั้นตอน
+- **แก้ไขไวยากรณ์ JSON ใน `backend/package.json`**: เพิ่มเครื่องหมายจุลภาค `,` หลังวงเล็บปีกกาปิด `}` ของส่วน `"scripts"` เพื่อแก้ไขปัญหา `EJSONPARSE` ที่เกิดจากโครงสร้าง JSON ไม่ถูกต้อง ทำให้ตัวแอปสามารถอ่านไฟล์และรันคำสั่ง build ได้ตามปกติ
+- **แก้ไขปัญหา TypeScript Type Error ใน `frontend/app/page.tsx`**: เพิ่ม `as const` ที่การกำหนดค่า `type: 'spring'` ในตัวแปร `itemVariants` ของ Framer Motion เพื่อป้องกันปัญหา Type Widening (การขยายชนิดข้อมูลเป็น string ทั่วไปแทนที่จะเป็นลิเทอรัลเฉพาะ) ซึ่งช่วยให้รันคำสั่ง build ของ Next.js ผ่านได้อย่างถูกต้อง
 - **ปรับปรุงการแสดงผลในหน้าสต็อกสินค้า โดยจำแนกหมวดหมู่ย่อย Packaging ออกเป็น 5 ประเภทตามหลักเกณฑ์ (/grill-me) (`frontend/app/inventory/page.tsx`)**:
   - ผ่านกระบวนการสัมภาษณ์ความต้องการ `/grill-me` เพื่อสรุปดีไซน์และรูปแบบของตัวกรองย่อย โดยได้เลือกเพิ่ม **แถบแท็กย่อย (Sub-Category Pill Tabs - [ทั้งหมด], [แกลลอน], [ฟอยล์], [ฝา], [กล่อง], [อื่นๆ])** สีมินิมอลแบบ Apple-style วางไว้ด้านล่างของตัวกรองหมวดหมู่หลักเมื่อผู้ใช้กดที่แท็บ Packaging
   - พัฒนาฟังก์ชันตัวช่วยคัดกรอง `getPackagingSubCategory` สำหรับจำแนกประเภทชิ้นส่วนบรรจุภัณฑ์ในกลุ่ม Packaging แบบอัตโนมัติตามหลักเกณฑ์:

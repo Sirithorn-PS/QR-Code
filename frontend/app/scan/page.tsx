@@ -423,7 +423,7 @@ export default function ScanPage() {
                                       title={`คลิกเพื่อสลับไปดูและทำรายการรับ/จ่ายสำหรับชิ้นส่วน [${c.componentItemCode}]`}
                                     >
                                       <div className="flex items-center gap-2 overflow-hidden">
-                                        <div className="shrink-0 font-mono font-bold text-[#BE1111] bg-red-50 group-hover/item:bg-white px-2 py-0.5 rounded border border-red-100/80">
+                                        <div className="shrink-0 whitespace-nowrap font-mono font-bold text-[#BE1111] bg-red-50 group-hover/item:bg-white px-2 py-0.5 rounded border border-red-100/80">
                                           {c.componentItemCode}
                                         </div>
                                         <div className="truncate text-gray-700 font-medium group-hover/item:text-gray-900">
@@ -431,7 +431,7 @@ export default function ScanPage() {
                                         </div>
                                       </div>
                                       <div className="shrink-0 ml-2 flex items-center gap-2">
-                                        <div className="text-right">
+                                        <div className="text-right whitespace-nowrap">
                                           <span className="font-bold text-gray-900 group-hover/item:text-[#BE1111]">{c.quantity}</span>
                                           <span className="text-[10px] text-gray-400 ml-1 font-mono">{c.uom}</span>
                                         </div>

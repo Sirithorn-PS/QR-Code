@@ -7,6 +7,54 @@ import QRCode from 'react-qr-code'
 import { Search, Package, ArrowLeft, Layers, Download, Check, History, X, Trash2, FileText, LayoutGrid, Crown, Droplets, Box, FlaskConical, QrCode, Star, Copy } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
+const getPackagingSubCategory = (item: Product): 'gallon' | 'foil' | 'cap' | 'box' | 'other' => {
+  const code = (item.itemCode || '').toLowerCase()
+  const name = (item.name || '').toLowerCase()
+  const unit = (item.unit || '').toLowerCase()
+
+  // 1. Other prioritizing Label and Strap
+  if (
+    code.includes('lbl') || name.includes('label') || name.includes('sticker') || name.includes('ฉลาก') ||
+    code.includes('strap') || name.includes('strap') || name.includes('สายรัด') || name.includes('รัดกล่อง')
+  ) {
+    return 'other'
+  }
+
+  // 2. แกลลอน (GALLON)
+  if (
+    name.includes('gallon') || name.includes('pail') || name.includes('drum') || name.includes('can') ||
+    name.includes('ถัง') || name.includes('ขวด') || name.includes('แกลลอน') ||
+    unit.includes('gallon') || unit.includes('pail') || unit.includes('drum')
+  ) {
+    return 'gallon'
+  }
+
+  // 3. ฟอยล์ (FOIL)
+  if (
+    name.includes('foil') || name.includes('film') || name.includes('seal') || name.includes('shrink') ||
+    name.includes('ฟอยล์') || name.includes('ซีล') || name.includes('ฟิล์ม')
+  ) {
+    return 'foil'
+  }
+
+  // 4. ฝา (CAP)
+  if (
+    name.includes('cap') || name.includes('lid') || name.includes('ฝา') ||
+    code.startsWith('355')
+  ) {
+    return 'cap'
+  }
+
+  // 5. กล่อง (BOX)
+  if (
+    name.includes('box') || name.includes('carton') || name.includes('กล่อง') || name.includes('ลัง')
+  ) {
+    return 'box'
+  }
+
+  return 'other'
+}
+
 export default function InventoryPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [search, setSearch] = useState('')
@@ -20,6 +68,7 @@ export default function InventoryPage() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [viewMode, setViewMode] = useState<'grouped' | 'flat'>('grouped')
   const [selectedParentCode, setSelectedParentCode] = useState<string | null>(null)
+  const [packagingSubTab, setPackagingSubTab] = useState<'all' | 'gallon' | 'foil' | 'cap' | 'box' | 'other'>('all')
 
   const [selectedBomProduct, setSelectedBomProduct] = useState<Product | null>(null)
   const [selectedQrProduct, setSelectedQrProduct] = useState<Product | null>(null)
@@ -295,6 +344,7 @@ export default function InventoryPage() {
                     setSearch(val)
                     if (val.trim() === '') {
                       setActiveTab('ALL')
+                      setPackagingSubTab('all')
                       loadProducts('')
                     }
                   }}
@@ -307,6 +357,7 @@ export default function InventoryPage() {
                     onClick={() => {
                       setSearch('')
                       setActiveTab('ALL')
+                      setPackagingSubTab('all')
                       loadProducts('')
                     }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
@@ -358,6 +409,7 @@ export default function InventoryPage() {
                   onClick={() => {
                     setActiveTab(opt.id)
                     setSelectedParentCode(null)
+                    setPackagingSubTab('all')
                   }}
                   className={`group flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 cursor-pointer shadow-[0_2px_10px_rgb(0,0,0,0.02)] active:scale-95 font-display ${
                     isSelected
@@ -379,6 +431,45 @@ export default function InventoryPage() {
             })}
           </div>
         </div>
+
+        {/* Sub-Category Pill Tabs: Packaging Filter */}
+        {activeTab === 'Packaging' && (
+          <div className="mb-8 w-full overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="flex items-center gap-2 min-w-max bg-gray-100/60 p-1.5 rounded-2xl border border-gray-200/50 font-display">
+              {[
+                { id: 'all', label: 'ทั้งหมด (All)', count: products.filter(p => p.itemType === 'Packaging').length },
+                { id: 'gallon', label: 'แกลลอน (Gallon)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'gallon').length },
+                { id: 'foil', label: 'ฟอยล์ (Foil)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'foil').length },
+                { id: 'cap', label: 'ฝา (Cap)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'cap').length },
+                { id: 'box', label: 'กล่อง (Box)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'box').length },
+                { id: 'other', label: 'อื่นๆ (Others)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'other').length },
+              ].map((subOpt) => {
+                const isSubSelected = packagingSubTab === subOpt.id
+                return (
+                  <button
+                    key={subOpt.id}
+                    type="button"
+                    onClick={() => setPackagingSubTab(subOpt.id as typeof packagingSubTab)}
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl transition-all duration-200 cursor-pointer text-xs font-bold ${
+                      isSubSelected
+                        ? 'bg-white text-gray-900 shadow-sm border border-gray-200'
+                        : 'text-gray-500 hover:text-gray-900 hover:bg-white/40'
+                    }`}
+                  >
+                    <span>{subOpt.label}</span>
+                    <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${
+                      isSubSelected
+                        ? 'bg-red-50 text-[#BE1111] font-bold'
+                        : 'bg-gray-200/60 text-gray-500'
+                    }`}>
+                      {subOpt.count}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Quick Filter Banner if parent selected */}
         {selectedParentCode && (
@@ -412,7 +503,12 @@ export default function InventoryPage() {
           <div className="space-y-6">
           {/* Dedicated Category Summary Table for Bulk, Raw Material & Packaging */}
           {(activeTab === 'Bulk' || activeTab === 'Raw Material' || activeTab === 'Packaging') && (() => {
-            const categoryItems = products.filter(p => p.itemType === activeTab && matchesUnit(p.unit))
+            const categoryItems = products
+              .filter(p => p.itemType === activeTab && matchesUnit(p.unit))
+              .filter(p => {
+                if (activeTab !== 'Packaging' || packagingSubTab === 'all') return true
+                return getPackagingSubCategory(p) === packagingSubTab
+              })
             const CategoryIcon = activeTab === 'Bulk' ? Droplets : activeTab === 'Packaging' ? Box : FlaskConical
             const categoryTitle = activeTab === 'Bulk' ? 'Bulk (กึ่งสำเร็จรูป / สารผสม)' : activeTab === 'Packaging' ? 'Packaging (บรรจุภัณฑ์ / วัสดุห่อหุ้ม)' : 'Raw Material (วัตถุดิบตั้งต้น / เคมีภัณฑ์)'
 
@@ -425,7 +521,15 @@ export default function InventoryPage() {
                     </div>
                     <div>
                       <h3 className="font-black text-lg tracking-wide flex items-center gap-2 text-gray-900">
-                        <span>รายการ {categoryTitle} ทั้งหมด</span>
+                        <span>
+                          รายการ {categoryTitle} {activeTab === 'Packaging' && (
+                            packagingSubTab === 'all' ? 'ทั้งหมด' :
+                            packagingSubTab === 'gallon' ? 'ประเภท แกลลอน' :
+                            packagingSubTab === 'foil' ? 'ประเภท ฟอยล์' :
+                            packagingSubTab === 'cap' ? 'ประเภท ฝา' :
+                            packagingSubTab === 'box' ? 'ประเภท กล่อง' : 'ประเภท อื่นๆ'
+                          )}
+                        </span>
                       </h3>
                       <p className="text-xs text-gray-500 mt-0.5">
                         สรุปรายการสินค้าในหมวดหมู่ {activeTab} พร้อมระบุรหัสหลัก Item 1 (สูตรสินค้าสำเร็จรูป) ที่ใช้งานชิ้นส่วนนี้อยู่
@@ -1273,18 +1377,18 @@ export default function InventoryPage() {
                   <table className="w-full text-left text-xs sm:text-sm">
                     <thead className="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
                       <tr>
-                        <th className="px-4 py-3 text-center w-16">Depth</th>
-                        <th className="px-4 py-3">รหัสส่วนประกอบ</th>
-                        <th className="px-4 py-3">ชื่อรายการ / วัตถุดิบ</th>
-                        <th className="px-4 py-3 text-right">ปริมาณใช้</th>
-                        <th className="px-4 py-3">หน่วย</th>
-                        <th className="px-4 py-3">คลัง</th>
+                        <th className="px-4 py-3 text-center w-16 whitespace-nowrap">Depth</th>
+                        <th className="px-4 py-3 whitespace-nowrap">รหัสส่วนประกอบ</th>
+                        <th className="px-4 py-3 whitespace-nowrap">ชื่อรายการ / วัตถุดิบ</th>
+                        <th className="px-4 py-3 text-right whitespace-nowrap">ปริมาณใช้</th>
+                        <th className="px-4 py-3 whitespace-nowrap">หน่วย</th>
+                        <th className="px-4 py-3 whitespace-nowrap">คลัง</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {bomList.filter(comp => comp.componentItemCode !== comp.parentItemCode).map((comp) => (
                         <tr key={comp.id} className="hover:bg-gray-50/60 transition-colors">
-                          <td className="px-4 py-2.5 text-center font-display font-bold text-gray-500">
+                          <td className="px-4 py-2.5 text-center font-display font-bold text-gray-500 whitespace-nowrap">
                             <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${
                               comp.depth === 1 ? 'bg-red-100 text-red-700' :
                               comp.depth === 2 ? 'bg-amber-100 text-amber-800' :
@@ -1293,7 +1397,7 @@ export default function InventoryPage() {
                               {comp.depth}
                             </span>
                           </td>
-                          <td className="px-4 py-2.5 font-display font-bold text-gray-900">
+                          <td className="px-4 py-2.5 font-display font-bold text-gray-900 whitespace-nowrap">
                             <button
                               type="button"
                               onClick={() => setSelectedQrProduct({
@@ -1307,17 +1411,17 @@ export default function InventoryPage() {
                                 location: '',
                                 itemType: comp.depth === 1 ? 'FG' : comp.depth === 2 ? 'Bulk' : 'Raw Material'
                               })}
-                              className="group inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-red-50 border border-gray-200 hover:border-red-200 text-gray-800 hover:text-[#BE1111] transition-all shadow-2xs cursor-pointer"
+                              className="group inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-red-50 border border-gray-200 hover:border-red-200 text-gray-800 hover:text-[#BE1111] transition-all shadow-2xs cursor-pointer whitespace-nowrap"
                               title="คลิกเพื่อดูและดาวน์โหลด QR Code"
                             >
-                              <QrCode className="w-3.5 h-3.5 text-[#BE1111]" />
-                              <span>{comp.componentItemCode}</span>
+                              <QrCode className="w-3.5 h-3.5 text-[#BE1111] shrink-0" />
+                              <span className="whitespace-nowrap">{comp.componentItemCode}</span>
                             </button>
                           </td>
                           <td className="px-4 py-2.5 text-gray-800 font-medium">{comp.description}</td>
-                          <td className="px-4 py-2.5 text-right font-bold text-[#BE1111]">{comp.quantity}</td>
-                          <td className="px-4 py-2.5 text-gray-600">{comp.uom}</td>
-                          <td className="px-4 py-2.5 text-gray-600 font-display font-semibold">{comp.warehouse}</td>
+                          <td className="px-4 py-2.5 text-right font-bold text-[#BE1111] whitespace-nowrap">{comp.quantity}</td>
+                          <td className="px-4 py-2.5 text-gray-600 whitespace-nowrap">{comp.uom}</td>
+                          <td className="px-4 py-2.5 text-gray-600 font-display font-semibold whitespace-nowrap">{comp.warehouse}</td>
                         </tr>
                       ))}
                     </tbody>

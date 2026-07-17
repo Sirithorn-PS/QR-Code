@@ -294,6 +294,17 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }))
 
+app.get('/health/db', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    return res.json({ status: 'ok', database: 'connected' })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown database error'
+    console.error('Database connection test failed:', message)
+    return res.status(500).json({ status: 'error', database: 'disconnected', details: message })
+  }
+})
+
 app.get('/users', authenticate, async (req, res) => {
   try {
     const users = await prisma.user.findMany({

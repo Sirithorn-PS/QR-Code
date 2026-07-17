@@ -1,6 +1,9 @@
 # บันทึกการทำงาน (Memories)
 
 ## 17 ก.ค. 2026
+- **แก้ไขปัญหาระบบ Backend บน Render ตอบกลับ `500 Internal Server Error` ทุกคำขอและเพิ่มระบบตรวจสอบการเชื่อมต่อฐานข้อมูล (`backend/package.json` และ `backend/src/index.ts`)**:
+  - ปรับปรุงสคริปต์ `build` ใน `backend/package.json` จาก `"tsc"` ให้เป็น `"prisma generate && tsc"` เพื่อรับประกันว่าทุกครั้งที่ระบบ Render ทำการ Build และอัปเดตเซิร์ฟเวอร์ ตัว Prisma Client จะได้รับการสร้างโครงสร้าง (Schema Definitions) ล่าสุดและสามารถเชื่อมต่อกับฐานข้อมูล Supabase PostgreSQL บน Production ได้อย่างถูกต้อง ไม่เกิด Error 500 จาก Client ไม่ตรงกับฐานข้อมูล
+  - เพิ่ม API Route `/health/db` สำหรับการตรวจสอบสถานะและการเชื่อมต่อระหว่างเซิร์ฟเวอร์ Render กับฐานข้อมูล Supabase (`DATABASE_URL`) ในขณะรันจริง หากเกิดปัญหาการเชื่อมต่อ ตัว API จะแจ้งสถานะและข้อความข้อผิดพลาดออกมาอย่างละเอียด เพื่อช่วยในการวิเคราะห์ปัญหาสภาพแวดล้อมได้ทันที
 - **แก้ไขข้อผิดพลาด `500 Internal Server Error` ขณะสแกน QR Code เพื่อดึงข้อมูลสินค้าผ่านมือถือ (`backend/src/index.ts`)**:
   - ปรับปรุง API `GET /products/:itemCode` และ `GET /products/:itemCode/bom` โดยเปลี่ยนจากคำสั่ง `prisma.product.findUnique({ where: { itemCode } })` ซึ่งเรียกร้องเงื่อนไข Unique Constraint และ Case-Sensitive จากฐานข้อมูลจนเกิด Exception บน Production มาเป็น `prisma.product.findFirst(...)` พร้อมระบบกรองคำค้นแบบ Case-Insensitive (`equals: rawCode, mode: 'insensitive'`) และตัดช่องว่าง (`trim()`)
   - ยกเลิกการตรวจสอบเงื่อนไข `!bomExists` ร่วมกับการค้นหาสินค้าหลัก (`findUnique`) เพื่อให้ผู้ใช้สามารถสแกนบาร์โค้ดดึงรายละเอียดและทำรายการธุรกรรม (รับเข้า/จ่ายออก) ของสินค้ารหัสใดๆ ที่มีในคลังได้ทันทีโดยไม่เกิด Error 500 ล้มเหลว

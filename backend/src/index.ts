@@ -1,4 +1,13 @@
 import 'dotenv/config'
+
+// Sanitize DATABASE_URL and DIRECT_URL to automatically remove accidental quotes or whitespace from Environment Variables
+if (process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = process.env.DATABASE_URL.replace(/^["']|["']$/g, '').trim()
+}
+if (process.env.DIRECT_URL) {
+  process.env.DIRECT_URL = process.env.DIRECT_URL.replace(/^["']|["']$/g, '').trim()
+}
+
 import express, { NextFunction, Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'

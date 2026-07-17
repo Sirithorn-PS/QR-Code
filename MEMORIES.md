@@ -2,6 +2,7 @@
 
 ## 17 ก.ค. 2026
 - **แก้ไขปัญหาระบบ Backend บน Render ตอบกลับ `500 Internal Server Error` ทุกคำขอและเพิ่มระบบตรวจสอบการเชื่อมต่อฐานข้อมูล (`backend/package.json` และ `backend/src/index.ts`)**:
+  - เพิ่มระบบทำความสะอาดตัวแปรสภาพแวดล้อม (`DATABASE_URL` และ `DIRECT_URL`) แบบอัตโนมัติเมื่อเริ่มต้นทำงาน ในไฟล์ `backend/src/index.ts` โดยทำการตัดเครื่องหมายคำพูด (Quote `"` หรือ `'`) หรือช่องว่างเว้นวรรคที่ผู้ใช้อาจเผลอคัดลอกมาวางในช่อง Environment Variables ของ Render Dashboard ออกโดยอัตโนมัติ เพื่อป้องกันข้อผิดพลาด `the URL must start with the protocol postgresql://` จาก Prisma
   - ปรับปรุงสคริปต์ `build` ใน `backend/package.json` จาก `"tsc"` ให้เป็น `"prisma generate && tsc"` เพื่อรับประกันว่าทุกครั้งที่ระบบ Render ทำการ Build และอัปเดตเซิร์ฟเวอร์ ตัว Prisma Client จะได้รับการสร้างโครงสร้าง (Schema Definitions) ล่าสุดและสามารถเชื่อมต่อกับฐานข้อมูล Supabase PostgreSQL บน Production ได้อย่างถูกต้อง ไม่เกิด Error 500 จาก Client ไม่ตรงกับฐานข้อมูล
   - เพิ่ม API Route `/health/db` สำหรับการตรวจสอบสถานะและการเชื่อมต่อระหว่างเซิร์ฟเวอร์ Render กับฐานข้อมูล Supabase (`DATABASE_URL`) ในขณะรันจริง หากเกิดปัญหาการเชื่อมต่อ ตัว API จะแจ้งสถานะและข้อความข้อผิดพลาดออกมาอย่างละเอียด เพื่อช่วยในการวิเคราะห์ปัญหาสภาพแวดล้อมได้ทันที
 - **แก้ไขข้อผิดพลาด `500 Internal Server Error` ขณะสแกน QR Code เพื่อดึงข้อมูลสินค้าผ่านมือถือ (`backend/src/index.ts`)**:

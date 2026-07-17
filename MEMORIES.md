@@ -1,5 +1,10 @@
 # บันทึกการทำงาน (Memories)
 
+## 17 ก.ค. 2026
+- **แก้ไขปัญหาระบบเชื่อมต่อข้ามโดเมน (CORS) และการแสดงผลข้อความ Error ในช่วงการ Deploy (`backend/src/index.ts` และ `frontend/lib/auth.ts`)**:
+  - **ฝั่ง Backend (`backend/src/index.ts`)**: ปรับปรุง CORS middleware ให้รองรับการตั้งค่าหลาย origin ผ่าน Environment Variable `CORS_ORIGIN` แบบ comma-separated string (เช่น `http://localhost:3000,https://qr-code-nine-tawny-57.vercel.app`) ทำให้ตัวแอปสามารถเปิดใช้งานได้จากทั้ง Vercel (Production) และ Localhost (Development) อย่างปลอดภัยและยืดหยุ่น
+  - **ฝั่ง Frontend (`frontend/lib/auth.ts`)**: แก้ไขข้อความแจ้งเตือน Error ใน block `catch` ของ API requests โดยนำการระบุคำว่า `(พอร์ต 4000)` ออกเพื่อลดความเข้าใจผิดของผู้ใช้เมื่อระบบทำงานจริงในสภาวะจำลองและ production ที่เปลี่ยน API URL ไปชี้ที่ Render แทนพอร์ต 4000 ของเครื่องโลคอล
+
 ## 15 ก.ค. 2026
 - **เพิ่มคำสั่ง build ใน Root package.json (`package.json`)**: เพื่อแก้ไขปัญหา Error `Missing script: "build"` เมื่อรันจากโฟลเดอร์หลัก โดยเพิ่มสคริปต์สำหรับการ build:
   - `npm run build:backend`: สั่ง build โฟลเดอร์ `backend` (`tsc`)

@@ -86,7 +86,7 @@ async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
       },
     })
   } catch {
-    throw new Error('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ Backend (พอร์ต 4000) ได้ กรุณาตรวจสอบการเปิดใช้งานระบบ')
+    throw new Error('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ Backend ได้ กรุณาตรวจสอบการเปิดใช้งานระบบ')
   }
 
   if (!response.ok) {
@@ -108,7 +108,7 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
       body: JSON.stringify(data),
     })
   } catch {
-    throw new Error('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ Backend (พอร์ต 4000) ได้ กรุณาตรวจสอบการเปิดใช้งานระบบ')
+    throw new Error('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ Backend ได้ กรุณาตรวจสอบการเปิดใช้งานระบบ')
   }
 
   if (!response.ok) {
@@ -130,7 +130,7 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
       body: JSON.stringify(credentials),
     })
   } catch {
-    throw new Error('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ Backend (พอร์ต 4000) ได้ กรุณาตรวจสอบการเปิดใช้งานระบบ')
+    throw new Error('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ Backend ได้ กรุณาตรวจสอบการเปิดใช้งานระบบ')
   }
 
   if (!response.ok) {

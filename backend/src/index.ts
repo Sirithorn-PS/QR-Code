@@ -15,7 +15,8 @@ const prisma =
   })
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
-const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000'
+const corsOriginEnv = process.env.CORS_ORIGIN || 'http://localhost:3000'
+const allowedOrigins = corsOriginEnv.split(',').map(o => o.trim())
 const isProduction = process.env.NODE_ENV === 'production'
 const JWT_SECRET = process.env.JWT_SECRET
 
@@ -26,7 +27,12 @@ if (!JWT_SECRET && isProduction) {
 const jwtSecret = JWT_SECRET || 'development-only-secret'
 
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', allowedOrigin)
+  const origin = req.headers.origin
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin)
+  } else {
+    res.header('Access-Control-Allow-Origin', allowedOrigins[0] || 'http://localhost:3000')
+  }
   res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE')
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   if (req.method === 'OPTIONS') {

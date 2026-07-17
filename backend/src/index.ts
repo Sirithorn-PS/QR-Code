@@ -419,9 +419,14 @@ app.get('/products', authenticate, async (req, res) => {
 
 app.get('/products/:itemCode/bom', authenticate, async (req, res) => {
   try {
-    const parentItemCode = req.params.itemCode
+    const parentItemCode = decodeURIComponent(req.params.itemCode || '').trim()
     const boms = await prisma.billOfMaterial.findMany({
-      where: { parentItemCode },
+      where: {
+        parentItemCode: {
+          equals: parentItemCode,
+          mode: 'insensitive'
+        }
+      },
       orderBy: [
         { depth: 'asc' },
         { componentItemCode: 'asc' }
@@ -451,23 +456,22 @@ app.get('/boms', authenticate, async (req, res) => {
 
 app.get('/products/:itemCode', authenticate, async (req, res) => {
   try {
-    const itemCode = req.params.itemCode
-    const [product, bomExists] = await Promise.all([
-      prisma.product.findUnique({
-        where: { itemCode },
-      }),
-      prisma.billOfMaterial.findFirst({
-        where: {
-          OR: [
-            { parentItemCode: itemCode },
-            { componentItemCode: itemCode }
-          ]
-        }
-      })
-    ])
+    const rawCode = decodeURIComponent(req.params.itemCode || '').trim()
+    if (!rawCode) {
+      return res.status(400).json({ error: 'กรุณาระบุรหัสสินค้าที่ต้องการค้นหา' })
+    }
 
-    if (!product || !bomExists) {
-      return res.status(404).json({ error: 'ไม่พบสินค้ารหัสนี้ในระบบ (หรือไม่ได้อยู่ในตารางสูตร BOM)' })
+    const product = await prisma.product.findFirst({
+      where: {
+        itemCode: {
+          equals: rawCode,
+          mode: 'insensitive'
+        }
+      },
+    })
+
+    if (!product) {
+      return res.status(404).json({ error: 'ไม่พบสินค้ารหัสนี้ในระบบ' })
     }
 
     return res.json(productSnapshot(product))

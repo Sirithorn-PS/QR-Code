@@ -1,6 +1,9 @@
 # บันทึกการทำงาน (Memories)
 
 ## 17 ก.ค. 2026
+- **แก้ไขข้อผิดพลาด `500 Internal Server Error` ขณะสแกน QR Code เพื่อดึงข้อมูลสินค้าผ่านมือถือ (`backend/src/index.ts`)**:
+  - ปรับปรุง API `GET /products/:itemCode` และ `GET /products/:itemCode/bom` โดยเปลี่ยนจากคำสั่ง `prisma.product.findUnique({ where: { itemCode } })` ซึ่งเรียกร้องเงื่อนไข Unique Constraint และ Case-Sensitive จากฐานข้อมูลจนเกิด Exception บน Production มาเป็น `prisma.product.findFirst(...)` พร้อมระบบกรองคำค้นแบบ Case-Insensitive (`equals: rawCode, mode: 'insensitive'`) และตัดช่องว่าง (`trim()`)
+  - ยกเลิกการตรวจสอบเงื่อนไข `!bomExists` ร่วมกับการค้นหาสินค้าหลัก (`findUnique`) เพื่อให้ผู้ใช้สามารถสแกนบาร์โค้ดดึงรายละเอียดและทำรายการธุรกรรม (รับเข้า/จ่ายออก) ของสินค้ารหัสใดๆ ที่มีในคลังได้ทันทีโดยไม่เกิด Error 500 ล้มเหลว
 - **ปรับปรุงระบบเชื่อมต่อข้ามโดเมน (CORS) และจัดการ URL ป้องกันข้อผิดพลาดในการ Deploy บน Vercel และ Render (`backend/src/index.ts` และ `frontend/lib/auth.ts`)**:
   - **ฝั่ง Backend (`backend/src/index.ts`)**: อัปเกรด CORS middleware ให้ตรวจสอบและอนุญาตโดเมนจาก `vercel.app` และ `localhost` โดยอัตโนมัติ พร้อมตัดเครื่องหมายสแลชปิดท้าย (`/`) ออกจาก Origin ก่อนเปรียบเทียบ เพื่อป้องกันปัญหา Preflight Option Request ล้มเหลวจากการตั้งค่า Environment Variable ไม่ตรงกันหรือมีสแลชเกิน
   - **ฝั่ง Frontend (`frontend/lib/auth.ts`)**: เพิ่มระบบตัดเครื่องหมายสแลชปิดท้ายออกจากตัวแปร `NEXT_PUBLIC_API_URL` ก่อนนำไปต่อกับ path ของ API เพื่อป้องกันปัญหา URL ซ้ำซ้อน (`//auth/login`) ที่อาจทำให้ Express หรือ Reverse Proxy บน Render ตอบกลับผิดพลาด และได้ลบข้อความระบุ `(พอร์ต 4000)` ออกจากหน้าแจ้งเตือน Error

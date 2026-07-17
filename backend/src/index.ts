@@ -275,11 +275,18 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
     // Try database lookup for custom registered users
     let user = null
     try {
-      user = await prisma.user.findUnique({ where: { username } })
-    } catch (dbError) {
-      console.warn('Database unreachable during login for:', username)
-      // หากเชื่อมต่อฐานข้อมูลไม่ได้ และไม่ได้ลงทะเบียนไว้ในระบบ ให้แจ้งเตือนต้องลงทะเบียนก่อน
-      return res.status(401).json({ error: 'ไม่พบบัญชีผู้ใช้ในระบบ กรุณาลงทะเบียนก่อนเข้าใช้งาน' })
+      user = await prisma.user.findFirst({
+        where: {
+          username: {
+            equals: username,
+            mode: 'insensitive',
+          },
+        },
+      })
+    } catch (dbError: unknown) {
+      const message = dbError instanceof Error ? dbError.message : 'Unknown DB Error'
+      console.error('Database query failed during login for username:', username, message)
+      return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล เพื่อตรวจสอบบัญชีผู้ใช้' })
     }
 
     if (!user) {

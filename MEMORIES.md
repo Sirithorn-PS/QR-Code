@@ -1,9 +1,9 @@
 # บันทึกการทำงาน (Memories)
 
 ## 17 ก.ค. 2026
-- **แก้ไขปัญหาระบบเชื่อมต่อข้ามโดเมน (CORS) และการแสดงผลข้อความ Error ในช่วงการ Deploy (`backend/src/index.ts` และ `frontend/lib/auth.ts`)**:
-  - **ฝั่ง Backend (`backend/src/index.ts`)**: ปรับปรุง CORS middleware ให้รองรับการตั้งค่าหลาย origin ผ่าน Environment Variable `CORS_ORIGIN` แบบ comma-separated string (เช่น `http://localhost:3000,https://qr-code-nine-tawny-57.vercel.app`) ทำให้ตัวแอปสามารถเปิดใช้งานได้จากทั้ง Vercel (Production) และ Localhost (Development) อย่างปลอดภัยและยืดหยุ่น
-  - **ฝั่ง Frontend (`frontend/lib/auth.ts`)**: แก้ไขข้อความแจ้งเตือน Error ใน block `catch` ของ API requests โดยนำการระบุคำว่า `(พอร์ต 4000)` ออกเพื่อลดความเข้าใจผิดของผู้ใช้เมื่อระบบทำงานจริงในสภาวะจำลองและ production ที่เปลี่ยน API URL ไปชี้ที่ Render แทนพอร์ต 4000 ของเครื่องโลคอล
+- **ปรับปรุงระบบเชื่อมต่อข้ามโดเมน (CORS) และจัดการ URL ป้องกันข้อผิดพลาดในการ Deploy บน Vercel และ Render (`backend/src/index.ts` และ `frontend/lib/auth.ts`)**:
+  - **ฝั่ง Backend (`backend/src/index.ts`)**: อัปเกรด CORS middleware ให้ตรวจสอบและอนุญาตโดเมนจาก `vercel.app` และ `localhost` โดยอัตโนมัติ พร้อมตัดเครื่องหมายสแลชปิดท้าย (`/`) ออกจาก Origin ก่อนเปรียบเทียบ เพื่อป้องกันปัญหา Preflight Option Request ล้มเหลวจากการตั้งค่า Environment Variable ไม่ตรงกันหรือมีสแลชเกิน
+  - **ฝั่ง Frontend (`frontend/lib/auth.ts`)**: เพิ่มระบบตัดเครื่องหมายสแลชปิดท้ายออกจากตัวแปร `NEXT_PUBLIC_API_URL` ก่อนนำไปต่อกับ path ของ API เพื่อป้องกันปัญหา URL ซ้ำซ้อน (`//auth/login`) ที่อาจทำให้ Express หรือ Reverse Proxy บน Render ตอบกลับผิดพลาด และได้ลบข้อความระบุ `(พอร์ต 4000)` ออกจากหน้าแจ้งเตือน Error
 
 ## 15 ก.ค. 2026
 - **เพิ่มคำสั่ง build ใน Root package.json (`package.json`)**: เพื่อแก้ไขปัญหา Error `Missing script: "build"` เมื่อรันจากโฟลเดอร์หลัก โดยเพิ่มสคริปต์สำหรับการ build:

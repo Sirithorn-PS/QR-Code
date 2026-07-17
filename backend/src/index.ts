@@ -16,7 +16,7 @@ const prisma =
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
 const corsOriginEnv = process.env.CORS_ORIGIN || 'http://localhost:3000'
-const allowedOrigins = corsOriginEnv.split(',').map(o => o.trim())
+const allowedOrigins = corsOriginEnv.split(',').map(o => o.trim().replace(/\/+$/, ''))
 const isProduction = process.env.NODE_ENV === 'production'
 const JWT_SECRET = process.env.JWT_SECRET
 
@@ -28,13 +28,21 @@ const jwtSecret = JWT_SECRET || 'development-only-secret'
 
 app.use((req, res, next) => {
   const origin = req.headers.origin
-  if (origin && allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin)
+  const cleanOrigin = origin?.replace(/\/+$/, '')
+  
+  if (origin) {
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(cleanOrigin || '') || cleanOrigin?.includes('vercel.app') || cleanOrigin?.includes('localhost')) {
+      res.header('Access-Control-Allow-Origin', origin)
+    } else {
+      res.header('Access-Control-Allow-Origin', allowedOrigins[0] || 'http://localhost:3000')
+    }
   } else {
     res.header('Access-Control-Allow-Origin', allowedOrigins[0] || 'http://localhost:3000')
   }
-  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE')
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  
+  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS')
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept')
+  res.header('Access-Control-Allow-Credentials', 'true')
   if (req.method === 'OPTIONS') {
     return res.sendStatus(204)
   }

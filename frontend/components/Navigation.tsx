@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { ScanLine, ClipboardCheck, Package, BarChart3, LogOut, LayoutDashboard } from 'lucide-react'
+import { ScanLine, ClipboardCheck, Package, BarChart3, LogOut, Home } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 export function Navigation({ children }: { children: React.ReactNode }) {
@@ -45,7 +45,7 @@ export function Navigation({ children }: { children: React.ReactNode }) {
   }
 
   const navItems = [
-    { href: '/', icon: LayoutDashboard, label: 'หน้าหลัก' },
+    { href: '/', icon: Home, label: 'หน้าหลัก' },
     { href: '/scan', icon: ScanLine, label: 'สแกน' },
     { href: '/transactions', icon: ClipboardCheck, label: 'รายการ' },
     { href: '/inventory', icon: Package, label: 'สต็อก' },
@@ -57,7 +57,10 @@ export function Navigation({ children }: { children: React.ReactNode }) {
       {/* Top Navbar (Desktop) */}
       <header className="hidden md:flex items-center justify-between h-16 px-6 bg-white border-b border-gray-200 shadow-sm z-10 shrink-0">
         <div className="flex items-center gap-8">
-          <h1 className="text-xl font-display font-bold text-gray-900 tracking-tight">QR Webapp</h1>
+          <div className="flex items-center gap-2">
+            <Package className="w-6 h-6 text-[#BE1111] shrink-0" />
+            <h1 className="text-xl font-display font-bold text-gray-900 tracking-tight">QR Webapp</h1>
+          </div>
           
           <nav className="flex items-center space-x-1">
             {navItems.map((item) => {

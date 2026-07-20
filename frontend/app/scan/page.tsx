@@ -4,11 +4,11 @@ import { FormEvent, useState, useCallback, useEffect } from 'react'
 import { createTransaction, fetchProduct, fetchProductBom, Product, BillOfMaterial } from '@/lib/auth'
 import { motion, AnimatePresence } from 'framer-motion'
 import QRScanner from '@/components/QRScanner'
-import { FileText, ChevronDown, ChevronUp, Droplets, Box, FlaskConical, ExternalLink, ArrowLeft } from 'lucide-react'
+import { FileText, ChevronDown, ChevronUp, Droplets, Box, FlaskConical, ExternalLink, ArrowLeft, PackagePlus, PackageMinus, Search, X } from 'lucide-react'
 
 export default function ScanPage() {
   const [, setItemCode] = useState('')
-  const [type, setType] = useState<'receive' | 'issue'>('receive')
+  const [scanMode, setScanMode] = useState<'receive' | 'issue' | 'view' | null>(null)
   const [quantity, setQuantity] = useState<number | string>(1)
   const [note, setNote] = useState('')
   const [product, setProduct] = useState<Product | null>(null)
@@ -72,9 +72,11 @@ export default function ScanPage() {
       setError('กรุณากรอก Item Code หรือข้อมูลจาก QR')
       return
     }
+
     if (!isDrillDown) {
       setProductHistory([])
     }
+
     setItemCode(cleanedCode)
     setQuantity(1)
     setNote('')
@@ -91,7 +93,7 @@ export default function ScanPage() {
         const boms = await fetchProductBom(p.itemCode)
         if (boms && boms.length > 0) {
           setBomList(boms)
-          setShowBom(true)
+          setShowBom(false)
         } else {
           setBomList([])
           setShowBom(false)
@@ -132,6 +134,7 @@ export default function ScanPage() {
       setProductHistory(prev => [...prev, product])
     }
     loadProductByCode(componentItemCode, `สลับไปยังชิ้นส่วน [${componentItemCode}] สำเร็จ`, true)
+    setShowBom(false)
   }
 
   const handleBack = () => {
@@ -147,6 +150,7 @@ export default function ScanPage() {
     setBomList([])
     setShowBom(false)
     setProductHistory([])
+
     setScanCooldown(true)
     setTimeout(() => {
       setScanCooldown(false)
@@ -163,6 +167,11 @@ export default function ScanPage() {
       return
     }
 
+    if (getProductGroup(product) !== 'Packaging' || (product.warehouse || '').toUpperCase().trim() !== 'WPK') {
+      setError('ทำรายการได้เฉพาะสินค้าประเภท Packaging ในคลัง WPK เท่านั้น')
+      return
+    }
+
     const finalQuantity = Number(quantity)
     if (!finalQuantity || finalQuantity <= 0) {
       setError('กรุณาระบุจำนวนสินค้าให้ถูกต้อง (ต้องมากกว่า 0)')
@@ -173,7 +182,7 @@ export default function ScanPage() {
     try {
       const transaction = await createTransaction({
         itemCode: product.itemCode,
-        type,
+        type: scanMode === 'issue' ? 'issue' : 'receive',
         quantity: finalQuantity,
         note,
       })
@@ -219,6 +228,33 @@ export default function ScanPage() {
     return 'Raw Material'
   }
 
+  const getProductGroup = (p: Product): 'FG' | 'Bulk' | 'Packaging' | 'Raw Material' => {
+    if (p.itemType === 'Packaging') return 'Packaging'
+    if (p.itemType === 'Bulk') return 'Bulk'
+    if (p.itemType === 'FG') return 'FG'
+    if (p.itemType === 'Raw Material' || p.itemType === 'RM') return 'Raw Material'
+    
+    const code = p.itemCode.toLowerCase()
+    const desc = p.description.toLowerCase()
+    const uom = (p.unit || '').toUpperCase()
+
+    if (
+      code.startsWith('pk') || code.startsWith('box') || code.startsWith('lbl') || code.startsWith('cap') || code.startsWith('gal') || code.startsWith('foil') || code.startsWith('75') ||
+      desc.includes('box') || desc.includes('label') || desc.includes('cap') || desc.includes('pail') || desc.includes('drum') || desc.includes('carton') || desc.includes('gallon') || desc.includes('foil') || desc.includes('sticker') || desc.includes('กล่อง') || desc.includes('ฉลาก') || desc.includes('ฝา') || desc.includes('ถัง') || desc.includes('แกลลอน') || desc.includes('ฟอยล์') ||
+      uom.includes('BOX') || uom.includes('GALLON') || uom.includes('PAIL') || uom.includes('DRUM') || uom === 'PC' || uom === 'PCS' || uom === 'EA' || uom === 'SET' || uom === 'RL'
+    ) {
+      return 'Packaging'
+    }
+
+    if (
+      desc.includes('bulk') || desc.includes('premix') || code.startsWith('i-') || code.startsWith('blk-') || code.startsWith('200')
+    ) {
+      return 'Bulk'
+    }
+
+    return 'Raw Material'
+  }
+
   return (
     <main className="min-h-screen bg-[#f5f5f7] px-4 py-8 md:px-6 md:py-12 flex flex-col items-center">
       <div className="w-full max-w-xl">
@@ -251,18 +287,98 @@ export default function ScanPage() {
             </motion.div>
           )}
 
-          <div className="rounded-3xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/80 overflow-hidden p-5 md:p-8">
-            <div className="mb-5 text-center">
-              <h3 className="text-lg font-bold text-gray-800">จัดตำแหน่ง QR Code ให้อยู่ในกรอบ</h3>
-              <p className="text-xs text-gray-400 mt-1">วางรหัส QR ของสินค้าให้อยู่ในช่องนำสายตาเพื่อสแกนอัตโนมัติ</p>
-              {scanCooldown && (
-                <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3.5 py-1 text-xs font-semibold text-[#BE1111] animate-pulse border border-red-100">
-                  <span>⏳ กำลังหน่วงเวลา 2 วินาที ก่อนเปิดกล้องสแกนชิ้นถัดไป...</span>
+          {scanMode === null ? (
+            <div className="grid gap-4 mt-2">
+              <button
+                onClick={() => setScanMode('receive')}
+                className="group relative overflow-hidden rounded-3xl bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-green-100 hover:border-green-300 hover:shadow-[0_8px_30px_rgba(22,163,74,0.12)] transition-all flex items-center gap-5 text-left"
+              >
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-50 text-green-600 group-hover:scale-110 group-hover:bg-green-100 transition-all">
+                  <PackagePlus className="w-7 h-7" />
                 </div>
-              )}
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-green-700 transition-colors">รับสินค้าเข้า (Receive)</h3>
+                  <p className="text-sm text-gray-500 mt-1">สแกนเพื่อรับสินค้า Packaging เข้าคลัง</p>
+                </div>
+              </button>
+              
+              <button
+                onClick={() => setScanMode('issue')}
+                className="group relative overflow-hidden rounded-3xl bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-red-100 hover:border-red-300 hover:shadow-[0_8px_30px_rgba(220,38,38,0.12)] transition-all flex items-center gap-5 text-left"
+              >
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-red-600 group-hover:scale-110 group-hover:bg-red-100 transition-all">
+                  <PackageMinus className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-red-700 transition-colors">เบิกออกสินค้า (Issue)</h3>
+                  <p className="text-sm text-gray-500 mt-1">สแกนเพื่อเบิก Packaging ออกไปใช้งาน</p>
+                </div>
+              </button>
+              
+              <button
+                onClick={() => setScanMode('view')}
+                className="group relative overflow-hidden rounded-3xl bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-blue-100 hover:border-blue-300 hover:shadow-[0_8px_30px_rgba(37,99,235,0.12)] transition-all flex items-center gap-5 text-left"
+              >
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 group-hover:scale-110 group-hover:bg-blue-100 transition-all">
+                  <Search className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors">ดูสต็อกคงเหลือ (View Stock)</h3>
+                  <p className="text-sm text-gray-500 mt-1">สแกนเพื่อตรวจสอบสูตร BOM และยอดคงเหลือ</p>
+                </div>
+              </button>
             </div>
-            <QRScanner onScanSuccess={handleScanSuccess} isPaused={loading || product !== null || scanCooldown} />
-          </div>
+          ) : (
+            <>
+              <div className="mb-4 flex items-center justify-between bg-white rounded-2xl p-3 shadow-sm border border-gray-100/80">
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                    scanMode === 'receive' ? 'bg-green-50 text-green-600' :
+                    scanMode === 'issue' ? 'bg-red-50 text-red-600' :
+                    'bg-blue-50 text-blue-600'
+                  }`}>
+                    {scanMode === 'receive' ? <PackagePlus className="w-5 h-5" /> :
+                     scanMode === 'issue' ? <PackageMinus className="w-5 h-5" /> :
+                     <Search className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block leading-tight">โหมดปัจจุบัน</span>
+                    <span className={`text-sm font-bold ${
+                      scanMode === 'receive' ? 'text-green-700' :
+                      scanMode === 'issue' ? 'text-red-700' :
+                      'text-blue-700'
+                    }`}>
+                      {scanMode === 'receive' ? 'รับสินค้าเข้า' :
+                       scanMode === 'issue' ? 'เบิกออกสินค้า' :
+                       'ดูสต็อกคงเหลือ'}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setScanMode(null)
+                    closeModalWithCooldown()
+                  }}
+                  className="px-3 py-1.5 text-xs font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 hover:text-gray-700 rounded-lg transition-colors cursor-pointer"
+                >
+                  เปลี่ยนโหมด
+                </button>
+              </div>
+
+              <div className="rounded-3xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/80 overflow-hidden p-5 md:p-8">
+                <div className="mb-5 text-center">
+                  <h3 className="text-lg font-bold text-gray-800">จัดตำแหน่ง QR Code ให้อยู่ในกรอบ</h3>
+                  <p className="text-xs text-gray-400 mt-1">วางรหัส QR ของสินค้าให้อยู่ในช่องนำสายตาเพื่อสแกนอัตโนมัติ</p>
+                  {scanCooldown && (
+                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3.5 py-1 text-xs font-semibold text-[#BE1111] animate-pulse border border-red-100">
+                      <span>⏳ กำลังหน่วงเวลา 2 วินาที ก่อนเปิดกล้องสแกนชิ้นถัดไป...</span>
+                    </div>
+                  )}
+                </div>
+                <QRScanner onScanSuccess={handleScanSuccess} isPaused={loading || product !== null || scanCooldown || scanMode === null} />
+              </div>
+            </>
+          )}
         </motion.div>
       </div>
 
@@ -366,87 +482,131 @@ export default function ScanPage() {
 
               {/* SAP BOM Expandable Section */}
               {bomList.length > 0 && (
-                <div className="mb-5 rounded-2xl border border-red-100 bg-red-50/40 p-4 transition-all">
+                <div className="mb-5">
                   <button
                     type="button"
-                    onClick={() => setShowBom(!showBom)}
-                    className="w-full flex items-center justify-between text-xs sm:text-sm font-bold text-[#BE1111] cursor-pointer"
+                    onClick={() => setShowBom(true)}
+                    className="inline-flex items-center justify-center gap-2 p-3.5 rounded-2xl bg-[#BE1111] hover:bg-[#A00F0F] text-white font-extrabold text-sm shadow-md cursor-pointer active:scale-95 transition-all w-full"
                   >
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4" />
-                      <span>📑 สูตรการผลิต SAP BOM ({bomList.filter(c => c.componentItemCode !== c.parentItemCode).length} รายการส่วนประกอบ)</span>
-                    </div>
-                    {showBom ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    <FileText className="w-5 h-5 shrink-0" />
+                    <span>ดูรายละเอียด BOM</span>
                   </button>
 
-                  {showBom && (
-                    <div className="mt-3 pt-3 border-t border-red-100/80 space-y-3">
-                      {(['Bulk', 'Packaging', 'Raw Material'] as const).map((subType) => {
-                        const subComponents = bomList.filter(c => c.componentItemCode !== c.parentItemCode && getBomComponentGroup(c) === subType)
-                        const subExpanded = expandedBomSubgroups[subType] ?? true
-                        const SubIcon = subType === 'Bulk' ? Droplets : subType === 'Packaging' ? Box : FlaskConical
-                        const subTitle = subType === 'Bulk' ? 'Bulk (สารผสม/กึ่งสำเร็จรูป)' : subType === 'Packaging' ? 'Packaging (บรรจุภัณฑ์)' : 'Raw Material (วัตถุดิบ)'
-
-                        return (
-                          <div key={subType} className="rounded-xl border border-gray-200/80 bg-white/80 overflow-hidden shadow-2xs">
+                  <AnimatePresence>
+                    {showBom && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-md"
+                      >
+                        <motion.div
+                          initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                          animate={{ scale: 1, opacity: 1, y: 0 }}
+                          exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                          transition={{ type: "tween", ease: "easeOut", duration: 0.2 }}
+                          className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl border border-gray-100 max-h-[80vh] flex flex-col overflow-hidden text-left"
+                        >
+                          <div className="flex items-start justify-between pb-4 border-b border-gray-100 mb-4 shrink-0">
+                            <div>
+                              <div className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-[#BE1111] border border-red-100 mb-1">
+                                📑 รายละเอียดสูตรการผลิต (BOM)
+                              </div>
+                              <h3 className="text-base sm:text-lg font-display font-bold text-gray-900 tracking-tight">{product.name}</h3>
+                              <p className="text-xs font-display font-semibold text-gray-500 mt-0.5">รหัสสินค้าหลัก: {product.itemCode}</p>
+                            </div>
                             <button
                               type="button"
-                              onClick={() => setExpandedBomSubgroups(prev => ({ ...prev, [subType]: !subExpanded }))}
-                              className="w-full bg-slate-50/90 px-3.5 py-2.5 flex items-center justify-between hover:bg-slate-100/80 transition-colors cursor-pointer border-b border-gray-100"
+                              onClick={() => setShowBom(false)}
+                              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
                             >
-                              <div className="flex items-center gap-2">
-                                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-700 shadow-2xs">
-                                  <SubIcon className="w-3.5 h-3.5" />
-                                </div>
-                                <span className="text-xs font-bold text-gray-800">{subTitle}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-700 font-mono">
-                                  {subComponents.length} รายการ
-                                </span>
-                                {subExpanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
-                              </div>
+                              <X className="w-5 h-5" />
                             </button>
-
-                            {subExpanded && (
-                              <div className="p-2 space-y-1.5 max-h-52 overflow-y-auto">
-                                {subComponents.length === 0 ? (
-                                  <div className="py-3 text-center text-gray-400 text-[11px]">
-                                    ไม่มีรายการในหมวดหมู่นี้
-                                  </div>
-                                ) : (
-                                  subComponents.map((c) => (
-                                    <div
-                                      key={c.id}
-                                      onClick={() => handleSelectBomComponent(c.componentItemCode)}
-                                      className="group/item flex items-center justify-between text-xs bg-white hover:bg-red-50/60 p-2.5 rounded-lg border border-gray-200 hover:border-red-200 shadow-2xs transition-all cursor-pointer active:scale-[0.99]"
-                                      title={`คลิกเพื่อสลับไปดูและทำรายการรับ/จ่ายสำหรับชิ้นส่วน [${c.componentItemCode}]`}
-                                    >
-                                      <div className="flex items-center gap-2 overflow-hidden">
-                                        <div className="shrink-0 whitespace-nowrap font-mono font-bold text-[#BE1111] bg-red-50 group-hover/item:bg-white px-2 py-0.5 rounded border border-red-100/80">
-                                          {c.componentItemCode}
-                                        </div>
-                                        <div className="truncate text-gray-700 font-medium group-hover/item:text-gray-900">
-                                          {c.description}
-                                        </div>
-                                      </div>
-                                      <div className="shrink-0 ml-2 flex items-center gap-2">
-                                        <div className="text-right whitespace-nowrap">
-                                          <span className="font-bold text-gray-900 group-hover/item:text-[#BE1111]">{c.quantity}</span>
-                                          <span className="text-[10px] text-gray-400 ml-1 font-mono">{c.uom}</span>
-                                        </div>
-                                        <ExternalLink className="w-3.5 h-3.5 text-gray-300 group-hover/item:text-[#BE1111] transition-colors" />
-                                      </div>
-                                    </div>
-                                  ))
-                                )}
-                              </div>
-                            )}
                           </div>
-                        )
-                      })}
-                    </div>
-                  )}
+
+                          <div className="overflow-y-auto flex-1 pr-1 space-y-4 py-1">
+                            {(['Bulk', 'Packaging', 'Raw Material'] as const).map((subType) => {
+                              const subComponents = bomList.filter(c => c.componentItemCode !== c.parentItemCode && getBomComponentGroup(c) === subType)
+                              const subExpanded = expandedBomSubgroups[subType] ?? true
+                              const SubIcon = subType === 'Bulk' ? Droplets : subType === 'Packaging' ? Box : FlaskConical
+                              const subTitle = subType === 'Bulk' ? 'Bulk (สารผสม/กึ่งสำเร็จรูป)' : subType === 'Packaging' ? 'Packaging (บรรจุภัณฑ์)' : 'Raw Material (วัตถุดิบ)'
+
+                              return (
+                                <div key={subType} className="rounded-xl border border-gray-200/80 bg-white overflow-hidden shadow-sm">
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedBomSubgroups(prev => ({ ...prev, [subType]: !subExpanded }))}
+                                    className="w-full bg-slate-50/90 px-3.5 py-3 flex items-center justify-between hover:bg-slate-100/80 transition-colors cursor-pointer border-b border-gray-100"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-700 shadow-2xs">
+                                        <SubIcon className="w-3.5 h-3.5" />
+                                      </div>
+                                      <span className="text-xs font-bold text-gray-800">{subTitle}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-700 font-mono">
+                                        {subComponents.length} รายการ
+                                      </span>
+                                      {subExpanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
+                                    </div>
+                                  </button>
+
+                                  {subExpanded && (
+                                    <div className="p-2 space-y-1.5 max-h-52 overflow-y-auto">
+                                      {subComponents.length === 0 ? (
+                                        <div className="py-3 text-center text-gray-400 text-[11px]">
+                                          ไม่มีรายการในหมวดหมู่นี้
+                                        </div>
+                                      ) : (
+                                        subComponents.map((c) => {
+                                          const isPackaging = subType === 'Packaging'
+                                          return (
+                                            <div
+                                              key={c.id}
+                                              onClick={() => handleSelectBomComponent(c.componentItemCode)}
+                                              className="group/item flex items-center justify-between text-xs p-2.5 rounded-lg border border-gray-200 hover:border-red-200 shadow-2xs bg-white hover:bg-red-50/60 transition-all cursor-pointer active:scale-[0.99]"
+                                              title={`คลิกเพื่อสลับไปยังสินค้าส่วนประกอบ [${c.componentItemCode}]`}
+                                            >
+                                              <div className="flex items-center gap-2 overflow-hidden">
+                                                <div className="shrink-0 whitespace-nowrap font-mono font-bold px-2 py-0.5 rounded border text-[#BE1111] bg-red-50 border-red-100/80 group-hover/item:bg-white">
+                                                  {c.componentItemCode}
+                                                </div>
+                                                <div className="truncate font-medium text-gray-700 group-hover/item:text-gray-900">
+                                                  {c.description}
+                                                </div>
+                                              </div>
+                                              <div className="shrink-0 ml-2 flex items-center gap-2">
+                                                <div className="text-right whitespace-nowrap">
+                                                  <span className="font-bold text-gray-900 group-hover/item:text-[#BE1111]">{c.quantity}</span>
+                                                  <span className="text-[10px] text-gray-400 ml-1 font-mono">{c.uom}</span>
+                                                </div>
+                                                <ExternalLink className="w-3.5 h-3.5 text-gray-300 group-hover/item:text-[#BE1111] transition-colors" />
+                                              </div>
+                                            </div>
+                                          )
+                                        })
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+
+                          <div className="pt-4 border-t border-gray-100 mt-4 flex justify-end shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setShowBom(false)}
+                              className="rounded-xl bg-gray-950 px-6 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 transition-colors shadow-sm cursor-pointer"
+                            >
+                              ปิดหน้าต่าง
+                            </button>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
 
@@ -463,51 +623,42 @@ export default function ScanPage() {
               )}
 
               {/* Action Form */}
-              <form onSubmit={submitTransaction}>
-                <div className="mb-5">
-                  <label className="mb-2 block text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    ประเภทรายการ
-                  </label>
-                  <div className="flex bg-gray-100/70 p-1.5 rounded-2xl relative z-0">
-                    {[
-                      { id: 'receive', label: 'รับเข้า (Receive)' },
-                      { id: 'issue', label: 'จ่ายออก (Issue)' }
-                    ].map(t => (
-                      <button
-                        key={t.id}
-                        type="button"
-                        onClick={() => setType(t.id as 'receive' | 'issue')}
-                        className={`flex-1 py-2.5 text-sm font-bold rounded-xl relative z-10 transition-colors ${type === t.id ? (t.id === 'receive' ? 'text-green-700' : 'text-red-700') : 'text-gray-500 hover:text-gray-700'}`}
-                      >
-                        {type === t.id && (
-                          <motion.div
-                            layoutId="activeTabScan"
-                            className="absolute inset-0 bg-white rounded-xl shadow-sm -z-10"
-                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                          />
-                        )}
-                        {t.label}
-                      </button>
-                    ))}
+              {getProductGroup(product) === 'Packaging' && (product.warehouse || '').toUpperCase().trim() === 'WPK' ? (
+                scanMode === 'view' ? (
+                <div className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 p-5 text-center shadow-inner">
+                  <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 mb-2">
+                    <Search className="w-5 h-5 text-blue-600" />
                   </div>
+                  <h4 className="text-sm font-bold text-blue-800 mb-1">โหมดดูสต็อกคงเหลือ</h4>
+                  <p className="text-xs text-blue-700">
+                    ปัจจุบันคุณกำลังอยู่ในโหมดดูสต็อก หากต้องการทำรายการรับเข้า/เบิกออก<br/>
+                    กรุณาปิดหน้าต่างนี้ และกด "เปลี่ยนโหมด" ที่หน้าสแกนหลัก
+                  </p>
                 </div>
+              ) : (
+              <form onSubmit={submitTransaction}>
 
                 <div className="mb-5">
                   <label htmlFor="quantity" className="mb-2 block text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     จำนวน
                   </label>
-                  <input
-                    id="quantity"
-                    type="text"
-                    inputMode="numeric"
-                    value={quantity}
-                    onChange={(event) => {
-                      const val = event.target.value.replace(/[^0-9]/g, '')
-                      setQuantity(val === '' ? '' : Number(val))
-                    }}
-                    placeholder="ระบุจำนวนที่ต้องการทำรายการ"
-                    className="w-full rounded-2xl border border-gray-200/80 bg-gray-50/50 backdrop-blur-sm px-4 py-3.5 text-base text-gray-800 font-bold focus:bg-white focus:border-[#BE1111]/30 focus:outline-none focus:ring-4 focus:ring-[#BE1111]/10 transition-all placeholder:font-normal"
-                  />
+                  <div className="relative">
+                    <input
+                      id="quantity"
+                      type="text"
+                      inputMode="numeric"
+                      value={quantity}
+                      onChange={(event) => {
+                        const val = event.target.value.replace(/[^0-9]/g, '')
+                        setQuantity(val === '' ? '' : Number(val))
+                      }}
+                      placeholder="ระบุจำนวนที่ต้องการทำรายการ"
+                      className="w-full rounded-2xl border border-gray-200/80 bg-gray-50/50 backdrop-blur-sm pl-4 pr-16 py-3.5 text-base text-gray-800 font-bold focus:bg-white focus:border-[#BE1111]/30 focus:outline-none focus:ring-4 focus:ring-[#BE1111]/10 transition-all placeholder:font-normal"
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                      <span className="text-gray-500 font-semibold">{product.unit}</span>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mb-6">
@@ -527,7 +678,11 @@ export default function ScanPage() {
                   type="submit"
                   disabled={loading}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full rounded-2xl bg-gray-900 hover:bg-black px-5 py-4 font-bold text-white shadow-lg shadow-gray-900/20 disabled:bg-gray-200 disabled:text-gray-400 transition-all text-sm flex items-center justify-center gap-2"
+                  className={`w-full rounded-2xl px-5 py-4 font-bold text-white shadow-lg disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none transition-all text-sm flex items-center justify-center gap-2 ${
+                    scanMode === 'receive' 
+                      ? 'bg-green-600 hover:bg-green-700 shadow-green-600/20' 
+                      : 'bg-red-600 hover:bg-red-700 shadow-red-600/20'
+                  }`}
                 >
                   {loading ? (
                     <>
@@ -538,10 +693,73 @@ export default function ScanPage() {
                       กำลังดำเนินการ...
                     </>
                   ) : (
-                    type === 'receive' ? 'รับเข้าคลังสินค้า' : 'จ่ายออกสินค้า'
+                    scanMode === 'receive' ? 'รับเข้าคลังสินค้า' : 'จ่ายออกสินค้า'
                   )}
                 </motion.button>
               </form>
+              )
+              ) : (
+                <div className="space-y-4">
+                  {bomList.filter(c => c.componentItemCode !== c.parentItemCode && getBomComponentGroup(c) === 'Packaging').length > 0 && (
+                    <div className="text-left">
+                      <h5 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2.5">
+                        📦 เลือกบรรจุภัณฑ์ (Packaging) เพื่อทำรายการ
+                      </h5>
+                      <div className="space-y-2">
+                        {bomList
+                          .filter(c => c.componentItemCode !== c.parentItemCode && getBomComponentGroup(c) === 'Packaging')
+                          .map((c) => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => handleSelectBomComponent(c.componentItemCode)}
+                              className="group/item flex items-center justify-between text-xs p-2.5 rounded-lg border border-gray-200 hover:border-red-200 shadow-2xs bg-white hover:bg-red-50/60 transition-all cursor-pointer active:scale-[0.99] w-full text-left"
+                              title={`คลิกเพื่อสลับไปดูและทำรายการรับ/จ่ายสำหรับชิ้นส่วน [${c.componentItemCode}]`}
+                            >
+                              <div className="flex items-center gap-2 overflow-hidden min-w-0">
+                                <div className="shrink-0 whitespace-nowrap font-mono font-bold px-2 py-0.5 rounded border text-[#BE1111] bg-red-50 border-red-100/80 group-hover/item:bg-white">
+                                  {c.componentItemCode}
+                                </div>
+                                <div className="truncate font-medium text-gray-700 group-hover/item:text-gray-900">
+                                  {c.description}
+                                </div>
+                              </div>
+                              <div className="shrink-0 ml-2 flex items-center gap-2">
+                                <div className="text-right whitespace-nowrap">
+                                  <span className="font-bold text-gray-900 group-hover/item:text-[#BE1111]">{c.quantity}</span>
+                                  <span className="text-[10px] text-gray-400 ml-1 font-mono">{c.uom}</span>
+                                </div>
+                                <ExternalLink className="w-3.5 h-3.5 text-gray-300 group-hover/item:text-[#BE1111] transition-colors" />
+                              </div>
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-center shadow-inner">
+                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-amber-100 mb-2">
+                      <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                    </div>
+                    <h4 className="text-sm font-bold text-amber-800 mb-1">ไม่อนุญาตให้ทำรายการ</h4>
+                    <p className="text-xs text-amber-700">
+                      {getProductGroup(product) !== 'Packaging' ? (
+                        <>
+                          {getProductGroup(product) === 'FG' ? 'การรับเข้า/เบิกออก สินค้าสำเร็จรูป (FG) ไม่สามารถทำได้ที่หน้านี้' : `รายการนี้เป็น ${getProductGroup(product)} ซึ่งไม่อนุญาตให้รับเข้า/เบิกออก`}<br/>
+                          กรุณาสแกนหรือเลือก <b>Packaging (บรรจุภัณฑ์)</b> เพื่อทำรายการ
+                        </>
+                      ) : (
+                        <>
+                          บรรจุภัณฑ์ (Packaging) รายการนี้ไม่ได้จัดเก็บในคลัง <b>WPK</b> (คลังปัจจุบัน: {product.warehouse || 'ไม่มี'})<br/>
+                          การรับเข้า/เบิกออก สามารถทำได้เฉพาะสินค้าประเภท Packaging ในคลัง WPK เท่านั้น
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
               </div>
             </motion.div>
           </>

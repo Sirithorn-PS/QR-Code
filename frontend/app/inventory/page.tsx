@@ -509,8 +509,8 @@ export default function InventoryPage() {
         {/* View Mode Content: Switch between Grouped and Flat views */}
         {viewMode === 'grouped' ? (
           <div className="space-y-6">
-          {/* Dedicated Category Summary Table for Bulk, Raw Material & Packaging */}
-          {(activeTab === 'Bulk' || activeTab === 'Raw Material' || activeTab === 'Packaging') && (() => {
+          {/* Dedicated Category Summary Table for Bulk & Raw Material */}
+          {(activeTab === 'Bulk' || activeTab === 'Raw Material') && (() => {
             const categoryItems = products
               .filter(p => p.itemType === activeTab && matchesUnit(p.unit))
               .filter(p => {
@@ -838,6 +838,100 @@ export default function InventoryPage() {
                 )
               })}
           </div>
+
+          {/* Packaging Cards View (Design matching FG Cards) */}
+          {activeTab === 'Packaging' && (
+            <div className="flex flex-col gap-5 animate-in fade-in duration-300 mb-6">
+              {displayedProducts
+                .filter(p => p.itemType === 'Packaging' && (packagingSubTab === 'all' || getPackagingSubCategory(p) === packagingSubTab))
+                .map(item => (
+                  <div key={item.id} className="w-full rounded-3xl border border-gray-200/90 bg-white p-5 sm:p-6 shadow-[0_2px_15px_rgb(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-gray-300 transition-all flex flex-col justify-between gap-4 relative group/card font-display">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                      <div className="w-full md:w-auto shrink-0 flex justify-center md:justify-start">
+                        <div 
+                          onClick={() => setSelectedQrProduct(item)}
+                          className="w-28 sm:w-36 h-28 sm:h-36 rounded-2xl bg-white border border-gray-100 shadow-2xs flex items-center justify-center p-3 relative cursor-pointer group/qr transition-all hover:border-red-200 hover:shadow-sm"
+                          title="คลิกเพื่อดูและขยาย QR Code"
+                        >
+                          <div className="absolute top-2.5 left-2.5 w-3 h-3 border-t-2 border-l-2 border-[#BE1111] rounded-tl-xs pointer-events-none" />
+                          <div className="absolute top-2.5 right-2.5 w-3 h-3 border-t-2 border-r-2 border-[#BE1111] rounded-tr-xs pointer-events-none" />
+                          <div className="absolute bottom-2.5 left-2.5 w-3 h-3 border-b-2 border-l-2 border-[#BE1111] rounded-bl-xs pointer-events-none" />
+                          <div className="absolute bottom-2.5 right-2.5 w-3 h-3 border-b-2 border-r-2 border-[#BE1111] rounded-br-xs pointer-events-none" />
+                          <QRCode value={item.itemCode} size={110} />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/qr:opacity-100 rounded-2xl flex flex-col items-center justify-center transition-opacity text-white text-xs font-bold text-center p-2 leading-tight backdrop-blur-2xs">
+                            <span className="text-lg mb-1">📱</span>
+                            <span>คลิกขยาย QR</span>
+                          </div>
+                          <div id={`qr-group-${item.itemCode}`} className="hidden">
+                            <QRCode value={item.itemCode} size={150} />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 min-w-0 space-y-2 pr-6 md:pr-4 w-full">
+                        <div>
+                          <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200/80 inline-block shadow-2xs">
+                            Packaging
+                          </span>
+                        </div>
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight leading-snug truncate" title={item.name}>
+                          {item.name}
+                        </h3>
+                        <div className="flex items-center gap-1.5 text-xs text-gray-600 font-medium pt-0.5">
+                          <span>Item Code:</span>
+                          <strong className="text-gray-800 font-bold">{item.itemCode}</strong>
+                          <button 
+                            type="button" 
+                            onClick={() => navigator.clipboard?.writeText(item.itemCode)} 
+                            className="p-1 text-gray-400 hover:text-gray-700 transition-colors cursor-pointer rounded hover:bg-gray-100" 
+                            title="คัดลอก Item Code"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1 text-xs">
+                          <div className="flex items-center gap-1.5 bg-gray-50 text-gray-600 px-3 py-1.5 rounded-xl border border-gray-200/80 font-medium">
+                            <span>📍 คลังจัดเก็บ:</span>
+                            <strong className="text-gray-900 font-bold ml-0.5">{item.warehouse || '-'} {item.location && `(${item.location})`}</strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row items-stretch sm:items-center md:items-stretch lg:items-center gap-3 sm:gap-4 shrink-0 w-full md:w-auto mt-2 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-gray-100">
+                        <div className="bg-slate-50 min-w-[140px] px-4 py-3 rounded-2xl border border-slate-200 flex flex-col justify-center text-left sm:text-center shadow-2xs">
+                          <span className="text-[10px] sm:text-[11px] text-slate-500 font-bold uppercase tracking-wider">
+                            STOCK คงเหลือ
+                          </span>
+                          <div className="text-2xl sm:text-3xl font-black text-gray-900 flex items-baseline sm:justify-center gap-1.5 mt-0.5">
+                            {item.quantity.toLocaleString()} <span className="text-xs font-bold text-gray-600">{item.unit}</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2 shrink-0 min-w-[165px]">
+                          <button
+                            type="button"
+                            onClick={() => downloadQRCodeAsPNG(item.itemCode)}
+                            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs border border-gray-200 cursor-pointer shadow-2xs active:scale-95 transition-all"
+                          >
+                            <Download className="w-4 h-4 text-gray-600 shrink-0" />
+                            <span>ดาวน์โหลด QR</span>
+                          </button>
+                          {user?.role === 'admin' && (
+                            <button
+                              type="button"
+                              onClick={() => setDeleteTarget(item)}
+                              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-red-50 text-gray-400 hover:text-red-600 font-bold text-xs border border-gray-200 hover:border-red-200 cursor-pointer shadow-2xs active:scale-95 transition-all"
+                            >
+                              <Trash2 className="w-4 h-4 shrink-0" />
+                              <span>ลบรายการ</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
 
           {/* 2. Unassigned Items Card (Items not linked as Parent or Component) */}
           {(() => {

@@ -111,45 +111,31 @@ async function authenticate(req: AuthenticatedRequest, res: Response, next: Next
   const authHeader = req.header('Authorization')
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
 
-  if (token && token !== 'null' && token !== 'undefined') {
-    try {
-      const payload = jwt.verify(token, jwtSecret) as jwt.JwtPayload
-      req.user = {
-        id: Number(payload.userId),
-        username: String(payload.username),
-        role: String(payload.role),
-      }
-      return next()
-    } catch {
-      // If token verification fails, fall through to default user
-    }
+  if (!token || token === 'null' || token === 'undefined') {
+    res.status(401).json({ error: 'Unauthorized' })
+    return
   }
 
-  // Fallback: assign default active Admin user without blocking
   try {
-    const firstAdmin = await prisma.user.findFirst({
-      where: { role: 'admin' },
-      orderBy: { id: 'asc' },
-    })
-    if (firstAdmin) {
-      req.user = {
-        id: firstAdmin.id,
-        username: firstAdmin.username,
-        role: firstAdmin.role,
-      }
-    } else {
-      req.user = { id: 6, username: 'supervisor', role: 'admin' }
+    const payload = jwt.verify(token, jwtSecret) as jwt.JwtPayload
+    req.user = {
+      id: Number(payload.userId),
+      username: String(payload.username),
+      role: String(payload.role),
     }
+    return next()
   } catch {
-    req.user = { id: 6, username: 'supervisor', role: 'admin' }
+    res.status(401).json({ error: 'Invalid or expired token' })
+    return
   }
-
-  return next()
 }
 
 function requireRole(...roles: string[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    // ไม่จำกัดสิทธิ์การเข้าถึงตามความต้องการของผู้ใช้งาน
+    if (!req.user || !roles.includes(req.user.role)) {
+      res.status(403).json({ error: 'Forbidden: Insufficient permissions' })
+      return
+    }
     return next()
   }
 }
@@ -862,3 +848,5 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'))
 process.on('beforeExit', async () => {
   await prisma.$disconnect()
 })
+
+export { app }

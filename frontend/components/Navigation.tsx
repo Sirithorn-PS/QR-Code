@@ -84,7 +84,7 @@ export function Navigation({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-5">
           <div className="text-right">
             <p className="text-sm font-medium text-gray-900">{user.fullName}</p>
-            <p className="text-xs text-[#BE1111] font-medium">{user.role === 'admin' ? 'ผู้ควบคุมดูแลระบบ (Supervisor)' : user.role === 'warehouse_staff' ? 'พนักงานทั่วไป' : user.role}</p>
+            <p className="text-xs text-[#BE1111] font-medium">{user.role === 'admin' ? 'ผู้ควบคุมดูแลระบบ (Supervisor)' : user.role === 'warehouse_staff' ? 'พนักงานทั่วไป (Staff)' : user.role}</p>
           </div>
           <div className="h-8 w-px bg-gray-200"></div>
           <button onClick={handleLogout} className="group flex items-center gap-2 px-2 py-2 text-sm font-medium text-gray-600 rounded-xl hover:bg-red-50 hover:text-red-700 transition-colors">

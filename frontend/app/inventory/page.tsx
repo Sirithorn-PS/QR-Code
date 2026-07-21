@@ -63,7 +63,7 @@ export default function InventoryPage() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(true)
 
-  const [activeTab, setActiveTab] = useState('ALL')
+  const [activeTab, setActiveTab] = useState('Packaging')
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -351,7 +351,7 @@ export default function InventoryPage() {
                     const val = event.target.value
                     setSearch(val)
                     if (val.trim() === '') {
-                      setActiveTab('ALL')
+                      setActiveTab('Packaging')
                       setPackagingSubTab('all')
                       loadProducts('')
                     }
@@ -364,7 +364,7 @@ export default function InventoryPage() {
                     type="button"
                     onClick={() => {
                       setSearch('')
-                      setActiveTab('ALL')
+                      setActiveTab('Packaging')
                       setPackagingSubTab('all')
                       loadProducts('')
                     }}

@@ -79,6 +79,7 @@ async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
       ...init,
+      cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

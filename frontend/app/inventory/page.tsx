@@ -915,6 +915,14 @@ export default function InventoryPage() {
                             <Download className="w-4 h-4 text-gray-600 shrink-0" />
                             <span>ดาวน์โหลด QR</span>
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => openBomModal(item)}
+                            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#BE1111] hover:bg-[#A00F0F] text-white font-extrabold text-xs shadow-xs cursor-pointer active:scale-95 transition-all"
+                          >
+                            <FileText className="w-4 h-4 shrink-0" />
+                            <span>ดูรายละเอียด BOM</span>
+                          </button>
                           {user?.role === 'admin' && (
                             <button
                               type="button"

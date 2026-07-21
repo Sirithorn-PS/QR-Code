@@ -8,7 +8,7 @@ import { FileText, ChevronDown, ChevronUp, Droplets, Box, FlaskConical, External
 
 export default function ScanPage() {
   const [, setItemCode] = useState('')
-  const [scanMode, setScanMode] = useState<'receive' | 'issue' | 'view' | null>(null)
+  const [scanMode, setScanMode] = useState<'receive' | 'issue' | null>(null)
   const [quantity, setQuantity] = useState<number | string>(1)
   const [note, setNote] = useState('')
   const [product, setProduct] = useState<Product | null>(null)
@@ -269,6 +269,10 @@ export default function ScanPage() {
           <p className="text-sm text-gray-500 mt-2">
             ยินดีต้อนรับกลับมา, {user?.fullName || 'ผู้ใช้งาน'}
           </p>
+          <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3.5 py-1 text-xs font-bold text-[#BE1111] border border-red-100/80 shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#BE1111] animate-pulse"></span>
+            พื้นที่ปฏิบัติงาน: คลัง WPK • เฉพาะสินค้า Yamalube เท่านั้น
+          </div>
         </motion.div>
 
         <motion.div
@@ -314,43 +318,22 @@ export default function ScanPage() {
                   <p className="text-sm text-gray-500 mt-1">สแกนเพื่อเบิก Packaging ออกไปใช้งาน</p>
                 </div>
               </button>
-              
-              <button
-                onClick={() => setScanMode('view')}
-                className="group relative overflow-hidden rounded-3xl bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-blue-100 hover:border-blue-300 hover:shadow-[0_8px_30px_rgba(37,99,235,0.12)] transition-all flex items-center gap-5 text-left"
-              >
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 group-hover:scale-110 group-hover:bg-blue-100 transition-all">
-                  <Search className="w-7 h-7" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors">ดูสต็อกคงเหลือ (View Stock)</h3>
-                  <p className="text-sm text-gray-500 mt-1">สแกนเพื่อตรวจสอบสูตร BOM และยอดคงเหลือ</p>
-                </div>
-              </button>
             </div>
           ) : (
             <>
               <div className="mb-4 flex items-center justify-between bg-white rounded-2xl p-3 shadow-sm border border-gray-100/80">
                 <div className="flex items-center gap-3">
                   <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                    scanMode === 'receive' ? 'bg-green-50 text-green-600' :
-                    scanMode === 'issue' ? 'bg-red-50 text-red-600' :
-                    'bg-blue-50 text-blue-600'
+                    scanMode === 'receive' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
                   }`}>
-                    {scanMode === 'receive' ? <PackagePlus className="w-5 h-5" /> :
-                     scanMode === 'issue' ? <PackageMinus className="w-5 h-5" /> :
-                     <Search className="w-5 h-5" />}
+                    {scanMode === 'receive' ? <PackagePlus className="w-5 h-5" /> : <PackageMinus className="w-5 h-5" />}
                   </div>
                   <div>
                     <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block leading-tight">โหมดปัจจุบัน</span>
                     <span className={`text-sm font-bold ${
-                      scanMode === 'receive' ? 'text-green-700' :
-                      scanMode === 'issue' ? 'text-red-700' :
-                      'text-blue-700'
+                      scanMode === 'receive' ? 'text-green-700' : 'text-red-700'
                     }`}>
-                      {scanMode === 'receive' ? 'รับสินค้าเข้า' :
-                       scanMode === 'issue' ? 'เบิกออกสินค้า' :
-                       'ดูสต็อกคงเหลือ'}
+                      {scanMode === 'receive' ? 'รับสินค้าเข้า' : 'เบิกออกสินค้า'}
                     </span>
                   </div>
                 </div>
@@ -624,18 +607,6 @@ export default function ScanPage() {
 
               {/* Action Form */}
               {getProductGroup(product) === 'Packaging' && (product.warehouse || '').toUpperCase().trim() === 'WPK' ? (
-                scanMode === 'view' ? (
-                <div className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 p-5 text-center shadow-inner">
-                  <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 mb-2">
-                    <Search className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <h4 className="text-sm font-bold text-blue-800 mb-1">โหมดดูสต็อกคงเหลือ</h4>
-                  <p className="text-xs text-blue-700">
-                    ปัจจุบันคุณกำลังอยู่ในโหมดดูสต็อก หากต้องการทำรายการรับเข้า/เบิกออก<br/>
-                    กรุณาปิดหน้าต่างนี้ และกด "เปลี่ยนโหมด" ที่หน้าสแกนหลัก
-                  </p>
-                </div>
-              ) : (
               <form onSubmit={submitTransaction}>
 
                 <div className="mb-5">
@@ -697,7 +668,6 @@ export default function ScanPage() {
                   )}
                 </motion.button>
               </form>
-              )
               ) : (
                 <div className="space-y-4">
                   {bomList.filter(c => c.componentItemCode !== c.parentItemCode && getBomComponentGroup(c) === 'Packaging').length > 0 && (

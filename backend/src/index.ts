@@ -239,7 +239,7 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
       })
     }
     if (username === 'staff' && password === 'staff123') {
-      const defaultStaff = { id: 7, username: 'staff', password: '', fullName: 'พนักงานคลังสินค้า (Staff)', role: 'warehouse_staff', createdAt: new Date() }
+      const defaultStaff = { id: 7, username: 'staff', password: '', fullName: 'พนักงานทั่วไป (Staff)', role: 'warehouse_staff', createdAt: new Date() }
       return res.json({
         token: signToken(defaultStaff),
         user: toPublicUser(defaultStaff),

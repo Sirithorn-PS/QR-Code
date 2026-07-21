@@ -34,13 +34,13 @@ async function main() {
     where: { username: 'staff' },
     update: {
       password: staffPassword,
-      fullName: 'พนักงานคลังสินค้า (Staff)',
+      fullName: 'พนักงานทั่วไป (Staff)',
       role: 'warehouse_staff'
     },
     create: {
       username: 'staff',
       password: staffPassword,
-      fullName: 'พนักงานคลังสินค้า (Staff)',
+      fullName: 'พนักงานทั่วไป (Staff)',
       role: 'warehouse_staff'
     }
   });

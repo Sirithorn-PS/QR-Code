@@ -12,20 +12,20 @@ async function main() {
   // 1. สร้างผู้ใช้งานเริ่มต้น (Admin และ Warehouse Staff)
   // ---------------------------------------------------------
   console.log('--- Step 1: สร้างข้อมูลผู้ใช้งานเริ่มต้นในตาราง User ---');
-  const adminPassword = await bcrypt.hash('admin123', 10);
+  const supervisorPassword = await bcrypt.hash('super1234', 10);
   const staffPassword = await bcrypt.hash('staff123', 10);
 
   const adminUser = await prisma.user.upsert({
-    where: { username: 'admin' },
+    where: { username: 'supervisor' },
     update: {
-      password: adminPassword,
-      fullName: 'ผู้ดูแลระบบคลังสินค้า (Admin)',
+      password: supervisorPassword,
+      fullName: 'ผู้ควบคุมดูแลระบบ (Supervisor)',
       role: 'admin'
     },
     create: {
-      username: 'admin',
-      password: adminPassword,
-      fullName: 'ผู้ดูแลระบบคลังสินค้า (Admin)',
+      username: 'supervisor',
+      password: supervisorPassword,
+      fullName: 'ผู้ควบคุมดูแลระบบ (Supervisor)',
       role: 'admin'
     }
   });

@@ -56,6 +56,7 @@ const getPackagingSubCategory = (item: Product): 'gallon' | 'foil' | 'cap' | 'bo
 }
 
 export default function InventoryPage() {
+  const [user, setUser] = useState<{ id: number; fullName: string; role: string } | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [search, setSearch] = useState('')
   const [error, setError] = useState('')
@@ -254,6 +255,13 @@ export default function InventoryPage() {
 
   useEffect(() => {
     let isMounted = true
+
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('user')
+      if (storedUser) {
+        setUser(JSON.parse(storedUser))
+      }
+    }
 
     async function loadInitialProducts() {
       try {
@@ -557,7 +565,7 @@ export default function InventoryPage() {
                           <th className="px-4 py-3.5 font-semibold">คลัง / โซน</th>
                           <th className="px-4 py-3.5 font-semibold">👑 สูตรสินค้าหลัก Item 1 ที่ใช้งาน</th>
                           <th className="px-4 py-3.5 font-semibold text-right">คงเหลือ</th>
-                          <th className="px-4 py-3.5 font-semibold text-center">จัดการ</th>
+                          {user?.role === 'admin' && <th className="px-4 py-3.5 font-semibold text-center">จัดการ</th>}
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
@@ -616,47 +624,58 @@ export default function InventoryPage() {
                               </td>
                               <td className="px-4 py-3.5 text-right">
                                 <div className="flex items-center justify-end gap-1.5">
-                                  <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    value={currentVal}
-                                    onChange={(e) => {
-                                      const val = e.target.value.replace(/[^0-9]/g, '')
-                                      setEditQuantities(prev => ({ ...prev, [item.id]: val }))
-                                    }}
-                                    className={`w-24 text-right rounded-lg border px-2.5 py-1.5 text-xs font-bold transition-all shadow-2xs focus:outline-none focus:ring-1 ${
-                                      isChanged 
-                                        ? 'border-[#BE1111] bg-red-50 text-[#BE1111]' 
-                                        : 'border-gray-200 bg-gray-50 text-gray-800 focus:bg-white focus:border-[#BE1111]'
-                                    }`}
-                                  />
-                                  <span className="text-gray-500 w-10 text-left font-medium">{item.unit}</span>
-                                  {isChanged && (
-                                    <button
-                                      onClick={() => {
-                                        const parsed = Number(currentVal)
-                                        if (!isNaN(parsed) && parsed >= 0) {
-                                          setConfirmTarget({ product: item, newQty: parsed })
-                                        }
-                                      }}
-                                      className="p-1.5 rounded-lg bg-[#BE1111] text-white hover:bg-[#A00F0F] transition-all shadow-2xs animate-pulse cursor-pointer"
-                                      title="บันทึกจำนวนสต็อก"
-                                    >
-                                      <Check className="w-3.5 h-3.5" />
-                                    </button>
+                                  {user?.role === 'admin' ? (
+                                    <>
+                                      <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={currentVal}
+                                        onChange={(e) => {
+                                          const val = e.target.value.replace(/[^0-9]/g, '')
+                                          setEditQuantities(prev => ({ ...prev, [item.id]: val }))
+                                        }}
+                                        className={`w-24 text-right rounded-lg border px-2.5 py-1.5 text-xs font-bold transition-all shadow-2xs focus:outline-none focus:ring-1 ${
+                                          isChanged 
+                                            ? 'border-[#BE1111] bg-red-50 text-[#BE1111]' 
+                                            : 'border-gray-200 bg-gray-50 text-gray-800 focus:bg-white focus:border-[#BE1111]'
+                                        }`}
+                                      />
+                                      <span className="text-gray-500 w-10 text-left font-medium">{item.unit}</span>
+                                      {isChanged && (
+                                        <button
+                                          onClick={() => {
+                                            const parsed = Number(currentVal)
+                                            if (!isNaN(parsed) && parsed >= 0) {
+                                              setConfirmTarget({ product: item, newQty: parsed })
+                                            }
+                                          }}
+                                          className="p-1.5 rounded-lg bg-[#BE1111] text-white hover:bg-[#A00F0F] transition-all shadow-2xs animate-pulse cursor-pointer"
+                                          title="บันทึกจำนวนสต็อก"
+                                        >
+                                          <Check className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span className="font-bold text-gray-900 text-sm">{item.quantity.toLocaleString()}</span>
+                                      <span className="text-gray-500 w-10 text-left font-medium">{item.unit}</span>
+                                    </>
                                   )}
                                 </div>
                               </td>
-                              <td className="px-4 py-3.5 text-center">
-                                <button
-                                  type="button"
-                                  onClick={() => setDeleteTarget(item)}
-                                  className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer"
-                                  title="ลบรายการสินค้า"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </td>
+                              {user?.role === 'admin' && (
+                                <td className="px-4 py-3.5 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteTarget(item)}
+                                    className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer"
+                                    title="ลบรายการสินค้า"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </td>
+                              )}
                             </tr>
                           )
                         })}
@@ -867,7 +886,7 @@ export default function InventoryPage() {
                         <th className="px-4 py-3 font-semibold">ชื่อรายการสินค้า</th>
                         <th className="px-4 py-3 font-semibold">คลัง / โซน</th>
                         <th className="px-4 py-3 font-semibold text-right">คงเหลือ</th>
-                        <th className="px-4 py-3 font-semibold text-center">จัดการ</th>
+                        {user?.role === 'admin' && <th className="px-4 py-3 font-semibold text-center">จัดการ</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -899,15 +918,17 @@ export default function InventoryPage() {
                           <td className="px-4 py-3 text-right font-bold text-gray-900">
                             {item.quantity.toLocaleString()} <span className="font-normal text-gray-500 text-[11px]">{item.unit}</span>
                           </td>
-                          <td className="px-4 py-3 text-center">
-                            <button
-                              type="button"
-                              onClick={() => setDeleteTarget(item)}
-                              className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
+                          {user?.role === 'admin' && (
+                            <td className="px-4 py-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => setDeleteTarget(item)}
+                                className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -950,7 +971,7 @@ export default function InventoryPage() {
                     <th className="px-4 py-3.5 font-semibold">ชื่อสินค้า</th>
                     <th className="px-4 py-3.5 font-semibold">คลังสินค้า / ตำแหน่ง</th>
                     <th className="px-4 py-3.5 font-semibold text-right">จำนวนคงเหลือ</th>
-                    <th className="px-4 py-3.5 font-semibold text-center">จัดการ</th>
+                    {user?.role === 'admin' && <th className="px-4 py-3.5 font-semibold text-center">จัดการ</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -959,7 +980,7 @@ export default function InventoryPage() {
                     if (filteredFlat.length === 0) {
                       return (
                         <tr>
-                          <td colSpan={6} className="px-6 py-12 text-center text-gray-500 font-medium">
+                          <td colSpan={user?.role === 'admin' ? 6 : 5} className="px-6 py-12 text-center text-gray-500 font-medium">
                             ไม่พบรายการสินค้าในหมวดหมู่นี้
                           </td>
                         </tr>
@@ -1009,47 +1030,58 @@ export default function InventoryPage() {
                           <td className="px-4 py-3.5 text-gray-600">{item.warehouse} ({item.location || '-'})</td>
                           <td className="px-4 py-3.5 text-right">
                             <div className="inline-flex items-center justify-end gap-1.5">
-                              <input
-                                type="text"
-                                value={currentVal}
-                                onChange={(e) => {
-                                  const val = e.target.value.replace(/[^0-9]/g, '')
-                                  setEditQuantities(prev => ({ ...prev, [item.id]: val }))
-                                }}
-                                className={`w-24 text-right rounded-lg border px-2.5 py-1.5 text-xs font-bold transition-all shadow-2xs focus:outline-none focus:ring-1 ${
-                                  isChanged 
-                                    ? 'border-[#BE1111] bg-red-50 text-[#BE1111]' 
-                                    : 'border-gray-200 bg-gray-50 text-gray-800 focus:bg-white focus:border-[#BE1111]'
-                                }`}
-                              />
-                              <span className="text-gray-500 w-10 text-left font-medium">{item.unit}</span>
-                              {isChanged && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const parsed = Number(currentVal)
-                                    if (!isNaN(parsed) && parsed >= 0) {
-                                      setConfirmTarget({ product: item, newQty: parsed })
-                                    }
-                                  }}
-                                  className="p-1.5 rounded-lg bg-[#BE1111] text-white hover:bg-[#A00F0F] transition-all shadow-2xs animate-pulse cursor-pointer"
-                                  title="บันทึกจำนวนสต็อก"
-                                >
-                                  <Check className="w-3.5 h-3.5" />
-                                </button>
+                              {user?.role === 'admin' ? (
+                                <>
+                                  <input
+                                    type="text"
+                                    value={currentVal}
+                                    onChange={(e) => {
+                                      const val = e.target.value.replace(/[^0-9]/g, '')
+                                      setEditQuantities(prev => ({ ...prev, [item.id]: val }))
+                                    }}
+                                    className={`w-24 text-right rounded-lg border px-2.5 py-1.5 text-xs font-bold transition-all shadow-2xs focus:outline-none focus:ring-1 ${
+                                      isChanged 
+                                        ? 'border-[#BE1111] bg-red-50 text-[#BE1111]' 
+                                        : 'border-gray-200 bg-gray-50 text-gray-800 focus:bg-white focus:border-[#BE1111]'
+                                    }`}
+                                  />
+                                  <span className="text-gray-500 w-10 text-left font-medium">{item.unit}</span>
+                                  {isChanged && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const parsed = Number(currentVal)
+                                        if (!isNaN(parsed) && parsed >= 0) {
+                                          setConfirmTarget({ product: item, newQty: parsed })
+                                        }
+                                      }}
+                                      className="p-1.5 rounded-lg bg-[#BE1111] text-white hover:bg-[#A00F0F] transition-all shadow-2xs animate-pulse cursor-pointer"
+                                      title="บันทึกจำนวนสต็อก"
+                                    >
+                                      <Check className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </>
+                              ) : (
+                                <>
+                                  <span className="font-bold text-gray-900 text-sm">{item.quantity.toLocaleString()}</span>
+                                  <span className="text-gray-500 w-10 text-left font-medium">{item.unit}</span>
+                                </>
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-3.5 text-center">
-                            <button
-                              type="button"
-                              onClick={() => setDeleteTarget(item)}
-                              className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer"
-                              title="ลบรายการสินค้า"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
+                          {user?.role === 'admin' && (
+                            <td className="px-4 py-3.5 text-center">
+                              <button
+                                type="button"
+                                onClick={() => setDeleteTarget(item)}
+                                className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer"
+                                title="ลบรายการสินค้า"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       )
                     })

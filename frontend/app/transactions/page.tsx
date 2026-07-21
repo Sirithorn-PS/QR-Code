@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2, CheckCircle2, AlertCircle, ArrowDownToLine, ArrowUp
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function TransactionsPage() {
+  const [user, setUser] = useState<{ id: number; fullName: string; role: string } | null>(null)
   const [transactions, setTransactions] = useState<StockTransaction[]>([])
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -38,6 +39,13 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     let isMounted = true
+
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('user')
+      if (storedUser) {
+        setUser(JSON.parse(storedUser))
+      }
+    }
 
     async function loadInitialTransactions() {
       try {
@@ -177,37 +185,44 @@ export default function TransactionsPage() {
                       </div>
                     </div>
 
-                    <div className="flex gap-2 self-start md:self-center">
-                      <button
-                        onClick={() => handleConfirm(transaction.id)}
-                        disabled={isBusy}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-[#10b981] px-5 py-2.5 font-bold text-white shadow-md shadow-[#10b981]/20 transition-all hover:bg-[#059669] hover:shadow-lg hover:shadow-[#10b981]/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:bg-slate-300 disabled:shadow-none disabled:transform-none disabled:cursor-not-allowed"
-                      >
-                        {isConfirming ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>กำลังอนุมัติ...</span>
-                          </>
-                        ) : (
-                          <span>อนุมัติ</span>
-                        )}
-                      </button>
+                    {user?.role === 'admin' ? (
+                      <div className="flex gap-2 self-start md:self-center">
+                        <button
+                          onClick={() => handleConfirm(transaction.id)}
+                          disabled={isBusy}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-[#10b981] px-5 py-2.5 font-bold text-white shadow-md shadow-[#10b981]/20 transition-all hover:bg-[#059669] hover:shadow-lg hover:shadow-[#10b981]/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:bg-slate-300 disabled:shadow-none disabled:transform-none disabled:cursor-not-allowed"
+                        >
+                          {isConfirming ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span>กำลังอนุมัติ...</span>
+                            </>
+                          ) : (
+                            <span>อนุมัติ</span>
+                          )}
+                        </button>
 
-                      <button
-                        onClick={() => openRejectModal(transaction.id)}
-                        disabled={isBusy}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-[#ef4444] px-5 py-2.5 font-bold text-white shadow-md shadow-[#ef4444]/20 transition-all hover:bg-[#dc2626] hover:shadow-lg hover:shadow-[#ef4444]/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:bg-slate-300 disabled:shadow-none disabled:transform-none disabled:cursor-not-allowed"
-                      >
-                        {isRejecting ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>กำลังปฏิเสธ...</span>
-                          </>
-                        ) : (
-                          <span>ปฏิเสธ</span>
-                        )}
-                      </button>
-                    </div>
+                        <button
+                          onClick={() => openRejectModal(transaction.id)}
+                          disabled={isBusy}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-[#ef4444] px-5 py-2.5 font-bold text-white shadow-md shadow-[#ef4444]/20 transition-all hover:bg-[#dc2626] hover:shadow-lg hover:shadow-[#ef4444]/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:bg-slate-300 disabled:shadow-none disabled:transform-none disabled:cursor-not-allowed"
+                        >
+                          {isRejecting ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span>กำลังปฏิเสธ...</span>
+                            </>
+                          ) : (
+                            <span>ปฏิเสธ</span>
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5 text-xs font-bold text-amber-600 self-start md:self-center shadow-2xs">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                        รอการอนุมัติจาก Supervisor
+                      </div>
+                    )}
                   </div>
                 </div>
               )

@@ -138,10 +138,10 @@ async function authenticate(req: AuthenticatedRequest, res: Response, next: Next
         role: firstAdmin.role,
       }
     } else {
-      req.user = { id: 6, username: 'admin', role: 'admin' }
+      req.user = { id: 6, username: 'supervisor', role: 'admin' }
     }
   } catch {
-    req.user = { id: 6, username: 'admin', role: 'admin' }
+    req.user = { id: 6, username: 'supervisor', role: 'admin' }
   }
 
   return next()
@@ -245,8 +245,8 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
     }
 
     // Fast-path for default Master Data users
-    if (username === 'admin' && password === 'admin123') {
-      const defaultAdmin = { id: 6, username: 'admin', password: '', fullName: 'ผู้ดูแลระบบคลังสินค้า (Admin)', role: 'admin', createdAt: new Date() }
+    if (username === 'supervisor' && password === 'super1234') {
+      const defaultAdmin = { id: 6, username: 'supervisor', password: '', fullName: 'ผู้ควบคุมดูแลระบบ (Supervisor)', role: 'admin', createdAt: new Date() }
       return res.json({
         token: signToken(defaultAdmin),
         user: toPublicUser(defaultAdmin),

@@ -116,7 +116,7 @@ export default function Home() {
               </div>
               <div>
                 <p className="text-xs text-gray-500 font-medium mb-1 uppercase tracking-wider">บทบาทของคุณ</p>
-                <p className="font-bold text-gray-900 text-lg capitalize tracking-tight">{user?.role === 'warehouse_staff' ? 'เจ้าหน้าที่คลังสินค้า' : user?.role || 'Guest'}</p>
+                <p className="font-bold text-gray-900 text-lg capitalize tracking-tight">{user?.role === 'admin' ? 'Supervisor' : user?.role === 'warehouse_staff' ? 'พนักงานทั่วไป' : user?.role || 'Guest'}</p>
               </div>
             </div>
 

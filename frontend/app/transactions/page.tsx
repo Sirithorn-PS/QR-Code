@@ -60,8 +60,22 @@ export default function TransactionsPage() {
 
     void loadInitialTransactions()
 
+    // Background Auto-Polling ทุกๆ 5 วินาที
+    const intervalId = setInterval(async () => {
+      try {
+        const freshTransactions = await fetchTransactions('pending')
+        if (isMounted) {
+          setTransactions(freshTransactions)
+        }
+      } catch (err) {
+        // ไม่ต้องแจ้งเตือน Error บนหน้าจอเพื่อไม่ให้รบกวนผู้ใช้ ปล่อยผ่านไป
+        console.error('Background poll failed:', err)
+      }
+    }, 5000)
+
     return () => {
       isMounted = false
+      clearInterval(intervalId)
     }
   }, [])
 

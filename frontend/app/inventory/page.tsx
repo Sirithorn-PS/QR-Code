@@ -428,8 +428,8 @@ export default function InventoryPage() {
                 </span>
                 <div className="text-2xl font-black text-gray-900 mt-2 flex items-baseline justify-between">
                   <span>{card.count}</span>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isSelected ? 'bg-gray-900 text-white font-bold' : 'text-gray-400 bg-gray-100'}`}>
-                    {isSelected ? 'เลือกอยู่' : 'รายการ'}
+                  <span className="text-xs font-semibold text-gray-400">
+                    รายการ
                   </span>
                 </div>
               </button>

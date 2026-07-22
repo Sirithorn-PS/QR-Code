@@ -429,12 +429,12 @@ export default function InventoryPage() {
                 <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1 truncate max-w-full">
                   {card.label}
                 </span>
-                <div className="text-2xl font-black text-gray-900 flex items-baseline justify-center gap-1">
-                  <span>{card.count}</span>
-                  <span className="text-xs font-semibold text-gray-400">
-                    รายการ
-                  </span>
+                <div className="text-2xl font-black text-gray-900 text-center leading-none mt-1">
+                  {card.count}
                 </div>
+                <span className="text-[10px] font-semibold text-gray-400 mt-1">
+                  รายการ
+                </span>
               </button>
             )
           })}

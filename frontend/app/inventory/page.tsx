@@ -418,7 +418,7 @@ export default function InventoryPage() {
                 onClick={() => setPackagingSubTab(card.id as typeof packagingSubTab)}
                 className={`p-4 rounded-2xl border font-display flex flex-col justify-between text-left transition-all duration-200 cursor-pointer ${
                   isSelected
-                    ? 'bg-white border-2 border-red-300 shadow-none scale-[1.01]'
+                    ? 'bg-white border-2 border-[#BE1111] shadow-none scale-[1.01]'
                     : 'bg-white/80 border border-gray-200/90 hover:border-gray-300 hover:bg-white opacity-85 hover:opacity-100'
                 }`}
               >

@@ -327,5 +327,6 @@
   - **การแก้ไข**:
     - แก้ไข TypeScript Type Mismatch ใน `frontend/app/inventory/page.tsx` และ `frontend/app/scan/page.tsx` ให้ถูกต้อง
     - อัปเดต `backend/tsconfig.json` โดยเพิ่ม `"include": ["src/**/*"]` และ `"exclude": ["node_modules", "dist", "__tests__"]`
+    - สร้างไฟล์ `backend/__tests__/tsconfig.json` เพื่อรองรับไฟล์ทดสอบและ `vitest.config.ts` ป้องกันปัญหา TypeScript Language Server ใน IDE (แถบ Problems) แจ้งเตือนข้อความตกค้าง
     - ทดสอบรัน `npm run build` ทั้ง frontend และ backend รวมถึงรัน unit tests (`vitest`) ผลการทดสอบผ่าน 100% พร้อมสำหรับ Commit & Push ขึ้น GitHub เพื่อให้ Vercel และ Render Deploy อัตโนมัติอีกครั้ง
 

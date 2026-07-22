@@ -432,19 +432,47 @@ app.get('/products', authenticate, async (req, res) => {
 
 app.get('/products/:itemCode/bom', authenticate, async (req, res) => {
   try {
-    const parentItemCode = decodeURIComponent(req.params.itemCode || '').trim()
-    const boms = await prisma.billOfMaterial.findMany({
+    const rawCode = decodeURIComponent(req.params.itemCode || '').trim()
+    let boms = await prisma.billOfMaterial.findMany({
       where: {
         parentItemCode: {
-          equals: parentItemCode,
+          equals: rawCode,
           mode: 'insensitive'
         }
       },
       orderBy: [
-        { depth: 'asc' },
-        { componentItemCode: 'asc' }
+        { id: 'asc' }
       ]
     })
+
+    if (boms.length === 0) {
+      const asComponent = await prisma.billOfMaterial.findMany({
+        where: {
+          componentItemCode: {
+            equals: rawCode,
+            mode: 'insensitive'
+          }
+        },
+        select: { parentItemCode: true },
+        take: 1
+      })
+
+      const parentCode = (asComponent[0]?.parentItemCode || '').trim()
+      if (parentCode) {
+        boms = await prisma.billOfMaterial.findMany({
+          where: {
+            parentItemCode: {
+              equals: parentCode,
+              mode: 'insensitive'
+            }
+          },
+          orderBy: [
+            { id: 'asc' }
+          ]
+        })
+      }
+    }
+
     return res.json(boms)
   } catch (err) {
     console.error('Error fetching BOM:', err)

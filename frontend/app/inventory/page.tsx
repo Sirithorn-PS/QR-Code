@@ -403,12 +403,12 @@ export default function InventoryPage() {
         {/* Interactive Overview Statistics Cards for Packaging (Acts as Direct Filter Buttons) */}
         <div className="mb-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
           {[
-            { id: 'all', label: 'บรรจุภัณฑ์ทั้งหมด', count: products.filter(p => p.itemType === 'Packaging').length, icon: Package, badgeBg: 'bg-gray-100/80 text-gray-700 border-gray-200/60' },
-            { id: 'gallon', label: 'แกลลอน (Gallon)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'gallon').length, icon: Droplets, badgeBg: 'bg-gray-100/80 text-gray-700 border-gray-200/60' },
-            { id: 'foil', label: 'ฟอยล์ (Foil)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'foil').length, icon: Zap, badgeBg: 'bg-gray-100/80 text-gray-700 border-gray-200/60' },
-            { id: 'cap', label: 'ฝา (Cap)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'cap').length, icon: Disc, badgeBg: 'bg-gray-100/80 text-gray-700 border-gray-200/60' },
-            { id: 'box', label: 'กล่อง (Box)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'box').length, icon: Box, badgeBg: 'bg-gray-100/80 text-gray-700 border-gray-200/60' },
-            { id: 'other', label: 'อื่นๆ (Others)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'other').length, icon: LayoutGrid, badgeBg: 'bg-gray-100/80 text-gray-700 border-gray-200/60' },
+            { id: 'all', label: 'บรรจุภัณฑ์ทั้งหมด', count: products.filter(p => p.itemType === 'Packaging').length, icon: Package, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
+            { id: 'gallon', label: 'แกลลอน (Gallon)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'gallon').length, icon: Droplets, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
+            { id: 'foil', label: 'ฟอยล์ (Foil)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'foil').length, icon: Zap, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
+            { id: 'cap', label: 'ฝา (Cap)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'cap').length, icon: Disc, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
+            { id: 'box', label: 'กล่อง (Box)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'box').length, icon: Box, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
+            { id: 'other', label: 'อื่นๆ (Others)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'other').length, icon: LayoutGrid, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
           ].map(card => {
             const isSelected = packagingSubTab === card.id
             const IconComponent = card.icon

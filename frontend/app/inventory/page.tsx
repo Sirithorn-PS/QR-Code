@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { fetchProducts, updateProductQuantity, createProduct, deleteProduct, fetchProductBom, Product, BillOfMaterial } from '@/lib/auth'
 import QRCode from 'react-qr-code'
-import { Search, Package, ArrowLeft, Layers, Download, Check, History, X, Trash2, FileText, LayoutGrid, Crown, Droplets, Box, FlaskConical, QrCode, Star, Copy } from 'lucide-react'
+import { Search, Package, ArrowLeft, Layers, Download, Check, History, X, Trash2, FileText, LayoutGrid, Crown, Droplets, Box, FlaskConical, QrCode, Star, Copy, Zap, Disc } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const getPackagingSubCategory = (item: Product): 'gallon' | 'foil' | 'cap' | 'box' | 'other' => {
@@ -403,30 +403,33 @@ export default function InventoryPage() {
         {/* Interactive Overview Statistics Cards for Packaging (Acts as Direct Filter Buttons) */}
         <div className="mb-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
           {[
-            { id: 'all', label: 'บรรจุภัณฑ์ทั้งหมด', count: products.filter(p => p.itemType === 'Packaging').length, icon: '📦', color: 'text-gray-700' },
-            { id: 'gallon', label: 'แกลลอน (Gallon)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'gallon').length, icon: '🛢️', color: 'text-blue-600' },
-            { id: 'foil', label: 'ฟอยล์ (Foil)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'foil').length, icon: '⚡', color: 'text-purple-600' },
-            { id: 'cap', label: 'ฝา (Cap)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'cap').length, icon: '🔴', color: 'text-red-600' },
-            { id: 'box', label: 'กล่อง (Box)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'box').length, icon: '📦', color: 'text-amber-600' },
-            { id: 'other', label: 'อื่นๆ (Others)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'other').length, icon: '🧩', color: 'text-slate-500' },
+            { id: 'all', label: 'บรรจุภัณฑ์ทั้งหมด', count: products.filter(p => p.itemType === 'Packaging').length, icon: Package, badgeBg: 'bg-gray-100 text-gray-700 border-gray-200' },
+            { id: 'gallon', label: 'แกลลอน (Gallon)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'gallon').length, icon: Droplets, badgeBg: 'bg-blue-50 text-blue-600 border-blue-100' },
+            { id: 'foil', label: 'ฟอยล์ (Foil)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'foil').length, icon: Zap, badgeBg: 'bg-purple-50 text-purple-600 border-purple-100' },
+            { id: 'cap', label: 'ฝา (Cap)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'cap').length, icon: Disc, badgeBg: 'bg-red-50 text-red-600 border-red-100' },
+            { id: 'box', label: 'กล่อง (Box)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'box').length, icon: Box, badgeBg: 'bg-amber-50 text-amber-600 border-amber-100' },
+            { id: 'other', label: 'อื่นๆ (Others)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'other').length, icon: LayoutGrid, badgeBg: 'bg-slate-100 text-slate-600 border-slate-200/80' },
           ].map(card => {
             const isSelected = packagingSubTab === card.id
+            const IconComponent = card.icon
             return (
               <button
                 key={card.id}
                 type="button"
                 onClick={() => setPackagingSubTab(card.id as typeof packagingSubTab)}
-                className={`p-4 rounded-2xl border font-display flex flex-col justify-between text-left transition-all duration-200 cursor-pointer ${
+                className={`p-4 rounded-2xl border font-display flex flex-col items-center justify-center text-center transition-all duration-200 cursor-pointer ${
                   isSelected
                     ? 'bg-white border-2 border-[#BE1111] shadow-none scale-[1.01]'
                     : 'bg-white/80 border border-gray-200/90 hover:border-gray-300 hover:bg-white opacity-85 hover:opacity-100'
                 }`}
               >
-                <span className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${card.color}`}>
-                  <span>{card.icon}</span>
-                  <span className="truncate">{card.label}</span>
+                <div className={`w-9 h-9 rounded-xl border flex items-center justify-center mb-2 shadow-2xs ${card.badgeBg}`}>
+                  <IconComponent className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1 truncate max-w-full">
+                  {card.label}
                 </span>
-                <div className="text-2xl font-black text-gray-900 mt-2 flex items-baseline justify-between">
+                <div className="text-2xl font-black text-gray-900 flex items-baseline justify-center gap-1">
                   <span>{card.count}</span>
                   <span className="text-xs font-semibold text-gray-400">
                     รายการ

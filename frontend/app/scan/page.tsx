@@ -707,18 +707,16 @@ export default function ScanPage() {
                     </div>
                   )}
 
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-center shadow-inner">
-                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-amber-100 mb-2">
-                      <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
+                  <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-5 text-center shadow-inner">
+                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 mb-2">
+                      <FileText className="w-5 h-5 text-blue-600" />
                     </div>
-                    <h4 className="text-sm font-bold text-amber-800 mb-1">ไม่อนุญาตให้ทำรายการ</h4>
-                    <p className="text-xs text-amber-700">
+                    <h4 className="text-sm font-bold text-blue-900 mb-1">ℹ️ รายการนี้สำหรับดูข้อมูล BOM เท่านั้น</h4>
+                    <p className="text-xs text-blue-700 leading-relaxed">
                       {getProductGroup(product) !== 'Packaging' ? (
                         <>
-                          {getProductGroup(product) === 'FG' ? 'การรับเข้า/เบิกออก สินค้าสำเร็จรูป (FG) ไม่สามารถทำได้ที่หน้านี้' : `รายการนี้เป็น ${getProductGroup(product)} ซึ่งไม่อนุญาตให้รับเข้า/เบิกออก`}<br/>
-                          กรุณาสแกนหรือเลือก <b>Packaging (บรรจุภัณฑ์)</b> เพื่อทำรายการ
+                          สินค้าประเภท <b>{getProductGroup(product)}</b> เป็นเพียงข้อมูลสำหรับดูสูตรการผลิต (BOM) เท่านั้น<br/>
+                          ไม่อนุญาตให้ทำรายการสแกนรับเข้า-เบิกออก (ระบบรองรับการสแกนรับเข้า-เบิกออกเฉพาะหมวด <b>Packaging</b> เท่านั้น)
                         </>
                       ) : (
                         <>

@@ -322,9 +322,12 @@ export default function InventoryPage() {
             </Link>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-red-50 text-[#BE1111] rounded-xl flex items-center justify-center shadow-sm">
-                <Layers className="w-5 h-5" />
+                <Box className="w-5 h-5" />
               </div>
-              <h1 className="text-2xl md:text-3xl font-display font-bold text-gray-900 tracking-tight">จัดการสต็อกสินค้า</h1>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-display font-bold text-gray-900 tracking-tight">จัดการสต็อกบรรจุภัณฑ์ (Packaging Stock)</h1>
+                <p className="text-xs text-gray-500 mt-0.5">คลังข้อมูลและระบบจัดการสต็อกบรรจุภัณฑ์ (แกลลอน, ฟอยล์, ฝา, กล่อง) สำหรับตรวจสอบและดาวน์โหลด QR Code</p>
+              </div>
             </div>
           </div>
 
@@ -351,7 +354,6 @@ export default function InventoryPage() {
                     const val = event.target.value
                     setSearch(val)
                     if (val.trim() === '') {
-                      setActiveTab('Packaging')
                       setPackagingSubTab('all')
                       loadProducts('')
                     }
@@ -364,12 +366,11 @@ export default function InventoryPage() {
                     type="button"
                     onClick={() => {
                       setSearch('')
-                      setActiveTab('Packaging')
                       setPackagingSubTab('all')
                       loadProducts('')
                     }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                    title="ล้างคำค้นหาและกลับสู่หน้า ทั้งหมด"
+                    title="ล้างคำค้นหา"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -399,86 +400,88 @@ export default function InventoryPage() {
           )}
         </AnimatePresence>
 
-        {/* Pill Tabs: Category Filter */}
-        <div className="mb-8 w-full overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          <div className="flex items-center gap-2.5 min-w-max">
+        {/* Overview Statistics Banner for Packaging */}
+        <div className="mb-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+          <div className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs font-display flex flex-col justify-between">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">บรรจุภัณฑ์ทั้งหมด</span>
+            <div className="text-2xl font-black text-gray-900 mt-1 flex items-baseline gap-1">
+              {products.filter(p => p.itemType === 'Packaging').length}
+              <span className="text-xs font-normal text-gray-400">รายการ</span>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs font-display flex flex-col justify-between">
+            <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1">🛢️ แกลลอน (Gallon)</span>
+            <div className="text-2xl font-black text-gray-900 mt-1 flex items-baseline gap-1">
+              {products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'gallon').length}
+              <span className="text-xs font-normal text-gray-400">รายการ</span>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs font-display flex flex-col justify-between">
+            <span className="text-[11px] font-bold text-purple-600 uppercase tracking-wider flex items-center gap-1">⚡ ฟอยล์ (Foil)</span>
+            <div className="text-2xl font-black text-gray-900 mt-1 flex items-baseline gap-1">
+              {products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'foil').length}
+              <span className="text-xs font-normal text-gray-400">รายการ</span>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs font-display flex flex-col justify-between">
+            <span className="text-[11px] font-bold text-red-600 uppercase tracking-wider flex items-center gap-1">🔴 ฝา (Cap)</span>
+            <div className="text-2xl font-black text-gray-900 mt-1 flex items-baseline gap-1">
+              {products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'cap').length}
+              <span className="text-xs font-normal text-gray-400">รายการ</span>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs font-display flex flex-col justify-between">
+            <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider flex items-center gap-1">📦 กล่อง (Box)</span>
+            <div className="text-2xl font-black text-gray-900 mt-1 flex items-baseline gap-1">
+              {products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'box').length}
+              <span className="text-xs font-normal text-gray-400">รายการ</span>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs font-display flex flex-col justify-between">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">🧩 อื่นๆ (Others)</span>
+            <div className="text-2xl font-black text-gray-900 mt-1 flex items-baseline gap-1">
+              {products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'other').length}
+              <span className="text-xs font-normal text-gray-400">รายการ</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Primary Sub-Category Filter Tabs: Packaging */}
+        <div className="mb-8 w-full overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="flex items-center gap-2 min-w-max bg-gray-100/70 p-1.5 rounded-2xl border border-gray-200/80 font-display shadow-2xs">
             {[
-              { id: 'ALL', label: 'ทั้งหมด', count: products.length, icon: LayoutGrid },
-              { id: 'FG', label: 'FG (สินค้าหลัก)', count: products.filter(p => p.itemType === 'FG').length, icon: Crown },
-              { id: 'Bulk', label: 'Bulk', count: products.filter(p => p.itemType === 'Bulk').length, icon: Droplets },
-              { id: 'Packaging', label: 'Packaging', count: products.filter(p => p.itemType === 'Packaging').length, icon: Box },
-              { id: 'Raw Material', label: 'Raw', count: products.filter(p => p.itemType === 'Raw Material').length, icon: FlaskConical },
-            ].map((opt) => {
-              const IconComp = opt.icon
-              const isSelected = activeTab === opt.id
+              { id: 'all', label: 'ทั้งหมด (All)', count: products.filter(p => p.itemType === 'Packaging').length },
+              { id: 'gallon', label: 'แกลลอน (Gallon)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'gallon').length },
+              { id: 'foil', label: 'ฟอยล์ (Foil)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'foil').length },
+              { id: 'cap', label: 'ฝา (Cap)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'cap').length },
+              { id: 'box', label: 'กล่อง (Box)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'box').length },
+              { id: 'other', label: 'อื่นๆ (Others)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'other').length },
+            ].map((subOpt) => {
+              const isSubSelected = packagingSubTab === subOpt.id
               return (
                 <button
-                  key={opt.id}
-                  onClick={() => {
-                    setActiveTab(opt.id)
-                    setSelectedParentCode(null)
-                    setPackagingSubTab('all')
-                  }}
-                  className={`group flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-300 cursor-pointer shadow-[0_2px_10px_rgb(0,0,0,0.02)] active:scale-95 font-display ${
-                    isSelected
-                      ? 'bg-gray-900 text-white border border-gray-900'
-                      : 'bg-white text-gray-600 border border-gray-200/80 hover:bg-gray-50 hover:border-gray-300 hover:shadow-sm'
+                  key={subOpt.id}
+                  type="button"
+                  onClick={() => setPackagingSubTab(subOpt.id as typeof packagingSubTab)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 cursor-pointer text-xs font-bold ${
+                    isSubSelected
+                      ? 'bg-gray-900 text-white shadow-md'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
                   }`}
                 >
-                  <IconComp className={`w-4 h-4 transition-transform duration-300 ${isSelected ? 'scale-110' : 'group-hover:scale-110'}`} />
-                  <span className="text-sm font-bold tracking-tight font-display">{opt.label}</span>
-                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-display font-bold ml-0.5 ${
-                    isSelected
-                      ? 'bg-white/20 text-white'
-                      : 'bg-gray-100 text-gray-500'
+                  <span>{subOpt.label}</span>
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] ${
+                    isSubSelected
+                      ? 'bg-white/20 text-white font-bold'
+                      : 'bg-gray-200/80 text-gray-600'
                   }`}>
-                    {opt.count}
+                    {subOpt.count}
                   </span>
                 </button>
               )
             })}
           </div>
         </div>
-
-        {/* Sub-Category Pill Tabs: Packaging Filter */}
-        {activeTab === 'Packaging' && (
-          <div className="mb-8 w-full overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <div className="flex items-center gap-2 min-w-max bg-gray-100/60 p-1.5 rounded-2xl border border-gray-200/50 font-display">
-              {[
-                { id: 'all', label: 'ทั้งหมด (All)', count: products.filter(p => p.itemType === 'Packaging').length },
-                { id: 'gallon', label: 'แกลลอน (Gallon)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'gallon').length },
-                { id: 'foil', label: 'ฟอยล์ (Foil)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'foil').length },
-                { id: 'cap', label: 'ฝา (Cap)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'cap').length },
-                { id: 'box', label: 'กล่อง (Box)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'box').length },
-                { id: 'other', label: 'อื่นๆ (Others)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'other').length },
-              ].map((subOpt) => {
-                const isSubSelected = packagingSubTab === subOpt.id
-                return (
-                  <button
-                    key={subOpt.id}
-                    type="button"
-                    onClick={() => setPackagingSubTab(subOpt.id as typeof packagingSubTab)}
-                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl transition-all duration-200 cursor-pointer text-xs font-bold ${
-                      isSubSelected
-                        ? 'bg-white text-gray-900 shadow-sm border border-gray-200'
-                        : 'text-gray-500 hover:text-gray-900 hover:bg-white/40'
-                    }`}
-                  >
-                    <span>{subOpt.label}</span>
-                    <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${
-                      isSubSelected
-                        ? 'bg-red-50 text-[#BE1111] font-bold'
-                        : 'bg-gray-200/60 text-gray-500'
-                    }`}>
-                      {subOpt.count}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
         {/* Quick Filter Banner if parent selected */}
         {selectedParentCode && (
           <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl bg-white p-4 border border-gray-200/90 shadow-2xs animate-in fade-in slide-in-from-top-2 duration-300">

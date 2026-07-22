@@ -235,7 +235,7 @@ export default function ScanPage() {
     if (p.itemType === 'Raw Material' || p.itemType === 'RM') return 'Raw Material'
     
     const code = p.itemCode.toLowerCase()
-    const desc = p.description.toLowerCase()
+    const desc = (p.name || '').toLowerCase()
     const uom = (p.unit || '').toUpperCase()
 
     if (

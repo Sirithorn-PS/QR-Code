@@ -319,3 +319,13 @@
   - เปลี่ยนรูปแบบการแสดงผลของสินค้าประเภท Packaging จากแบบตาราง (Table View) มาเป็นการ์ดขนาดใหญ่ (Card View) เหมือนหน้าสินค้าหลัก (FG) เพื่อความสวยงาม สอดคล้องของดีไซน์ระบบ และใช้งานสะดวกยิ่งขึ้น
   - เพิ่มปุ่ม "ดูรายละเอียด BOM" ให้กับรายการการ์ดสินค้าประเภท Packaging
 
+## 22 July 2026
+- **วิเคราะห์และแก้ไขปัญหา Deployment Build Failed บน Vercel และ Render**:
+  - **สาเหตุของปัญหา**:
+    1. **Vercel Build Error (Frontend)**: เกิดจาก TypeScript Type Error ใน `frontend/app/inventory/page.tsx` (การเปรียบเทียบ `activeTab !== 'Packaging'` เมื่อ type ถูก narrow เป็น `'Bulk' | 'Raw Material'`) และใน `frontend/app/scan/page.tsx` (การเรียก `p.description` ซึ่งไม่มีใน interface `Product` โดยที่ถูกต้องคือ `p.name`) ทำให้คำสั่ง `next build` ล้มเหลว (`exit status 1`) ส่งผลให้ Vercel ไม่สามารถ Deploy เวอร์ชันใหม่ได้ และคงหน้าเว็บเดิมไว้
+    2. **Render Build Error (Backend)**: เกิดจาก `backend/tsconfig.json` ไม่มีพร็อพเพอร์ตี้ `"include"` ทำให้ `tsc` ไปรวมไฟล์ในโฟลเดอร์ `__tests__` และ `vitest.config.ts` ซึ่งอยู่นอก `src` (`rootDir`) เกิดข้อผิดพลาด `TS6059` ส่งผลให้การ Build บน Render ล้มเหลว
+  - **การแก้ไข**:
+    - แก้ไข TypeScript Type Mismatch ใน `frontend/app/inventory/page.tsx` และ `frontend/app/scan/page.tsx` ให้ถูกต้อง
+    - อัปเดต `backend/tsconfig.json` โดยเพิ่ม `"include": ["src/**/*"]` และ `"exclude": ["node_modules", "dist", "__tests__"]`
+    - ทดสอบรัน `npm run build` ทั้ง frontend และ backend รวมถึงรัน unit tests (`vitest`) ผลการทดสอบผ่าน 100% พร้อมสำหรับ Commit & Push ขึ้น GitHub เพื่อให้ Vercel และ Render Deploy อัตโนมัติอีกครั้ง
+

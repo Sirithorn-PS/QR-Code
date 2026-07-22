@@ -513,12 +513,8 @@ export default function InventoryPage() {
           {(activeTab === 'Bulk' || activeTab === 'Raw Material') && (() => {
             const categoryItems = products
               .filter(p => p.itemType === activeTab && matchesUnit(p.unit))
-              .filter(p => {
-                if (activeTab !== 'Packaging' || packagingSubTab === 'all') return true
-                return getPackagingSubCategory(p) === packagingSubTab
-              })
-            const CategoryIcon = activeTab === 'Bulk' ? Droplets : activeTab === 'Packaging' ? Box : FlaskConical
-            const categoryTitle = activeTab === 'Bulk' ? 'Bulk (กึ่งสำเร็จรูป / สารผสม)' : activeTab === 'Packaging' ? 'Packaging (บรรจุภัณฑ์ / วัสดุห่อหุ้ม)' : 'Raw Material (วัตถุดิบตั้งต้น / เคมีภัณฑ์)'
+            const CategoryIcon = activeTab === 'Bulk' ? Droplets : FlaskConical
+            const categoryTitle = activeTab === 'Bulk' ? 'Bulk (กึ่งสำเร็จรูป / สารผสม)' : 'Raw Material (วัตถุดิบตั้งต้น / เคมีภัณฑ์)'
 
             return (
               <div className="mb-8 overflow-hidden rounded-3xl border border-gray-200/80 bg-white shadow-[0_4px_20px_rgb(0,0,0,0.03)] animate-in fade-in duration-300 font-display">
@@ -530,13 +526,7 @@ export default function InventoryPage() {
                     <div>
                       <h3 className="font-black text-lg tracking-wide flex items-center gap-2 text-gray-900">
                         <span>
-                          รายการ {categoryTitle} {activeTab === 'Packaging' && (
-                            packagingSubTab === 'all' ? 'ทั้งหมด' :
-                            packagingSubTab === 'gallon' ? 'ประเภท แกลลอน' :
-                            packagingSubTab === 'foil' ? 'ประเภท ฟอยล์' :
-                            packagingSubTab === 'cap' ? 'ประเภท ฝา' :
-                            packagingSubTab === 'box' ? 'ประเภท กล่อง' : 'ประเภท อื่นๆ'
-                          )}
+                          รายการ {categoryTitle}
                         </span>
                       </h3>
                       <p className="text-xs text-gray-500 mt-0.5">

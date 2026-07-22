@@ -400,87 +400,41 @@ export default function InventoryPage() {
           )}
         </AnimatePresence>
 
-        {/* Overview Statistics Banner for Packaging */}
+        {/* Interactive Overview Statistics Cards for Packaging (Acts as Direct Filter Buttons) */}
         <div className="mb-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
-          <div className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs font-display flex flex-col justify-between">
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">บรรจุภัณฑ์ทั้งหมด</span>
-            <div className="text-2xl font-black text-gray-900 mt-1 flex items-baseline gap-1">
-              {products.filter(p => p.itemType === 'Packaging').length}
-              <span className="text-xs font-normal text-gray-400">รายการ</span>
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs font-display flex flex-col justify-between">
-            <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1">🛢️ แกลลอน (Gallon)</span>
-            <div className="text-2xl font-black text-gray-900 mt-1 flex items-baseline gap-1">
-              {products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'gallon').length}
-              <span className="text-xs font-normal text-gray-400">รายการ</span>
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs font-display flex flex-col justify-between">
-            <span className="text-[11px] font-bold text-purple-600 uppercase tracking-wider flex items-center gap-1">⚡ ฟอยล์ (Foil)</span>
-            <div className="text-2xl font-black text-gray-900 mt-1 flex items-baseline gap-1">
-              {products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'foil').length}
-              <span className="text-xs font-normal text-gray-400">รายการ</span>
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs font-display flex flex-col justify-between">
-            <span className="text-[11px] font-bold text-red-600 uppercase tracking-wider flex items-center gap-1">🔴 ฝา (Cap)</span>
-            <div className="text-2xl font-black text-gray-900 mt-1 flex items-baseline gap-1">
-              {products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'cap').length}
-              <span className="text-xs font-normal text-gray-400">รายการ</span>
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs font-display flex flex-col justify-between">
-            <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider flex items-center gap-1">📦 กล่อง (Box)</span>
-            <div className="text-2xl font-black text-gray-900 mt-1 flex items-baseline gap-1">
-              {products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'box').length}
-              <span className="text-xs font-normal text-gray-400">รายการ</span>
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs font-display flex flex-col justify-between">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">🧩 อื่นๆ (Others)</span>
-            <div className="text-2xl font-black text-gray-900 mt-1 flex items-baseline gap-1">
-              {products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'other').length}
-              <span className="text-xs font-normal text-gray-400">รายการ</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Primary Sub-Category Filter Tabs: Packaging */}
-        <div className="mb-8 w-full overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          <div className="flex items-center gap-2 min-w-max bg-gray-100/70 p-1.5 rounded-2xl border border-gray-200/80 font-display shadow-2xs">
-            {[
-              { id: 'all', label: 'ทั้งหมด (All)', count: products.filter(p => p.itemType === 'Packaging').length },
-              { id: 'gallon', label: 'แกลลอน (Gallon)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'gallon').length },
-              { id: 'foil', label: 'ฟอยล์ (Foil)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'foil').length },
-              { id: 'cap', label: 'ฝา (Cap)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'cap').length },
-              { id: 'box', label: 'กล่อง (Box)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'box').length },
-              { id: 'other', label: 'อื่นๆ (Others)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'other').length },
-            ].map((subOpt) => {
-              const isSubSelected = packagingSubTab === subOpt.id
-              return (
-                <button
-                  key={subOpt.id}
-                  type="button"
-                  onClick={() => setPackagingSubTab(subOpt.id as typeof packagingSubTab)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 cursor-pointer text-xs font-bold ${
-                    isSubSelected
-                      ? 'bg-gray-900 text-white shadow-md'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
-                  }`}
-                >
-                  <span>{subOpt.label}</span>
-                  <span className={`px-2 py-0.5 rounded-md text-[10px] ${
-                    isSubSelected
-                      ? 'bg-white/20 text-white font-bold'
-                      : 'bg-gray-200/80 text-gray-600'
-                  }`}>
-                    {subOpt.count}
+          {[
+            { id: 'all', label: 'บรรจุภัณฑ์ทั้งหมด', count: products.filter(p => p.itemType === 'Packaging').length, icon: '📦', color: 'text-gray-700' },
+            { id: 'gallon', label: 'แกลลอน (Gallon)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'gallon').length, icon: '🛢️', color: 'text-blue-600' },
+            { id: 'foil', label: 'ฟอยล์ (Foil)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'foil').length, icon: '⚡', color: 'text-purple-600' },
+            { id: 'cap', label: 'ฝา (Cap)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'cap').length, icon: '🔴', color: 'text-red-600' },
+            { id: 'box', label: 'กล่อง (Box)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'box').length, icon: '📦', color: 'text-amber-600' },
+            { id: 'other', label: 'อื่นๆ (Others)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'other').length, icon: '🧩', color: 'text-slate-500' },
+          ].map(card => {
+            const isSelected = packagingSubTab === card.id
+            return (
+              <button
+                key={card.id}
+                type="button"
+                onClick={() => setPackagingSubTab(card.id as typeof packagingSubTab)}
+                className={`p-4 rounded-2xl border font-display flex flex-col justify-between text-left transition-all duration-200 cursor-pointer ${
+                  isSelected
+                    ? 'bg-white border-gray-900 shadow-md ring-2 ring-gray-900/10 scale-[1.02]'
+                    : 'bg-white/80 border-gray-200/90 hover:border-gray-300 hover:shadow-xs hover:bg-white opacity-85 hover:opacity-100'
+                }`}
+              >
+                <span className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${card.color}`}>
+                  <span>{card.icon}</span>
+                  <span className="truncate">{card.label}</span>
+                </span>
+                <div className="text-2xl font-black text-gray-900 mt-2 flex items-baseline justify-between">
+                  <span>{card.count}</span>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isSelected ? 'bg-gray-900 text-white font-bold' : 'text-gray-400 bg-gray-100'}`}>
+                    {isSelected ? 'เลือกอยู่' : 'รายการ'}
                   </span>
-                </button>
-              )
-            })}
-          </div>
+                </div>
+              </button>
+            )
+          })}
         </div>
         {/* Quick Filter Banner if parent selected */}
         {selectedParentCode && (

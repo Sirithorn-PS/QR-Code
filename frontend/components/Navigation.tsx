@@ -46,11 +46,11 @@ export function Navigation({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: '/', icon: Home, label: 'หน้าหลัก' },
-    { href: '/dashboard', icon: LayoutDashboard, label: 'แดชบอร์ด' },
     { href: '/scan', icon: ScanLine, label: 'สแกน' },
     { href: '/transactions', icon: ClipboardCheck, label: 'รายการ' },
     { href: '/inventory', icon: Package, label: 'สต็อก' },
     { href: '/reports', icon: BarChart3, label: 'รายงาน' },
+    { href: '/dashboard', icon: LayoutDashboard, label: 'แดชบอร์ด' },
   ]
 
   return (

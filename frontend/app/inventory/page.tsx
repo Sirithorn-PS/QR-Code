@@ -1045,7 +1045,7 @@ export default function InventoryPage() {
                     <th className="px-4 py-3.5 font-semibold">Item Code</th>
                     <th className="px-4 py-3.5 font-semibold">ประเภท</th>
                     <th className="px-4 py-3.5 font-semibold">ชื่อสินค้า</th>
-                    <th className="px-4 py-3.5 font-semibold">คลังสินค้า / ตำแหน่ง</th>
+                    <th className="px-4 py-3.5 font-semibold">คลังวัตถุดิบ / ตำแหน่ง</th>
                     <th className="px-4 py-3.5 font-semibold text-right">จำนวนคงเหลือ</th>
                     {user?.role === 'admin' && <th className="px-4 py-3.5 font-semibold text-center">จัดการ</th>}
                   </tr>
@@ -1590,7 +1590,7 @@ export default function InventoryPage() {
                 </h3>
                 <div className="grid grid-cols-2 gap-2 mt-3 bg-gray-50 p-3 rounded-xl border border-gray-100 text-left">
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-gray-400 block">คลังสินค้า / โซน</span>
+                    <span className="text-[10px] uppercase font-bold text-gray-400 block">คลังวัตถุดิบ / โซน</span>
                     <span className="text-xs font-semibold text-gray-700 block truncate mt-0.5">
                       {selectedQrProduct.warehouse || 'ไม่มี'} {selectedQrProduct.location ? `(${selectedQrProduct.location})` : ''}
                     </span>

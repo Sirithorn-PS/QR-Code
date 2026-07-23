@@ -72,7 +72,7 @@ export default function RegisterPage() {
             สร้างบัญชีใหม่
           </h1>
           <p className="text-gray-500 text-sm font-medium">
-            ลงทะเบียนเพื่อใช้งานระบบจัดการคลังสินค้า
+            ลงทะเบียนเพื่อใช้งานระบบจัดการคลังวัตถุดิบ
           </p>
         </div>
 

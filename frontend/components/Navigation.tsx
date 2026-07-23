@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { ScanLine, ClipboardCheck, Package, BarChart3, LogOut, Home } from 'lucide-react'
+import { ScanLine, ClipboardCheck, Package, BarChart3, LogOut, Home, LayoutDashboard } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 export function Navigation({ children }: { children: React.ReactNode }) {
@@ -46,6 +46,7 @@ export function Navigation({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: '/', icon: Home, label: 'หน้าหลัก' },
+    { href: '/dashboard', icon: LayoutDashboard, label: 'แดชบอร์ด' },
     { href: '/scan', icon: ScanLine, label: 'สแกน' },
     { href: '/transactions', icon: ClipboardCheck, label: 'รายการ' },
     { href: '/inventory', icon: Package, label: 'สต็อก' },

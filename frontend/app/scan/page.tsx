@@ -664,7 +664,7 @@ export default function ScanPage() {
                       กำลังดำเนินการ...
                     </>
                   ) : (
-                    scanMode === 'receive' ? 'รับเข้าคลังสินค้า' : 'เบิกออกสินค้า'
+                    scanMode === 'receive' ? 'รับเข้าคลังวัตถุดิบ' : 'เบิกออกวัตถุดิบ'
                   )}
                 </motion.button>
               </form>

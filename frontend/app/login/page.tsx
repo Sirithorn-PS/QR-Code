@@ -77,7 +77,7 @@ export default function LoginPage() {
             ยินดีต้อนรับกลับมา
           </h1>
           <p className="text-gray-500 text-sm font-medium">
-            เข้าสู่ระบบเพื่อจัดการคลังสินค้า
+            เข้าสู่ระบบเพื่อจัดการคลังวัตถุดิบ
           </p>
         </div>
 

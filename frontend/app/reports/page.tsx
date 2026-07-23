@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { fetchTransactions, StockTransaction } from '@/lib/auth'
-import { ArrowLeft, FileText, Wrench, Filter, CheckCircle2, XCircle, Clock, Calendar, Search } from 'lucide-react'
+import { ArrowLeft, FileText, SlidersHorizontal, Filter, CheckCircle2, XCircle, Clock, Calendar, Search, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function ReportsPage() {
@@ -142,6 +142,16 @@ export default function ReportsPage() {
     return { dateStr, timeStr }
   }
 
+  const parseStockAdjustNote = (note: string) => {
+    const openParenIndex = note.indexOf('(')
+    if (openParenIndex !== -1) {
+      const title = note.substring(0, openParenIndex).trim()
+      const detail = note.substring(openParenIndex).trim()
+      return { title, detail }
+    }
+    return { title: note, detail: '' }
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 sm:px-6 py-8">
       <div className="mx-auto max-w-7xl">
@@ -261,7 +271,7 @@ export default function ReportsPage() {
         <div className="mb-6 flex flex-wrap gap-2 p-1 bg-gray-200/50 rounded-full w-fit">
           {[
             { id: 'all', label: `ทั้งหมด (${transactions.length})`, icon: FileText },
-            { id: 'adjust', label: `ประวัติการแก้ไขสต็อก (${transactions.filter(t => t.note?.includes('ปรับปรุงสต็อก')).length})`, icon: Wrench, color: 'text-amber-500' },
+            { id: 'adjust', label: `ประวัติการแก้ไขสต็อก (${transactions.filter(t => t.note?.includes('ปรับปรุงสต็อก')).length})`, icon: SlidersHorizontal, color: 'text-amber-500' },
             { id: 'normal', label: `รายการทั่วไป (${transactions.filter(t => !t.note?.includes('ปรับปรุงสต็อก')).length})`, icon: Filter }
           ].map((tab) => (
             <button
@@ -305,7 +315,7 @@ export default function ReportsPage() {
                   <th className="px-6 py-4 text-center">สินค้า</th>
                   <th className="px-6 py-4 text-center">ประเภท</th>
                   <th className="px-6 py-4 text-center">จำนวน</th>
-                  <th className="px-6 py-4 text-center">หมายเหตุ / รายละเอียด</th>
+                  <th className="px-6 py-4 text-center">หมายเหตุ</th>
                   <th className="px-6 py-4 text-center">สถานะ</th>
                   <th className="px-6 py-4 text-center">ผู้ดำเนินการ</th>
                 </tr>
@@ -355,66 +365,84 @@ export default function ReportsPage() {
                             </div>
                           </td>
                         <td className="px-6 py-5 text-center">
-                          <div className="font-semibold text-gray-900 text-sm">
-                            {transaction.product?.description || transaction.itemSnapshot.name}
+                          <div className="flex flex-col items-center justify-center text-center">
+                            <div className="font-semibold text-gray-900 text-sm">
+                              {transaction.product?.description || transaction.itemSnapshot.name}
+                            </div>
+                            <div className="text-xs font-display text-gray-400 mt-1">
+                              {transaction.product?.itemCode || transaction.itemSnapshot.itemCode}
+                            </div>
                           </div>
-                          <div className="text-xs font-mono text-gray-400 mt-1">
-                            {transaction.product?.itemCode || transaction.itemSnapshot.itemCode}
-                          </div>
-                        </td>
-                        <td className="px-6 py-5 text-center">
-                          {transaction.type === 'receive' ? (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-700 border border-emerald-200/50">
-                              + รับเข้า
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-700 border border-rose-200/50">
-                              - จ่ายออก
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-5 text-center font-mono font-bold text-gray-900 text-base">
-                          {transaction.quantity.toLocaleString()}
-                        </td>
-                        <td className="px-6 py-5 text-center">
-                          {transaction.note && transaction.note.includes('ปรับปรุงสต็อก') ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-700 border border-amber-200/50">
-                              <Wrench className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                              <span>{transaction.note}</span>
-                            </span>
-                          ) : transaction.note ? (
-                            <span className="text-xs text-gray-500 bg-gray-100/50 px-3 py-1.5 rounded-xl border border-gray-200/50 inline-block">
-                              {transaction.note}
-                            </span>
-                          ) : (
-                            <span className="text-gray-300">-</span>
-                          )}
                         </td>
                         <td className="px-6 py-5 text-center whitespace-nowrap">
-                          {transaction.status === 'confirmed' ? (
-                            <span className="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600 border border-emerald-100">
-                              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                              <span>ยืนยันแล้ว</span>
-                            </span>
-                          ) : transaction.status === 'rejected' ? (
-                            <span className="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-100">
-                              <XCircle className="w-3.5 h-3.5 shrink-0" />
-                              <span>ปฏิเสธแล้ว</span>
-                            </span>
-                          ) : (
-                            <span className="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-600 border border-amber-100">
-                              <Clock className="w-3.5 h-3.5 shrink-0" />
-                              <span>รอการยืนยัน</span>
-                            </span>
-                          )}
+                          <div className="flex items-center justify-center">
+                            {transaction.type === 'receive' ? (
+                              <span className="whitespace-nowrap inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-bold font-display bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
+                                <span>รับเข้า</span>
+                              </span>
+                            ) : (
+                              <span className="whitespace-nowrap inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-bold font-display bg-red-50 text-[#BE1111] border border-red-200/80 shadow-2xs">
+                                <span>เบิกออก</span>
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-center font-display font-bold text-gray-900 text-base">
+                          <div className="text-center">{transaction.quantity.toLocaleString()}</div>
+                        </td>
+                        <td className="px-6 py-5 text-center">
+                          <div className="flex items-center justify-center text-center">
+                            {transaction.note && transaction.note.includes('ปรับปรุงสต็อก') ? (
+                              (() => {
+                                const { title, detail } = parseStockAdjustNote(transaction.note)
+                                return (
+                                  <span className="inline-flex items-center gap-2 rounded-2xl bg-amber-500/10 px-3.5 py-2 text-xs font-bold font-display text-amber-800 border border-amber-200/60 shadow-2xs whitespace-nowrap">
+                                    <SlidersHorizontal className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                    <span className="flex flex-col items-center justify-center leading-tight whitespace-nowrap">
+                                      <span className="whitespace-nowrap">{title}</span>
+                                      {detail && <span className="text-[11px] font-medium text-amber-700/90 mt-0.5 whitespace-nowrap">{detail}</span>}
+                                    </span>
+                                  </span>
+                                )
+                              })()
+                            ) : transaction.note ? (
+                              <span className="text-xs text-gray-500 font-display bg-gray-100/50 px-3 py-1.5 rounded-xl border border-gray-200/50 inline-block">
+                                {transaction.note}
+                              </span>
+                            ) : (
+                              <span className="text-gray-300">-</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center">
+                            {transaction.status === 'confirmed' ? (
+                              <span className="whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold font-display bg-emerald-500/10 text-emerald-700 border border-emerald-200/70 shadow-2xs">
+                                <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                                <span>ยืนยันแล้ว</span>
+                              </span>
+                            ) : transaction.status === 'rejected' ? (
+                              <span className="whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold font-display bg-rose-500/10 text-rose-700 border border-rose-200/70 shadow-2xs">
+                                <XCircle className="w-3.5 h-3.5 shrink-0 text-rose-600" />
+                                <span>ปฏิเสธแล้ว</span>
+                              </span>
+                            ) : (
+                              <span className="whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold font-display bg-amber-500/10 text-amber-800 border border-amber-200/70 shadow-2xs">
+                                <Clock className="w-3.5 h-3.5 shrink-0 text-amber-600" />
+                                <span>รอการยืนยัน</span>
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-5 text-center text-xs">
-                          <div className="font-medium text-gray-900">{transaction.createdBy?.fullName || '-'}</div>
-                          {transaction.approvedBy && (
-                            <div className="text-gray-400 mt-1 font-mono text-[10px] uppercase tracking-wider">
-                              APPV: {transaction.approvedBy.fullName}
-                            </div>
-                          )}
+                          <div className="flex flex-col items-center justify-center text-center">
+                            <div className="font-medium text-gray-900">{transaction.createdBy?.fullName || '-'}</div>
+                            {transaction.approvedBy && (
+                              <div className="text-gray-400 mt-1 font-display text-[10px] uppercase tracking-wider">
+                                APPV: {transaction.approvedBy.fullName}
+                              </div>
+                            )}
+                          </div>
                         </td>
                       </motion.tr>
                     )
@@ -454,12 +482,12 @@ export default function ReportsPage() {
                       <div className="font-bold text-gray-900 text-sm leading-tight">
                         {transaction.product?.description || transaction.itemSnapshot.name}
                       </div>
-                      <div className="text-xs font-mono text-gray-400 mt-1">
+                      <div className="text-xs font-display text-gray-400 mt-1">
                         {transaction.product?.itemCode || transaction.itemSnapshot.itemCode}
                       </div>
                     </div>
                     <div className="text-right flex flex-col items-end gap-1">
-                      <div className={`font-mono font-bold text-lg ${transaction.type === 'receive' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      <div className={`font-display font-bold text-lg ${transaction.type === 'receive' ? 'text-emerald-600' : 'text-rose-600'}`}>
                         {transaction.type === 'receive' ? '+' : '-'}{transaction.quantity.toLocaleString()}
                       </div>
                     </div>
@@ -479,17 +507,25 @@ export default function ReportsPage() {
                         <Clock className="w-3.5 h-3.5" /> รอการยืนยัน
                       </span>
                     )}
-                    <span className="text-gray-400 font-mono">•</span>
-                    <span className="text-gray-400 font-mono">{formatDate(transaction.createdAt)}</span>
+                    <span className="text-gray-400 font-display">•</span>
+                    <span className="text-gray-400 font-display">{formatDate(transaction.createdAt)}</span>
                   </div>
 
                   {transaction.note && (
                     <div className="pt-3 border-t border-gray-50">
                       {transaction.note.includes('ปรับปรุงสต็อก') ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 w-full">
-                          <Wrench className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                          <span>{transaction.note}</span>
-                        </span>
+                        (() => {
+                          const { title, detail } = parseStockAdjustNote(transaction.note)
+                          return (
+                            <span className="inline-flex items-center gap-2 rounded-2xl bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-800 w-full border border-amber-100 whitespace-nowrap">
+                              <SlidersHorizontal className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                              <span className="flex flex-col items-start leading-tight whitespace-nowrap">
+                                <span className="whitespace-nowrap">{title}</span>
+                                {detail && <span className="text-[11px] font-medium text-amber-700/90 mt-0.5 whitespace-nowrap">{detail}</span>}
+                              </span>
+                            </span>
+                          )
+                        })()
                       ) : (
                         <span className="text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-xl border border-gray-100 block">
                           {transaction.note}

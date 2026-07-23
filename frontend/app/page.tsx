@@ -74,7 +74,7 @@ export default function Home() {
                 <ScanLine className="w-10 h-10" />
               </div>
               <h3 className="text-2xl font-display font-bold text-gray-900 mb-4 relative z-10">สแกนสินค้า</h3>
-              <p className="text-gray-500 mb-10 text-base max-w-[16rem] leading-relaxed relative z-10">สแกน QR Code เพื่อรับเข้าหรือจ่ายออกสินค้าอย่างรวดเร็ว</p>
+              <p className="text-gray-500 mb-10 text-base max-w-[16rem] leading-relaxed relative z-10">สแกน QR Code เพื่อรับเข้าหรือเบิกออกสินค้าอย่างรวดเร็ว</p>
               
               <div className="mt-auto inline-flex items-center justify-center w-full px-8 py-4 bg-[#BE1111] text-white font-semibold rounded-2xl group-hover:bg-[#A00F0F] group-active:scale-95 transition-all duration-300 relative z-10 shadow-md shadow-red-500/20">
                 <span>เริ่มสแกน</span>

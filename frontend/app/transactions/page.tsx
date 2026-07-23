@@ -176,16 +176,14 @@ export default function TransactionsPage() {
                   <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
                     <div>
                       <div className="flex items-center gap-3 mb-2">
-                        <span className="text-sm font-mono font-bold text-slate-400 bg-slate-50 px-2.5 py-0.5 rounded-md border border-slate-100">#{transaction.id}</span>
+                        <span className="text-sm font-display font-bold text-slate-400 bg-slate-50 px-2.5 py-0.5 rounded-md border border-slate-100">#{transaction.id}</span>
                         {transaction.type === 'receive' ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-100 px-2.5 py-0.5 text-xs font-bold text-green-700">
-                            <ArrowDownToLine className="w-3.5 h-3.5" />
+                          <span className="inline-flex items-center justify-center rounded-full bg-green-50 border border-green-100 px-2.5 py-0.5 text-xs font-bold text-green-700">
                             รับเข้า
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-700">
-                            <ArrowUpFromLine className="w-3.5 h-3.5" />
-                            จ่ายออก
+                          <span className="inline-flex items-center justify-center rounded-full bg-red-50 border border-red-100 px-2.5 py-0.5 text-xs font-bold text-[#BE1111]">
+                            เบิกออก
                           </span>
                         )}
                       </div>
@@ -263,7 +261,7 @@ export default function TransactionsPage() {
               transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
               className="relative w-full max-w-md rounded-3xl bg-white/95 backdrop-blur-xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.1)] border border-white/40"
             >
-              <h3 className="text-xl font-display font-bold text-slate-900 tracking-tight">ยืนยันการปฏิเสธรายการ <span className="text-slate-400 font-mono text-lg ml-1">#{rejectModalTxId}</span></h3>
+              <h3 className="text-xl font-display font-bold text-slate-900 tracking-tight">ยืนยันการปฏิเสธรายการ <span className="text-slate-400 font-display text-lg ml-1">#{rejectModalTxId}</span></h3>
               <p className="mt-2 text-sm text-slate-500">
                 กรุณาระบุหมายเหตุหรือเหตุผลในการปฏิเสธรายการนี้ (ถ้ามี) เพื่อแจ้งให้ผู้สร้างรายการทราบ
               </p>

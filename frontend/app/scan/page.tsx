@@ -432,7 +432,7 @@ export default function ScanPage() {
                       )}
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mt-2">{product.name}</h3>
-                    <p className="text-xs font-mono text-gray-400 mt-0.5">{product.itemCode}</p>
+                    <p className="text-xs font-display text-gray-400 mt-0.5">{product.itemCode}</p>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0 ml-2">
                     <button
@@ -528,7 +528,7 @@ export default function ScanPage() {
                                       <span className="text-xs font-bold text-gray-800">{subTitle}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-700 font-mono">
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-700 font-display">
                                         {subComponents.length} รายการ
                                       </span>
                                       {subExpanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
@@ -552,7 +552,7 @@ export default function ScanPage() {
                                               title={`คลิกเพื่อสลับไปยังสินค้าส่วนประกอบ [${c.componentItemCode}]`}
                                             >
                                               <div className="flex items-center gap-2 overflow-hidden">
-                                                <div className="shrink-0 whitespace-nowrap font-mono font-bold px-2 py-0.5 rounded border text-[#BE1111] bg-red-50 border-red-100/80 group-hover/item:bg-white">
+                                                <div className="shrink-0 whitespace-nowrap font-display font-bold px-2 py-0.5 rounded border text-[#BE1111] bg-red-50 border-red-100/80 group-hover/item:bg-white">
                                                   {c.componentItemCode}
                                                 </div>
                                                 <div className="truncate font-medium text-gray-700 group-hover/item:text-gray-900">
@@ -562,7 +562,7 @@ export default function ScanPage() {
                                               <div className="shrink-0 ml-2 flex items-center gap-2">
                                                 <div className="text-right whitespace-nowrap">
                                                   <span className="font-bold text-gray-900 group-hover/item:text-[#BE1111]">{c.quantity}</span>
-                                                  <span className="text-[10px] text-gray-400 ml-1 font-mono">{c.uom}</span>
+                                                  <span className="text-[10px] text-gray-400 ml-1 font-display">{c.uom}</span>
                                                 </div>
                                                 <ExternalLink className="w-3.5 h-3.5 text-gray-300 group-hover/item:text-[#BE1111] transition-colors" />
                                               </div>
@@ -664,7 +664,7 @@ export default function ScanPage() {
                       กำลังดำเนินการ...
                     </>
                   ) : (
-                    scanMode === 'receive' ? 'รับเข้าคลังสินค้า' : 'จ่ายออกสินค้า'
+                    scanMode === 'receive' ? 'รับเข้าคลังสินค้า' : 'เบิกออกสินค้า'
                   )}
                 </motion.button>
               </form>
@@ -687,7 +687,7 @@ export default function ScanPage() {
                               title={`คลิกเพื่อสลับไปดูและทำรายการรับ/จ่ายสำหรับชิ้นส่วน [${c.componentItemCode}]`}
                             >
                               <div className="flex items-center gap-2 overflow-hidden min-w-0">
-                                <div className="shrink-0 whitespace-nowrap font-mono font-bold px-2 py-0.5 rounded border text-[#BE1111] bg-red-50 border-red-100/80 group-hover/item:bg-white">
+                                <div className="shrink-0 whitespace-nowrap font-display font-bold px-2 py-0.5 rounded border text-[#BE1111] bg-red-50 border-red-100/80 group-hover/item:bg-white">
                                   {c.componentItemCode}
                                 </div>
                                 <div className="truncate font-medium text-gray-700 group-hover/item:text-gray-900">
@@ -697,7 +697,7 @@ export default function ScanPage() {
                               <div className="shrink-0 ml-2 flex items-center gap-2">
                                 <div className="text-right whitespace-nowrap">
                                   <span className="font-bold text-gray-900 group-hover/item:text-[#BE1111]">{c.quantity}</span>
-                                  <span className="text-[10px] text-gray-400 ml-1 font-mono">{c.uom}</span>
+                                  <span className="text-[10px] text-gray-400 ml-1 font-display">{c.uom}</span>
                                 </div>
                                 <ExternalLink className="w-3.5 h-3.5 text-gray-300 group-hover/item:text-[#BE1111] transition-colors" />
                               </div>

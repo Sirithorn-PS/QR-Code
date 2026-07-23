@@ -1458,20 +1458,20 @@ export default function InventoryPage() {
               >
                 <div className="flex items-start justify-between pb-4 border-b border-gray-100 mb-4">
                   <div>
-                    <div className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-[#BE1111] border border-red-100 mb-1">
-                      👑 SAP Bill of Materials (BOM) Recipe
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-[#BE1111] border border-red-100 mb-1.5">
+                      Bill of Materials (BOM)
+                    </div>
+                    <div className="text-sm sm:text-base font-display font-bold text-[#BE1111] tracking-tight mb-1">
+                      รหัสสินค้าหลัก: {displayParentCode}
                     </div>
                     <h3 className="text-base sm:text-lg font-display font-bold text-gray-900 tracking-tight">{mainTitle}</h3>
-                    <div className="flex flex-wrap items-center gap-2 mt-1">
-                      <span className="text-xs font-display font-extrabold text-[#BE1111] bg-red-50 px-2.5 py-0.5 rounded-lg border border-red-100 font-mono">
-                        รหัสสินค้าหลัก: {displayParentCode}
-                      </span>
-                      {selectedBomProduct.itemCode !== displayParentCode && (
+                    {selectedBomProduct.itemCode !== displayParentCode && (
+                      <div className="mt-1">
                         <span className="text-xs font-display font-semibold text-gray-500">
                           (สำหรับส่วนประกอบ: {selectedBomProduct.name} [{selectedBomProduct.itemCode}])
                         </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                   <button
                     type="button"
@@ -1502,7 +1502,7 @@ export default function InventoryPage() {
                             className="flex items-center justify-between text-xs p-3.5 rounded-2xl border border-gray-200/80 bg-white hover:bg-slate-50/80 transition-all shadow-2xs font-display"
                           >
                             <div className="flex items-center gap-3 overflow-hidden min-w-0 pr-2">
-                              <div className="shrink-0 whitespace-nowrap font-bold px-2.5 py-1 rounded-lg border text-[#BE1111] bg-red-50/80 border-red-100 font-mono text-xs">
+                              <div className="shrink-0 whitespace-nowrap font-bold px-2.5 py-1 rounded-lg border text-[#BE1111] bg-red-50/80 border-red-100 font-display text-xs">
                                 {c.componentItemCode}
                               </div>
                               <div className="truncate font-semibold text-gray-800" title={c.description}>

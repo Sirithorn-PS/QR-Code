@@ -346,15 +346,23 @@ app.get('/products', authenticate, async (req, res) => {
     const [allProducts, boms] = await Promise.all([
       prisma.product.findMany({ take: 2000 }),
       prisma.billOfMaterial.findMany({
-        select: { parentItemCode: true, componentItemCode: true }
+        select: { parentItemCode: true, componentItemCode: true, uom: true }
       })
     ])
 
     const parentMap = new Map<string, Set<string>>()
     const bomItemCodes = new Set<string>()
+    const uomMap = new Map<string, string>()
+
     boms.forEach(b => {
       if (b.parentItemCode) bomItemCodes.add(b.parentItemCode.trim())
-      if (b.componentItemCode) bomItemCodes.add(b.componentItemCode.trim())
+      if (b.componentItemCode) {
+        const comp = b.componentItemCode.trim()
+        bomItemCodes.add(comp)
+        if (b.uom && b.uom.trim()) {
+          uomMap.set(comp, b.uom.trim())
+        }
+      }
       if (!parentMap.has(b.componentItemCode)) parentMap.set(b.componentItemCode, new Set())
       parentMap.get(b.componentItemCode)!.add(b.parentItemCode)
     })
@@ -419,8 +427,21 @@ app.get('/products', authenticate, async (req, res) => {
 
     return res.json(validProducts.map(p => {
       const parents = parentMap.get(p.itemCode)
+      const codeKey = p.itemCode.trim()
+      const bomUom = uomMap.get(codeKey)
+      const finalUnit = (bomUom && p.itemType !== 'FG') ? bomUom : p.unit
+
+      // Async sync to DB if Product.unit is outdated compared to BillOfMaterial.uom
+      if (bomUom && p.unit !== bomUom) {
+        prisma.product.updateMany({
+          where: { itemCode: p.itemCode },
+          data: { unit: bomUom }
+        }).catch(err => console.error('Failed to auto-sync product unit:', err))
+      }
+
       return productSnapshot({
         ...p,
+        unit: finalUnit,
         parentItemCodes: parents ? Array.from(parents) : (p.itemType === 'FG' ? [p.itemCode] : [])
       })
     }))
@@ -515,7 +536,22 @@ app.get('/products/:itemCode', authenticate, async (req, res) => {
       return res.status(404).json({ error: 'ไม่พบสินค้ารหัสนี้ในระบบ' })
     }
 
-    return res.json(productSnapshot(product))
+    const bomItem = await prisma.billOfMaterial.findFirst({
+      where: { componentItemCode: { equals: rawCode, mode: 'insensitive' } },
+      select: { uom: true }
+    })
+
+    const bomUom = bomItem?.uom?.trim()
+    const finalUnit = (bomUom && product.itemType !== 'FG') ? bomUom : product.unit
+
+    if (bomUom && product.unit !== bomUom) {
+      prisma.product.updateMany({
+        where: { itemCode: product.itemCode },
+        data: { unit: bomUom }
+      }).catch(err => console.error('Failed to auto-sync product unit:', err))
+    }
+
+    return res.json(productSnapshot({ ...product, unit: finalUnit }))
   } catch (error) {
     console.error('Error fetching single product:', error)
     return res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลสินค้ารายการนี้ได้ชั่วคราว' })

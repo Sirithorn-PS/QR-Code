@@ -127,6 +127,21 @@ export default function ReportsPage() {
     })
   }
 
+  const formatDateParts = (dateString: string) => {
+    const d = new Date(dateString)
+    const dateStr = d.toLocaleDateString('th-TH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+    const timeStr = d.toLocaleTimeString('th-TH', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    })
+    return { dateStr, timeStr }
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 sm:px-6 py-8">
       <div className="mx-auto max-w-7xl">
@@ -283,16 +298,16 @@ export default function ReportsPage() {
         {/* Desktop Table View */}
         <div className="hidden md:block overflow-hidden rounded-3xl border border-gray-200/60 bg-white/80 backdrop-blur-md shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
+            <table className="w-full text-center text-sm border-collapse">
               <thead className="bg-gray-50/50 text-gray-500 text-xs uppercase tracking-wider font-semibold border-b border-gray-200/60">
                 <tr>
-                  <th className="px-6 py-4">วันที่ / เวลา</th>
-                  <th className="px-6 py-4">สินค้า</th>
-                  <th className="px-6 py-4">ประเภท</th>
-                  <th className="px-6 py-4 text-right">จำนวน</th>
-                  <th className="px-6 py-4">หมายเหตุ / รายละเอียด</th>
-                  <th className="px-6 py-4">สถานะ</th>
-                  <th className="px-6 py-4">ผู้ดำเนินการ</th>
+                  <th className="px-6 py-4 text-center">วันที่ / เวลา</th>
+                  <th className="px-6 py-4 text-center">สินค้า</th>
+                  <th className="px-6 py-4 text-center">ประเภท</th>
+                  <th className="px-6 py-4 text-center">จำนวน</th>
+                  <th className="px-6 py-4 text-center">หมายเหตุ / รายละเอียด</th>
+                  <th className="px-6 py-4 text-center">สถานะ</th>
+                  <th className="px-6 py-4 text-center">ผู้ดำเนินการ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -323,18 +338,23 @@ export default function ReportsPage() {
                       </td>
                     </motion.tr>
                   ) : (
-                    filteredTransactions.map((transaction, index) => (
-                      <motion.tr 
-                        key={transaction.id} 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2, delay: index * 0.02 }}
-                        className="hover:bg-gray-50/80 transition-colors group"
-                      >
-                        <td className="px-6 py-5 text-gray-500 font-mono text-xs">
-                          {formatDate(transaction.createdAt)}
-                        </td>
-                        <td className="px-6 py-5">
+                    filteredTransactions.map((transaction, index) => {
+                      const { dateStr, timeStr } = formatDateParts(transaction.createdAt)
+                      return (
+                        <motion.tr 
+                          key={transaction.id} 
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2, delay: index * 0.02 }}
+                          className="hover:bg-gray-50/80 transition-colors group"
+                        >
+                          <td className="px-6 py-5 text-center">
+                            <div className="flex flex-col items-center justify-center text-xs font-display">
+                              <span className="font-semibold text-gray-700 whitespace-nowrap">{dateStr}</span>
+                              <span className="text-[11px] font-bold text-gray-400 mt-0.5 whitespace-nowrap">{timeStr}</span>
+                            </div>
+                          </td>
+                        <td className="px-6 py-5 text-center">
                           <div className="font-semibold text-gray-900 text-sm">
                             {transaction.product?.description || transaction.itemSnapshot.name}
                           </div>
@@ -342,7 +362,7 @@ export default function ReportsPage() {
                             {transaction.product?.itemCode || transaction.itemSnapshot.itemCode}
                           </div>
                         </td>
-                        <td className="px-6 py-5">
+                        <td className="px-6 py-5 text-center">
                           {transaction.type === 'receive' ? (
                             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-700 border border-emerald-200/50">
                               + รับเข้า
@@ -353,10 +373,10 @@ export default function ReportsPage() {
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-5 text-right font-mono font-bold text-gray-900 text-base">
+                        <td className="px-6 py-5 text-center font-mono font-bold text-gray-900 text-base">
                           {transaction.quantity.toLocaleString()}
                         </td>
-                        <td className="px-6 py-5">
+                        <td className="px-6 py-5 text-center">
                           {transaction.note && transaction.note.includes('ปรับปรุงสต็อก') ? (
                             <span className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-700 border border-amber-200/50">
                               <Wrench className="w-3.5 h-3.5 text-amber-600 shrink-0" />
@@ -370,25 +390,25 @@ export default function ReportsPage() {
                             <span className="text-gray-300">-</span>
                           )}
                         </td>
-                        <td className="px-6 py-5">
+                        <td className="px-6 py-5 text-center whitespace-nowrap">
                           {transaction.status === 'confirmed' ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600 border border-emerald-100">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              ยืนยันแล้ว
+                            <span className="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                              <span>ยืนยันแล้ว</span>
                             </span>
                           ) : transaction.status === 'rejected' ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-100">
-                              <XCircle className="w-3.5 h-3.5" />
-                              ปฏิเสธแล้ว
+                            <span className="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-100">
+                              <XCircle className="w-3.5 h-3.5 shrink-0" />
+                              <span>ปฏิเสธแล้ว</span>
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-600 border border-amber-100">
-                              <Clock className="w-3.5 h-3.5" />
-                              รอการยืนยัน
+                            <span className="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-600 border border-amber-100">
+                              <Clock className="w-3.5 h-3.5 shrink-0" />
+                              <span>รอการยืนยัน</span>
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-5 text-xs">
+                        <td className="px-6 py-5 text-center text-xs">
                           <div className="font-medium text-gray-900">{transaction.createdBy?.fullName || '-'}</div>
                           {transaction.approvedBy && (
                             <div className="text-gray-400 mt-1 font-mono text-[10px] uppercase tracking-wider">
@@ -397,7 +417,8 @@ export default function ReportsPage() {
                           )}
                         </td>
                       </motion.tr>
-                    ))
+                    )
+                  })
                   )}
                 </AnimatePresence>
               </tbody>

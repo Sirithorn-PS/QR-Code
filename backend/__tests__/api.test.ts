@@ -21,4 +21,13 @@ describe('API Integration Tests (Security & Roles)', () => {
     expect(response.status).toBe(401)
     expect(response.body).toHaveProperty('error')
   })
+
+  it('should reject unauthenticated access to /products/with-bom', async () => {
+    const response = await request(app).post('/products/with-bom').send({
+      parentItemCode: 'TEST-001',
+      componentItemCode: 'TEST-001',
+      description: 'Test Item',
+    })
+    expect(response.status).toBe(401)
+  })
 })

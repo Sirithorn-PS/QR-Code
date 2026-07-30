@@ -114,6 +114,11 @@ export default function ScanPage() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
+      const modeParam = params.get('mode')
+      if (modeParam === 'receive' || modeParam === 'issue') {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setScanMode(modeParam)
+      }
       const codeParam = params.get('code')
       if (codeParam) {
         // eslint-disable-next-line react-hooks/set-state-in-effect

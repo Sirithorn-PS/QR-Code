@@ -83,11 +83,11 @@ export default function DashboardPage() {
 
   // --- 3. คำนวณสัดส่วนหมวดบรรจุภัณฑ์ (Donut Chart Data) ---
   const categoriesDef = [
-    { key: 'gallon', label: 'แกลลอน', keywords: ['แกลลอน', 'gallon', '20l', '5l', '4l', '1l'], color: '#10B981' }, // Emerald
-    { key: 'cap', label: 'ฝา', keywords: ['ฝา', 'cap', 'lid', 'จุก'], color: '#3B82F6' }, // Blue
-    { key: 'foil', label: 'ฟอยล์', keywords: ['ฟอยล์', 'foil', 'แผ่น'], color: '#EC4899' }, // Pink
-    { key: 'box', label: 'กล่อง', keywords: ['กล่อง', 'box', 'ลัง', 'carton'], color: '#F59E0B' }, // Amber
-    { key: 'label', label: 'ฉลาก', keywords: ['ฉลาก', 'label', 'สติกเกอร์', 'sticker'], color: '#8B5CF6' } // Purple
+    { key: 'gallon', label: 'แกลลอน', keywords: ['แกลลอน', 'gallon', '20l', '5l', '4l', '1l'], color: '#10B981' }, // Emerald Green
+    { key: 'cap', label: 'ฝา', keywords: ['ฝา', 'cap', 'lid', 'จุก'], color: '#3B82F6' }, // Royal Blue
+    { key: 'foil', label: 'ฟอยล์', keywords: ['ฟอยล์', 'foil', 'แผ่น'], color: '#8B5CF6' }, // Purple
+    { key: 'box', label: 'กล่อง', keywords: ['กล่อง', 'box', 'ลัง', 'carton'], color: '#F472B6' }, // Coral Pink
+    { key: 'label', label: 'ฉลาก', keywords: ['ฉลาก', 'label', 'สติกเกอร์', 'sticker'], color: '#14B8A6' } // Teal
   ]
 
   let categoryCounts = categoriesDef.map(cat => {
@@ -249,12 +249,12 @@ export default function DashboardPage() {
         {/* Charts Section: 7-Day Trend Chart & Packaging Distribution Chart & Quick Action */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* 7-Day Trend Bar Chart (7 Cols) */}
+          {/* 7-Day Trend Bar Chart (5 Cols) */}
           <motion.div 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.25 }}
-            className="lg:col-span-6 bg-white p-6 sm:p-7 rounded-3xl border border-slate-100 shadow-xs flex flex-col justify-between"
+            className="lg:col-span-5 bg-white p-6 sm:p-7 rounded-3xl border border-slate-100 shadow-xs flex flex-col justify-between"
           >
             <div>
               <div className="flex items-center justify-between mb-6">
@@ -315,70 +315,91 @@ export default function DashboardPage() {
             </div>
           </motion.div>
 
-          {/* Donut Chart Category Distribution (3 Cols) */}
+          {/* Donut Chart Category Distribution (4 Cols - Image 2 Redesign) */}
           <motion.div 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.3 }}
-            className="lg:col-span-3 bg-white p-6 sm:p-7 rounded-3xl border border-slate-100 shadow-xs flex flex-col justify-between"
+            className="lg:col-span-4 bg-white p-6 sm:p-7 rounded-3xl border border-slate-100 shadow-xs flex flex-col justify-between"
           >
             <div>
-              <h3 className="text-lg font-display font-bold text-slate-900 mb-1">สัดส่วนวัตถุดิบบรรจุภัณฑ์</h3>
-              <p className="text-xs text-slate-400 font-medium mb-6">จำแนกตามประเภทบรรจุภัณฑ์หลัก</p>
+              <h3 className="text-lg font-display font-bold text-slate-900 mb-5">สัดส่วนวัตถุดิบบรรจุภัณฑ์</h3>
 
-              {/* Donut Visual Representation */}
-              <div className="flex flex-col items-center justify-center my-2">
-                <div className="relative w-36 h-36 flex items-center justify-center">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                    <path
-                      className="text-slate-100"
-                      strokeWidth="4"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                    {categoryCounts.reduce((acc, cat, idx) => {
-                      const percent = (cat.count / totalCategorized) * 100
-                      const strokeDasharray = `${percent} ${100 - percent}`
-                      const strokeDashoffset = acc.offset
-                      acc.offset -= percent
-                      acc.elements.push(
-                        <path
-                          key={idx}
-                          stroke={cat.color}
-                          strokeWidth="4"
-                          strokeDasharray={strokeDasharray}
-                          strokeDashoffset={strokeDashoffset}
-                          strokeLinecap="round"
-                          fill="none"
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                        />
-                      )
-                      return acc
-                    }, { offset: 0, elements: [] as React.ReactNode[] }).elements}
-                  </svg>
-                  <div className="absolute flex flex-col items-center justify-center text-center">
-                    <span className="text-xs text-slate-400 font-semibold uppercase">รวม</span>
-                    <span className="text-xl font-display font-extrabold text-slate-900">{totalProductsCount}</span>
-                    <span className="text-[10px] text-slate-400 font-medium">รายการ</span>
-                  </div>
-                </div>
-              </div>
+              {/* Donut Visual + Legend Container (Side-by-side) */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-6 my-2">
+                {/* Left: Thick Ring Donut Chart + "ดูทั้งหมด >" */}
+                <div className="flex flex-col items-center justify-center shrink-0">
+                  <div className="relative w-48 h-48 sm:w-52 sm:h-52 flex items-center justify-center">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
+                      <circle
+                        cx="100"
+                        cy="100"
+                        r="70"
+                        fill="none"
+                        className="text-slate-100"
+                        stroke="currentColor"
+                        strokeWidth="38"
+                      />
+                      {categoryCounts.reduce((acc, cat, idx) => {
+                        const percent = totalCategorized > 0 ? (cat.count / totalCategorized) * 100 : 0
+                        if (percent <= 0) return acc
 
-              {/* Legend List */}
-              <div className="mt-6 space-y-2">
-                {categoryCounts.map((cat, idx) => {
-                  const pct = Math.round((cat.count / totalCategorized) * 100)
-                  return (
-                    <div key={idx} className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }}></span>
-                        <span className="font-semibold text-slate-700">{cat.label}</span>
-                      </div>
-                      <span className="font-display font-bold text-slate-500">{cat.count} <span className="text-[10px] text-slate-400">({pct}%)</span></span>
+                        const totalC = 2 * Math.PI * 70 // 439.8229715
+                        const segmentLen = (percent / 100) * totalC
+
+                        const strokeDasharray = `${segmentLen} ${totalC - segmentLen}`
+                        const strokeDashoffset = -acc.offset
+                        acc.offset += segmentLen
+
+                        acc.elements.push(
+                          <circle
+                            key={idx}
+                            cx="100"
+                            cy="100"
+                            r="70"
+                            fill="none"
+                            stroke={cat.color}
+                            strokeWidth="38"
+                            strokeDasharray={strokeDasharray}
+                            strokeDashoffset={strokeDashoffset}
+                          />
+                        )
+                        return acc
+                      }, { offset: 0, elements: [] as React.ReactNode[] }).elements}
+                    </svg>
+                    <div className="absolute flex flex-col items-center justify-center text-center">
+                      <span className="text-xs text-slate-400 font-medium">รวม</span>
+                      <span className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 leading-tight my-0.5">{totalProductsCount}</span>
+                      <span className="text-xs text-slate-400 font-medium">รายการ</span>
                     </div>
-                  )
-                })}
+                  </div>
+
+                  <Link 
+                    href="/inventory" 
+                    className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors"
+                  >
+                    <span>ดูทั้งหมด</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+
+                {/* Right: Legend List */}
+                <div className="flex-1 space-y-3.5 w-full sm:w-auto">
+                  {categoryCounts.map((cat, idx) => {
+                    const pct = Math.round((cat.count / totalCategorized) * 100)
+                    return (
+                      <div key={idx} className="flex items-start gap-2.5 text-xs">
+                        <span className="w-2.5 h-2.5 rounded-full mt-1 shrink-0" style={{ backgroundColor: cat.color }}></span>
+                        <div>
+                          <div className="font-bold text-slate-800 text-xs sm:text-sm">{cat.label}</div>
+                          <div className="text-xs text-slate-400 font-medium font-display mt-0.5">
+                            {cat.count} <span className="text-slate-400">({pct}%)</span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </motion.div>

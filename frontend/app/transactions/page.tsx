@@ -1,14 +1,14 @@
 'use client'
 
-import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { confirmTransaction, fetchTransactions, rejectTransaction, StockTransaction } from '@/lib/auth'
-import { ArrowLeft, Loader2, CheckCircle2, AlertCircle, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react'
+import { Loader2, CheckCircle2, AlertCircle, XCircle, Clock, Filter } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function TransactionsPage() {
   const [user, setUser] = useState<{ id: number; fullName: string; role: string } | null>(null)
   const [transactions, setTransactions] = useState<StockTransaction[]>([])
+  const [statusFilter, setStatusFilter] = useState<'pending' | 'all' | 'confirmed' | 'rejected'>('pending')
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
@@ -49,8 +49,8 @@ export default function TransactionsPage() {
 
     async function loadInitialTransactions() {
       try {
-        const initialTransactions = await fetchTransactions('pending')
-        if (isMounted) setTransactions(initialTransactions)
+        const data = await fetchTransactions('')
+        if (isMounted) setTransactions(data)
       } catch (err) {
         if (isMounted) setError(err instanceof Error ? err.message : 'โหลดรายการไม่สำเร็จ')
       } finally {
@@ -63,12 +63,11 @@ export default function TransactionsPage() {
     // Background Auto-Polling ทุกๆ 5 วินาที
     const intervalId = setInterval(async () => {
       try {
-        const freshTransactions = await fetchTransactions('pending')
+        const freshData = await fetchTransactions('')
         if (isMounted) {
-          setTransactions(freshTransactions)
+          setTransactions(freshData)
         }
       } catch (err) {
-        // ไม่ต้องแจ้งเตือน Error บนหน้าจอเพื่อไม่ให้รบกวนผู้ใช้ ปล่อยผ่านไป
         console.error('Background poll failed:', err)
       }
     }, 5000)
@@ -79,14 +78,30 @@ export default function TransactionsPage() {
     }
   }, [])
 
-  // ฟังก์ชันอนุมัติรายการทันที (กดแล้วแสดง Spinner แล้วลบรายการออกจากหน้าจอโดยไม่ต้องรีโหลดทั้งหน้า)
+  // คำนวณจำนวนรายการรออนุมัติ และจำนวนของแต่ละสถานะตามข้อมูลจริง
+  const pendingCount = useMemo(() => transactions.filter((t) => t.status === 'pending').length, [transactions])
+  const confirmedCount = useMemo(() => transactions.filter((t) => t.status === 'confirmed').length, [transactions])
+  const rejectedCount = useMemo(() => transactions.filter((t) => t.status === 'rejected').length, [transactions])
+  const totalCount = transactions.length
+
+  // กรองรายการตามแท็บสถานะที่เลือก
+  const filteredTransactions = useMemo(() => {
+    if (statusFilter === 'all') return transactions
+    return transactions.filter((t) => t.status === statusFilter)
+  }, [transactions, statusFilter])
+
+  // ฟังก์ชันอนุมัติรายการทันที
   const handleConfirm = async (id: number) => {
     setProcessingId(id)
     setProcessingAction('confirm')
     try {
       await confirmTransaction(id)
-      // ลบรายการที่อนุมัติแล้วออกจากรายการหน้าจอทันที ไม่ต้องรีโหลดทั้งเพจ
-      setTransactions((prev) => prev.filter((item) => item.id !== id))
+      setTransactions((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, status: 'confirmed' } : item))
+      )
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('transactionUpdated'))
+      }
       showNotification(`อนุมัติรายการ #${id} สำเร็จเรียบร้อย`)
     } catch (err) {
       showNotification(err instanceof Error ? err.message : 'อนุมัติรายการไม่สำเร็จ', true)
@@ -117,8 +132,12 @@ export default function TransactionsPage() {
     setProcessingAction('reject')
     try {
       await rejectTransaction(id, rejectNote.trim() || undefined)
-      // ลบรายการออกจากหน้าจอทันที
-      setTransactions((prev) => prev.filter((item) => item.id !== id))
+      setTransactions((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, status: 'rejected', note: rejectNote.trim() || item.note } : item))
+      )
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('transactionUpdated'))
+      }
       closeRejectModal()
       showNotification(`ปฏิเสธรายการ #${id} เรียบร้อยแล้ว`)
     } catch (err) {
@@ -132,11 +151,7 @@ export default function TransactionsPage() {
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-8">
       <div className="mx-auto max-w-6xl">
-        <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-[#BE1111] transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          <span>กลับหน้าหลัก</span>
-        </Link>
-        <h1 className="mt-2 text-3xl font-display font-bold text-slate-900 tracking-tight">รายการรอการยืนยัน</h1>
+        <h1 className="text-3xl font-display font-bold text-slate-900 tracking-tight">รายการรอการยืนยัน</h1>
 
         {/* แถบแจ้งเตือนข้อความ (หายไปเองใน 3.5 วินาที) */}
         {error && (
@@ -152,18 +167,99 @@ export default function TransactionsPage() {
           </div>
         )}
 
+        {/* แท็บกรองสถานะรายการ */}
+        <div className="mt-6 flex flex-wrap items-center gap-2.5 border-b border-slate-200/80 pb-4">
+          <button
+            type="button"
+            onClick={() => setStatusFilter('pending')}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              statusFilter === 'pending'
+                ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/60'
+            }`}
+          >
+            <Clock className="w-4 h-4" />
+            <span>รออนุมัติ</span>
+            <span className={`px-2 py-0.5 rounded-full text-xs ${
+              statusFilter === 'pending' ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-600 font-display'
+            }`}>
+              {pendingCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter('all')}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              statusFilter === 'all'
+                ? 'bg-slate-900 text-white shadow-md'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/60'
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+            <span>ทั้งหมด</span>
+            <span className={`px-2 py-0.5 rounded-full text-xs ${
+              statusFilter === 'all' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 font-display'
+            }`}>
+              {totalCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter('confirmed')}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              statusFilter === 'confirmed'
+                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/60'
+            }`}
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            <span>อนุมัติแล้ว</span>
+            <span className={`px-2 py-0.5 rounded-full text-xs ${
+              statusFilter === 'confirmed' ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600 font-display'
+            }`}>
+              {confirmedCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter('rejected')}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              statusFilter === 'rejected'
+                ? 'bg-[#BE1111] text-white shadow-md shadow-red-600/20'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/60'
+            }`}
+          >
+            <XCircle className="w-4 h-4" />
+            <span>ปฏิเสธ</span>
+            <span className={`px-2 py-0.5 rounded-full text-xs ${
+              statusFilter === 'rejected' ? 'bg-red-800 text-white' : 'bg-slate-100 text-slate-600 font-display'
+            }`}>
+              {rejectedCount}
+            </span>
+          </button>
+        </div>
+
         <div className="mt-6 grid gap-4">
           {loading ? (
             <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-white p-12 text-center text-slate-500">
               <Loader2 className="h-8 w-8 animate-spin text-[#BE1111] mb-2" />
               <span>กำลังโหลดรายการ...</span>
             </div>
-          ) : transactions.length === 0 ? (
+          ) : filteredTransactions.length === 0 ? (
             <div className="rounded-lg border border-slate-200 bg-white p-12 text-center text-slate-500">
-              ไม่มีรายการรอการยืนยัน
+              {statusFilter === 'pending'
+                ? 'ไม่มีรายการรอการยืนยัน'
+                : statusFilter === 'confirmed'
+                ? 'ไม่มีรายการที่ได้รับการอนุมัติ'
+                : statusFilter === 'rejected'
+                ? 'ไม่มีรายการที่ถูกปฏิเสธ'
+                : 'ไม่มีรายการข้อมูลในระบบ'}
             </div>
           ) : (
-            transactions.map((transaction) => {
+            filteredTransactions.map((transaction) => {
               const isConfirming = processingId === transaction.id && processingAction === 'confirm'
               const isRejecting = processingId === transaction.id && processingAction === 'reject'
               const isBusy = processingId === transaction.id
@@ -197,42 +293,57 @@ export default function TransactionsPage() {
                       </div>
                     </div>
 
-                    {user?.role === 'admin' ? (
-                      <div className="flex gap-2 self-start md:self-center">
-                        <button
-                          onClick={() => handleConfirm(transaction.id)}
-                          disabled={isBusy}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-[#10b981] px-5 py-2.5 font-bold text-white shadow-md shadow-[#10b981]/20 transition-all hover:bg-[#059669] hover:shadow-lg hover:shadow-[#10b981]/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:bg-slate-300 disabled:shadow-none disabled:transform-none disabled:cursor-not-allowed"
-                        >
-                          {isConfirming ? (
-                            <>
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              <span>กำลังอนุมัติ...</span>
-                            </>
-                          ) : (
-                            <span>อนุมัติ</span>
-                          )}
-                        </button>
+                    {transaction.status === 'pending' ? (
+                      user?.role === 'admin' ? (
+                        <div className="flex gap-2 self-start md:self-center">
+                          <button
+                            onClick={() => handleConfirm(transaction.id)}
+                            disabled={isBusy}
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-[#10b981] px-5 py-2.5 font-bold text-white shadow-md shadow-[#10b981]/20 transition-all hover:bg-[#059669] hover:shadow-lg hover:shadow-[#10b981]/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:bg-slate-300 disabled:shadow-none disabled:transform-none disabled:cursor-not-allowed cursor-pointer"
+                          >
+                            {isConfirming ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span>กำลังอนุมัติ...</span>
+                              </>
+                            ) : (
+                              <span>อนุมัติ</span>
+                            )}
+                          </button>
 
-                        <button
-                          onClick={() => openRejectModal(transaction.id)}
-                          disabled={isBusy}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-[#ef4444] px-5 py-2.5 font-bold text-white shadow-md shadow-[#ef4444]/20 transition-all hover:bg-[#dc2626] hover:shadow-lg hover:shadow-[#ef4444]/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:bg-slate-300 disabled:shadow-none disabled:transform-none disabled:cursor-not-allowed"
-                        >
-                          {isRejecting ? (
-                            <>
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              <span>กำลังปฏิเสธ...</span>
-                            </>
-                          ) : (
-                            <span>ปฏิเสธ</span>
-                          )}
-                        </button>
+                          <button
+                            onClick={() => openRejectModal(transaction.id)}
+                            disabled={isBusy}
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-[#ef4444] px-5 py-2.5 font-bold text-white shadow-md shadow-[#ef4444]/20 transition-all hover:bg-[#dc2626] hover:shadow-lg hover:shadow-[#ef4444]/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:bg-slate-300 disabled:shadow-none disabled:transform-none disabled:cursor-not-allowed cursor-pointer"
+                          >
+                            {isRejecting ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span>กำลังปฏิเสธ...</span>
+                              </>
+                            ) : (
+                              <span>ปฏิเสธ</span>
+                            )}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5 text-xs font-bold text-amber-600 self-start md:self-center shadow-2xs">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                          รอการอนุมัติจาก Supervisor
+                        </div>
+                      )
+                    ) : transaction.status === 'confirmed' ? (
+                      <div className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-2.5 text-xs font-bold text-emerald-700 self-start md:self-center shadow-2xs">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span>อนุมัติแล้ว</span>
                       </div>
                     ) : (
-                      <div className="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5 text-xs font-bold text-amber-600 self-start md:self-center shadow-2xs">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                        รอการอนุมัติจาก Supervisor
+                      <div className="inline-flex items-center gap-1.5 rounded-xl bg-red-50 border border-red-200 px-4 py-2.5 text-xs font-bold text-[#BE1111] self-start md:self-center shadow-2xs">
+                        <XCircle className="w-4 h-4 text-[#BE1111]" />
+                        <span>ปฏิเสธแล้ว</span>
+                        {transaction.note && (
+                          <span className="text-[11px] font-normal text-red-600 ml-1">({transaction.note})</span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -285,7 +396,7 @@ export default function TransactionsPage() {
                   type="button"
                   onClick={closeRejectModal}
                   disabled={processingId !== null}
-                  className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 active:scale-95 transition-all disabled:opacity-50"
+                  className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
                 >
                   ยกเลิก
                 </button>
@@ -293,7 +404,7 @@ export default function TransactionsPage() {
                   type="button"
                   onClick={handleConfirmReject}
                   disabled={processingId !== null}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#BE1111] px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-[#BE1111]/20 hover:bg-[#A00F0F] hover:shadow-lg hover:shadow-[#BE1111]/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all disabled:bg-slate-300 disabled:shadow-none disabled:transform-none"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#BE1111] px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-[#BE1111]/20 hover:bg-[#A00F0F] hover:shadow-lg hover:shadow-[#BE1111]/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all disabled:bg-slate-300 disabled:shadow-none disabled:transform-none cursor-pointer"
                 >
                   {processingId === rejectModalTxId ? (
                     <>

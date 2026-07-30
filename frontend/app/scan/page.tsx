@@ -191,6 +191,9 @@ export default function ScanPage() {
         quantity: finalQuantity,
         note,
       })
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('transactionUpdated'))
+      }
       setMessage(`สร้างรายการรอการยืนยัน #${transaction.id} สำเร็จ`)
       setNote('')
       setQuantity(1)

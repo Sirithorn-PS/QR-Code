@@ -2,14 +2,21 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { ScanLine, ClipboardCheck, Package, BarChart3, LogOut, Home, LayoutDashboard } from 'lucide-react'
+import { ScanLine, ClipboardCheck, Package, BarChart3, LogOut, Home, LayoutDashboard, Bell, CheckCheck } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { fetchTransactions, fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead, NotificationItem } from '@/lib/auth'
 
 export function Navigation({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-  const [user, setUser] = useState<{ id: number, fullName: string, role: string } | null>(null)
+  const [user, setUser] = useState<{ id: number; fullName: string; role: string } | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [pendingCount, setPendingCount] = useState<number>(0)
+
+  // Notification state
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0)
+  const [showNotifPopover, setShowNotifPopover] = useState<boolean>(false)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -26,6 +33,118 @@ export function Navigation({ children }: { children: React.ReactNode }) {
       router.push('/login')
     }
   }, [pathname, router])
+
+  // ดึงจำนวนรายการรออนุมัติสำหรับแสดง Badge บนเมนู "รายการ"
+  useEffect(() => {
+    if (!user) {
+      setPendingCount(0)
+      return
+    }
+
+    let isMounted = true
+
+    async function loadPendingCount() {
+      try {
+        const pendingList = await fetchTransactions('pending')
+        if (isMounted) {
+          setPendingCount(pendingList.length)
+        }
+      } catch (e) {
+        console.error('Failed to fetch pending count for badge:', e)
+      }
+    }
+
+    void loadPendingCount()
+
+    const handleUpdate = () => {
+      void loadPendingCount()
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('transactionUpdated', handleUpdate)
+    }
+
+    const intervalId = setInterval(() => {
+      void loadPendingCount()
+    }, 5000)
+
+    return () => {
+      isMounted = false
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('transactionUpdated', handleUpdate)
+      }
+      clearInterval(intervalId)
+    }
+  }, [user, pathname])
+
+  // ดึงรายการ Notification และ Unread Count
+  useEffect(() => {
+    if (!user) return
+
+    let isMounted = true
+
+    async function loadNotifications() {
+      try {
+        const res = await fetchNotifications()
+        if (isMounted) {
+          setNotifications(res.notifications)
+          setUnreadNotifCount(res.unreadCount)
+        }
+      } catch (e) {
+        console.error('Failed to fetch notifications:', e)
+      }
+    }
+
+    void loadNotifications()
+
+    const handleUpdate = () => {
+      void loadNotifications()
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('transactionUpdated', handleUpdate)
+    }
+
+    const intervalId = setInterval(() => {
+      void loadNotifications()
+    }, 5000)
+
+    return () => {
+      isMounted = false
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('transactionUpdated', handleUpdate)
+      }
+      clearInterval(intervalId)
+    }
+  }, [user, pathname])
+
+  const handleNotificationClick = async (notif: NotificationItem) => {
+    if (!notif.isRead) {
+      try {
+        await markNotificationAsRead(notif.id)
+        setNotifications((prev) =>
+          prev.map((item) => (item.id === notif.id ? { ...item, isRead: true } : item))
+        )
+        setUnreadNotifCount((prev) => Math.max(0, prev - 1))
+      } catch (e) {
+        console.error('Failed to mark notification read:', e)
+      }
+    }
+    setShowNotifPopover(false)
+    if (notif.link) {
+      router.push(notif.link)
+    }
+  }
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllNotificationsAsRead()
+      setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })))
+      setUnreadNotifCount(0)
+    } catch (e) {
+      console.error('Failed to mark all notifications read:', e)
+    }
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('token')
@@ -53,6 +172,85 @@ export function Navigation({ children }: { children: React.ReactNode }) {
     { href: '/dashboard', icon: LayoutDashboard, label: 'แดชบอร์ด' },
   ]
 
+  const NotificationPopoverContent = (
+    <div className="w-80 sm:w-96 rounded-2xl bg-white p-4 shadow-2xl border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
+      <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+        <div className="flex items-center gap-2">
+          <Bell className="w-4 h-4 text-[#BE1111]" />
+          <h3 className="font-display font-bold text-gray-900 text-sm">การแจ้งเตือน</h3>
+          {unreadNotifCount > 0 && (
+            <span className="bg-red-50 text-[#BE1111] text-[11px] font-bold px-2 py-0.5 rounded-full">
+              {unreadNotifCount} ใหม่
+            </span>
+          )}
+        </div>
+        {unreadNotifCount > 0 && (
+          <button
+            type="button"
+            onClick={handleMarkAllRead}
+            className="text-xs font-semibold text-gray-500 hover:text-[#BE1111] transition-colors inline-flex items-center gap-1 cursor-pointer"
+          >
+            <CheckCheck className="w-3.5 h-3.5" />
+            <span>อ่านทั้งหมด</span>
+          </button>
+        )}
+      </div>
+
+      <div className="mt-2 max-h-80 overflow-y-auto space-y-2 pr-1">
+        {notifications.length === 0 ? (
+          <div className="py-8 text-center text-xs text-gray-400">
+            ไม่มีการแจ้งเตือน
+          </div>
+        ) : (
+          notifications.map((notif) => (
+            <div
+              key={notif.id}
+              onClick={() => handleNotificationClick(notif)}
+              className={`p-3 rounded-xl transition-all cursor-pointer border ${
+                notif.isRead
+                  ? 'bg-white border-gray-100 hover:bg-gray-50'
+                  : 'bg-red-50/40 border-red-100/80 hover:bg-red-50'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                  notif.type === 'pending_approval'
+                    ? 'bg-amber-100 text-amber-800'
+                    : notif.type === 'approval_result'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {notif.type === 'pending_approval'
+                    ? 'รออนุมัติ'
+                    : notif.type === 'approval_result'
+                    ? 'ผลการอนุมัติ'
+                    : 'วัตถุดิบใกล้หมด'}
+                </span>
+                <span className="text-[10px] text-gray-400">
+                  {new Date(notif.createdAt).toLocaleDateString('th-TH', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
+              </div>
+              <h4 className="mt-1.5 text-xs font-bold text-gray-900 leading-tight flex items-center">
+                {!notif.isRead && (
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#BE1111] mr-1.5 shrink-0"></span>
+                )}
+                <span>{notif.title}</span>
+              </h4>
+              <p className="mt-1 text-[11px] text-gray-600 whitespace-pre-line leading-relaxed">
+                {notif.message}
+              </p>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
+
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
       {/* Top Navbar (Desktop) */}
@@ -66,6 +264,8 @@ export function Navigation({ children }: { children: React.ReactNode }) {
           <nav className="flex items-center space-x-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+              const showBadge = item.href === '/transactions' && pendingCount > 0
+
               return (
                 <Link key={item.href} href={item.href}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
@@ -75,14 +275,51 @@ export function Navigation({ children }: { children: React.ReactNode }) {
                   }`}
                 >
                   <item.icon className={`w-4 h-4 transition-colors ${isActive ? 'text-[#BE1111]' : 'text-gray-400 group-hover:text-gray-600'}`} />
-                  {item.label}
+                  <span>{item.label}</span>
+                  {showBadge && (
+                    <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-[#BE1111] text-white text-[11px] font-bold font-display shadow-2xs animate-pulse">
+                      {pendingCount}
+                    </span>
+                  )}
                 </Link>
               )
             })}
           </nav>
         </div>
 
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-4">
+          {/* Notification Bell Button */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowNotifPopover(!showNotifPopover)}
+              className="relative p-2.5 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-all cursor-pointer"
+              title="การแจ้งเตือน"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadNotifCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#BE1111] px-1 text-[10px] font-bold font-display text-white shadow-2xs animate-pulse">
+                  {unreadNotifCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notification Popover Dropdown */}
+            {showNotifPopover && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowNotifPopover(false)}
+                />
+                <div className="absolute right-0 mt-2 z-50">
+                  {NotificationPopoverContent}
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="h-8 w-px bg-gray-200"></div>
+
           <div className="text-right">
             <p className="text-sm font-medium text-gray-900">{user.fullName}</p>
             <p className="text-xs text-[#BE1111] font-medium">{user.role === 'admin' ? 'ผู้ควบคุมดูแลระบบ (Supervisor)' : user.role === 'warehouse_staff' ? 'พนักงานทั่วไป (Staff)' : user.role}</p>
@@ -92,6 +329,42 @@ export function Navigation({ children }: { children: React.ReactNode }) {
             <LogOut className="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors" />
             ออกจากระบบ
           </button>
+        </div>
+      </header>
+
+      {/* Mobile Top Header for Notification Bell */}
+      <header className="md:hidden flex items-center justify-between h-14 px-4 bg-white border-b border-gray-200 shadow-xs z-10 shrink-0">
+        <div className="flex items-center gap-2">
+          <Package className="w-5 h-5 text-[#BE1111] shrink-0" />
+          <h1 className="text-base font-display font-bold text-gray-900 tracking-tight">QR Webapp</h1>
+        </div>
+
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowNotifPopover(!showNotifPopover)}
+            className="relative p-2 rounded-xl text-gray-600 hover:bg-gray-100 transition-all cursor-pointer"
+            title="การแจ้งเตือน"
+          >
+            <Bell className="w-5 h-5" />
+            {unreadNotifCount > 0 && (
+              <span className="absolute top-1 right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#BE1111] px-1 text-[10px] font-bold font-display text-white shadow-2xs animate-pulse">
+                {unreadNotifCount}
+              </span>
+            )}
+          </button>
+
+          {showNotifPopover && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowNotifPopover(false)}
+              />
+              <div className="absolute right-0 mt-2 z-50">
+                {NotificationPopoverContent}
+              </div>
+            </>
+          )}
         </div>
       </header>
 
@@ -105,9 +378,18 @@ export function Navigation({ children }: { children: React.ReactNode }) {
         <div className="flex justify-around items-center h-16 px-2">
           {navItems.map((item) => {
             const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+            const showBadge = item.href === '/transactions' && pendingCount > 0
+
             return (
-              <Link key={item.href} href={item.href} className="flex flex-col items-center justify-center w-full h-full space-y-1.5 tap-highlight-transparent">
-                <item.icon className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-[#BE1111]' : 'text-gray-400'}`} />
+              <Link key={item.href} href={item.href} className="flex flex-col items-center justify-center w-full h-full space-y-1 tap-highlight-transparent relative">
+                <div className="relative">
+                  <item.icon className={`w-5 h-5 transition-colors duration-200 ${isActive ? 'text-[#BE1111]' : 'text-gray-400'}`} />
+                  {showBadge && (
+                    <span className="absolute -top-1.5 -right-3 inline-flex items-center justify-center min-w-[18px] h-4.5 px-1 rounded-full bg-[#BE1111] text-white text-[10px] font-bold font-display shadow-2xs animate-pulse">
+                      {pendingCount}
+                    </span>
+                  )}
+                </div>
                 <span className={`text-[10px] font-medium transition-colors duration-200 ${isActive ? 'text-[#BE1111]' : 'text-gray-500'}`}>
                   {item.label}
                 </span>
@@ -119,3 +401,4 @@ export function Navigation({ children }: { children: React.ReactNode }) {
     </div>
   )
 }
+

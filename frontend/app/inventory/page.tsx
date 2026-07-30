@@ -2,9 +2,9 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { fetchProducts, updateProductQuantity, createProduct, deleteProduct, fetchProductBom, Product, BillOfMaterial } from '@/lib/auth'
+import { fetchProducts, updateProductQuantity, createProduct, deleteProduct, fetchProductBom, createProductWithBom, Product, BillOfMaterial } from '@/lib/auth'
 import QRCode from 'react-qr-code'
-import { Search, Package, ArrowLeft, Layers, Download, Check, History, X, Trash2, FileText, LayoutGrid, Crown, Droplets, Box, FlaskConical, QrCode, Star, Copy, Zap, Disc } from 'lucide-react'
+import { Search, Package, ArrowLeft, Layers, Download, Check, History, X, Trash2, FileText, LayoutGrid, Crown, Droplets, Box, FlaskConical, QrCode, Star, Copy, Zap, Disc, Plus, CheckCircle2, AlertCircle, Printer } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const getPackagingSubCategory = (item: Product): 'gallon' | 'foil' | 'cap' | 'box' | 'other' => {
@@ -123,56 +123,129 @@ export default function InventoryPage() {
   const [deletingLoading, setDeletingLoading] = useState(false)
 
   const [showAddModal, setShowAddModal] = useState(false)
-  const [newItemCode, setNewItemCode] = useState('')
-  const [newName, setNewName] = useState('')
-  const [newUnit, setNewUnit] = useState('PCS')
-  const [newWarehouse, setNewWarehouse] = useState('WPK')
-  const [newLocation, setNewLocation] = useState('')
-  const [newQuantity, setNewQuantity] = useState('0')
-  const [addingError, setAddingError] = useState('')
-  const [addingLoading, setAddingLoading] = useState(false)
+  const [bomForm, setBomForm] = useState({
+    parentItemCode: '',
+    componentItemCode: '',
+    description: '',
+    uom: '',
+    quantity: '',
+    warehouse: '',
+    depth: '1',
+    bomType: '',
+  })
+  const [bomComponents, setBomComponents] = useState<{
+    id: string
+    componentItemCode: string
+    description: string
+    warehouse: string
+    quantity: string
+    uom: string
+  }[]>([])
 
-  const handleAddProduct = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setAddingError('')
-    const qtyNum = Number(newQuantity)
-    if (!newItemCode.trim() || !newName.trim()) {
-      setAddingError('กรุณากรอกรหัสสินค้าและชื่อสินค้าให้ครบถ้วน')
-      return
-    }
-    if (isNaN(qtyNum) || qtyNum < 0 || !Number.isInteger(qtyNum)) {
-      setAddingError('จำนวนเริ่มต้นต้องเป็นตัวเลขจำนวนเต็มที่ไม่ติดลบ')
-      return
-    }
-    setAddingLoading(true)
-    try {
-      const created = await createProduct({
-        itemCode: newItemCode.trim(),
-        description: newName.trim(),
-        unit: newUnit.trim() || 'PCS',
-        warehouse: newWarehouse.trim() || 'WPK',
-        location: newLocation.trim(),
-        quantity: qtyNum,
-      })
-      setProducts(prev => [created, ...prev])
-      setShowAddModal(false)
-      setNewItemCode('')
-      setNewName('')
-      setNewUnit('PCS')
-      setNewWarehouse('WPK')
-      setNewLocation('')
-      setNewQuantity('0')
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'เพิ่มรายการสินค้าไม่สำเร็จ'
-      if (msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('unique constraint')) {
-        setAddingError('รหัสสินค้า (Item Code) นี้มีอยู่ในระบบแล้ว กรุณาใช้รหัสอื่น')
-      } else {
-        setAddingError(msg)
+  const handleAddBomComponent = () => {
+    setBomComponents(prev => [
+      ...prev,
+      {
+        id: String(Date.now() + Math.random()),
+        componentItemCode: '',
+        description: '',
+        warehouse: '',
+        quantity: '',
+        uom: '',
       }
+    ])
+  }
+
+  const handleUpdateBomComponent = (id: string, field: 'componentItemCode' | 'description' | 'warehouse' | 'quantity' | 'uom', value: string) => {
+    setBomComponents(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item))
+  }
+
+  const handleRemoveBomComponent = (id: string) => {
+    setBomComponents(prev => prev.filter(item => item.id !== id))
+  }
+
+  const [submittingProduct, setSubmittingProduct] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+
+  const handleSaveProductWithBom = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitError('')
+
+    const mainCode = (bomForm.componentItemCode || bomForm.parentItemCode || '').trim()
+    const parentCode = (bomForm.parentItemCode || bomForm.componentItemCode || '').trim()
+    const desc = bomForm.description.trim()
+
+    if (!mainCode) {
+      setSubmitError('กรุณากรอกรหัสสินค้า (Item Code)')
+      return
+    }
+    if (!desc) {
+      setSubmitError('กรุณากรอกรายละเอียดสินค้า (Description)')
+      return
+    }
+
+    const qtyVal = Number(bomForm.quantity || 0)
+    if (isNaN(qtyVal) || qtyVal < 0) {
+      setSubmitError('จำนวนสินค้าต้องเป็นตัวเลขที่ไม่ติดลบ')
+      return
+    }
+
+    for (let i = 0; i < bomComponents.length; i++) {
+      const comp = bomComponents[i]
+      if (!comp.componentItemCode.trim() || !comp.description.trim()) {
+        setSubmitError(`กรุณากรอกข้อมูลส่วนประกอบที่ ${i + 1} ให้ครบถ้วน (Component Code และ Description)`)
+        return
+      }
+      const cQty = Number(comp.quantity || 1)
+      if (isNaN(cQty) || cQty < 0) {
+        setSubmitError(`จำนวนส่วนประกอบที่ ${i + 1} ต้องเป็นตัวเลขที่ไม่ติดลบ`)
+        return
+      }
+    }
+
+    setSubmittingProduct(true)
+    try {
+      await createProductWithBom({
+        parentItemCode: parentCode,
+        componentItemCode: mainCode,
+        description: desc,
+        uom: bomForm.uom.trim() || 'PCS',
+        warehouse: bomForm.warehouse.trim() || 'WPK',
+        quantity: qtyVal,
+        bomType: bomForm.bomType.trim() || 'FG',
+        components: bomComponents.map(c => ({
+          componentItemCode: c.componentItemCode.trim(),
+          description: c.description.trim(),
+          warehouse: c.warehouse.trim() || bomForm.warehouse.trim() || 'WPK',
+          quantity: Number(c.quantity || 1),
+          uom: c.uom.trim() || 'PCS',
+        }))
+      })
+
+      setShowAddModal(false)
+      setBomForm({
+        parentItemCode: '',
+        componentItemCode: '',
+        description: '',
+        uom: '',
+        quantity: '',
+        warehouse: '',
+        depth: '1',
+        bomType: '',
+      })
+      setBomComponents([])
+      setSubmitError('')
+
+      loadProducts(search)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการบันทึกสินค้า'
+      setSubmitError(msg)
     } finally {
-      setAddingLoading(false)
+      setSubmittingProduct(false)
     }
   }
+
+
 
   const downloadQRCodeAsPNG = (itemCode: string) => {
     try {
@@ -262,6 +335,124 @@ export default function InventoryPage() {
       console.error('Download QR Code Error:', error)
       alert('เกิดข้อผิดพลาดในการดาวน์โหลด QR Code')
     }
+  }
+
+  const handlePrintQRCode = (item: Product) => {
+    const container = document.getElementById(`qr-modal-${item.itemCode}`) || document.getElementById(`qr-group-${item.itemCode}`)
+    const svg = container?.querySelector('svg')
+    if (!svg) {
+      alert('ไม่พบข้อมูลรูปภาพ QR Code กรุณาลองใหม่อีกครั้ง')
+      return
+    }
+
+    const clonedSvg = svg.cloneNode(true) as SVGSVGElement
+    clonedSvg.setAttribute('width', '220px')
+    clonedSvg.setAttribute('height', '220px')
+    if (!clonedSvg.getAttribute('xmlns')) {
+      clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    }
+
+    const svgData = new XMLSerializer().serializeToString(clonedSvg)
+    const svgDataBase64 = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgData)}`
+
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) {
+      alert('กรุณาอนุญาตให้เปิด Pop-up เพื่อพิมพ์ QR Code')
+      return
+    }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>พิมพ์ QR Code - ${item.itemCode}</title>
+          <style>
+            @media print {
+              @page { margin: 10mm; size: auto; }
+              body { margin: 0; background: #fff; }
+            }
+            body {
+              font-family: Arial, sans-serif;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              min-height: 100vh;
+              margin: 0;
+              padding: 20px;
+              background-color: #f8fafc;
+            }
+            .card {
+              background: #ffffff;
+              border: 2px solid #000000;
+              border-radius: 16px;
+              padding: 24px;
+              width: 300px;
+              text-align: center;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            }
+            .qr-img {
+              width: 200px;
+              height: 200px;
+              margin: 16px auto;
+              display: block;
+            }
+            .badge {
+              display: inline-block;
+              background: #eff6ff;
+              color: #1d4ed8;
+              border: 1px solid #bfdbfe;
+              font-size: 11px;
+              font-weight: bold;
+              padding: 3px 10px;
+              border-radius: 9999px;
+            }
+            .item-code {
+              font-size: 20px;
+              font-weight: 900;
+              font-family: monospace;
+              color: #111827;
+              margin: 8px 0 4px 0;
+            }
+            .item-name {
+              font-size: 13px;
+              font-weight: bold;
+              color: #374151;
+              margin-bottom: 12px;
+              line-height: 1.4;
+            }
+            .meta {
+              display: flex;
+              justify-content: space-between;
+              font-size: 11px;
+              color: #4b5563;
+              border-top: 1px solid #e5e7eb;
+              padding-top: 10px;
+              margin-top: 12px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <div class="badge">${item.itemType || 'Packaging'} (คลัง ${item.warehouse || 'WPK'})</div>
+            <img src="${svgDataBase64}" class="qr-img" />
+            <div class="item-code">${item.itemCode}</div>
+            <div class="item-name">${item.name}</div>
+            <div class="meta">
+              <span><strong>คลัง:</strong> ${item.warehouse || 'WPK'}</span>
+              <span><strong>สถานะ:</strong> พร้อมใช้งาน</span>
+            </div>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            }
+          </script>
+        </body>
+      </html>
+    `)
+    printWindow.document.close()
   }
 
   const loadProducts = async (query = search) => {
@@ -364,6 +555,16 @@ export default function InventoryPage() {
               <History className="w-4 h-4" />
               <span>ประวัติการแก้ไขสต็อก</span>
             </Link>
+            {user?.role === 'admin' && (
+              <button
+                type="button"
+                onClick={() => setShowAddModal(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#BE1111] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#a00e0e] transition-all shadow-md shadow-[#BE1111]/20 shrink-0 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>เพิ่มสินค้าใหม่</span>
+              </button>
+            )}
             <form
               className="flex gap-2"
               onSubmit={(event) => {
@@ -820,28 +1021,39 @@ export default function InventoryPage() {
               <div className="flex flex-col gap-5 animate-in fade-in duration-300 mb-6">
                 {displayedProducts
                   .filter(p => p.itemType === 'Packaging' && (packagingSubTab === 'all' || getPackagingSubCategory(p) === packagingSubTab))
-                  .map(item => (
+                  .map(item => {
+                    const canGenerateQR = item.itemType === 'Packaging' && item.warehouse === 'WPK'
+
+                    return (
                     <div key={item.id} className="w-full rounded-3xl border border-gray-200/90 bg-white p-5 sm:p-6 shadow-[0_2px_15px_rgb(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-gray-300 transition-all flex flex-col justify-between gap-4 relative group/card font-display">
                       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                         <div className="w-full md:w-auto shrink-0 flex justify-center md:justify-start">
-                          <div
-                            onClick={() => setSelectedQrProduct(item)}
-                            className="w-28 sm:w-36 h-28 sm:h-36 rounded-2xl bg-white border border-gray-100 shadow-2xs flex items-center justify-center p-3 relative cursor-pointer group/qr transition-all hover:border-red-200 hover:shadow-sm"
-                            title="คลิกเพื่อดูและขยาย QR Code"
-                          >
-                            <div className="absolute top-2.5 left-2.5 w-3 h-3 border-t-2 border-l-2 border-[#BE1111] rounded-tl-xs pointer-events-none" />
-                            <div className="absolute top-2.5 right-2.5 w-3 h-3 border-t-2 border-r-2 border-[#BE1111] rounded-tr-xs pointer-events-none" />
-                            <div className="absolute bottom-2.5 left-2.5 w-3 h-3 border-b-2 border-l-2 border-[#BE1111] rounded-bl-xs pointer-events-none" />
-                            <div className="absolute bottom-2.5 right-2.5 w-3 h-3 border-b-2 border-r-2 border-[#BE1111] rounded-br-xs pointer-events-none" />
-                            <QRCode value={item.itemCode} size={110} />
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/qr:opacity-100 rounded-2xl flex flex-col items-center justify-center transition-opacity text-white text-xs font-bold text-center p-2 leading-tight backdrop-blur-2xs">
-                              <span className="text-lg mb-1">📱</span>
-                              <span>คลิกขยาย QR</span>
+                          {canGenerateQR ? (
+                            <div
+                              onClick={() => setSelectedQrProduct(item)}
+                              className="w-28 sm:w-36 h-28 sm:h-36 rounded-2xl bg-white border border-gray-100 shadow-2xs flex items-center justify-center p-3 relative cursor-pointer group/qr transition-all hover:border-red-200 hover:shadow-sm"
+                              title="คลิกเพื่อดูและขยาย QR Code"
+                            >
+                              <div className="absolute top-2.5 left-2.5 w-3 h-3 border-t-2 border-l-2 border-[#BE1111] rounded-tl-xs pointer-events-none" />
+                              <div className="absolute top-2.5 right-2.5 w-3 h-3 border-t-2 border-r-2 border-[#BE1111] rounded-tr-xs pointer-events-none" />
+                              <div className="absolute bottom-2.5 left-2.5 w-3 h-3 border-b-2 border-l-2 border-[#BE1111] rounded-bl-xs pointer-events-none" />
+                              <div className="absolute bottom-2.5 right-2.5 w-3 h-3 border-b-2 border-r-2 border-[#BE1111] rounded-br-xs pointer-events-none" />
+                              <QRCode value={item.itemCode} size={110} />
+                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/qr:opacity-100 rounded-2xl flex flex-col items-center justify-center transition-opacity text-white text-xs font-bold text-center p-2 leading-tight backdrop-blur-2xs">
+                                <span className="text-lg mb-1">📱</span>
+                                <span>คลิกขยาย QR</span>
+                              </div>
+                              <div id={`qr-group-${item.itemCode}`} className="hidden">
+                                <QRCode value={item.itemCode} size={150} />
+                              </div>
                             </div>
-                            <div id={`qr-group-${item.itemCode}`} className="hidden">
-                              <QRCode value={item.itemCode} size={150} />
+                          ) : (
+                            <div className="w-28 sm:w-36 h-28 sm:h-36 rounded-2xl bg-gray-50 border border-dashed border-gray-200 flex flex-col items-center justify-center p-3 text-center">
+                              <QrCode className="w-6 h-6 text-gray-300 mb-1" />
+                              <span className="text-[11px] font-bold text-gray-400">ไม่มี QR Code</span>
+                              <span className="text-[9px] text-gray-400 mt-0.5">(คลัง {item.warehouse || '-'})</span>
                             </div>
-                          </div>
+                          )}
                         </div>
 
                         <div className="flex-1 min-w-0 space-y-2 pr-6 md:pr-4 w-full">
@@ -881,14 +1093,16 @@ export default function InventoryPage() {
                             </span>
                           </div>
                           <div className="flex flex-col gap-2 shrink-0 min-w-[165px]">
-                            <button
-                              type="button"
-                              onClick={() => downloadQRCodeAsPNG(item.itemCode)}
-                              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs border border-gray-200 cursor-pointer shadow-2xs active:scale-95 transition-all"
-                            >
-                              <Download className="w-4 h-4 text-gray-600 shrink-0" />
-                              <span>ดาวน์โหลด QR</span>
-                            </button>
+                            {canGenerateQR && (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedQrProduct(item)}
+                                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs border border-gray-200 cursor-pointer shadow-2xs active:scale-95 transition-all"
+                              >
+                                <QrCode className="w-4 h-4 text-[#BE1111] shrink-0" />
+                                <span>ดู QR Code</span>
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => openBomModal(item)}
@@ -911,7 +1125,8 @@ export default function InventoryPage() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    )
+                  })}
               </div>
             )}
 
@@ -1290,150 +1505,7 @@ export default function InventoryPage() {
       </AnimatePresence>
 
       {/* Add Product Modal */}
-      <AnimatePresence>
-        {showAddModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 10 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              transition={{ type: "tween", ease: "easeOut", duration: 0.2 }}
-              className="w-full max-w-lg rounded-3xl bg-white p-6 md:p-8 shadow-2xl border border-gray-100 overflow-hidden max-h-[85vh] overflow-y-auto mb-16 sm:mb-0"
-            >
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
-                <div>
-                  <h3 className="text-xl font-display font-bold text-gray-900">เพิ่มรายการสินค้าใหม่</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">ระบบจะสร้าง QR Code ของสินค้านี้ให้อัตโนมัติในตารางหลังบันทึก</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
 
-              {addingError && (
-                <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-3.5 text-sm font-medium text-red-800 shadow-2xs flex items-center justify-between">
-                  <span>{addingError}</span>
-                  <button type="button" onClick={() => setAddingError('')} className="text-red-600 hover:text-red-900 font-bold ml-2">✕</button>
-                </div>
-              )}
-
-              <form onSubmit={handleAddProduct} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                      รหัสสินค้า (Item Code) <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={newItemCode}
-                      onChange={(e) => setNewItemCode(e.target.value)}
-                      placeholder="เช่น 7290103900"
-                      className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1d1d1f]/20 focus:border-[#1d1d1f] bg-gray-50/50 focus:bg-white transition-all shadow-2xs"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                      จำนวนเริ่มต้น <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      required
-                      value={newQuantity}
-                      onChange={(e) => setNewQuantity(e.target.value.replace(/[^0-9]/g, ''))}
-                      className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm font-bold text-[#BE1111] bg-red-50/30 focus:outline-none focus:ring-2 focus:ring-[#1d1d1f]/20 focus:border-[#1d1d1f] focus:bg-white transition-all shadow-2xs text-right"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                    ชื่อสินค้า <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    placeholder="ระบุชื่อหรือรายละเอียดสินค้า"
-                    className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1d1d1f]/20 focus:border-[#1d1d1f] bg-gray-50/50 focus:bg-white transition-all shadow-2xs"
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                      หน่วย
-                    </label>
-                    <input
-                      type="text"
-                      value={newUnit}
-                      onChange={(e) => setNewUnit(e.target.value)}
-                      placeholder="PCS"
-                      className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1d1d1f]/20 focus:border-[#1d1d1f] bg-gray-50/50 focus:bg-white transition-all shadow-2xs"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                      คลัง
-                    </label>
-                    <input
-                      type="text"
-                      value={newWarehouse}
-                      onChange={(e) => setNewWarehouse(e.target.value)}
-                      placeholder="WPK"
-                      className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1d1d1f]/20 focus:border-[#1d1d1f] bg-gray-50/50 focus:bg-white transition-all shadow-2xs"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                      Location
-                    </label>
-                    <input
-                      type="text"
-                      value={newLocation}
-                      onChange={(e) => setNewLocation(e.target.value)}
-                      placeholder="-"
-                      className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1d1d1f]/20 focus:border-[#1d1d1f] bg-gray-50/50 focus:bg-white transition-all shadow-2xs"
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-4 flex gap-3 border-t border-gray-100 mt-6">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddModal(false)}
-                    disabled={addingLoading}
-                    className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                  >
-                    ยกเลิก
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={addingLoading}
-                    className="flex-1 rounded-xl bg-[#1d1d1f] hover:bg-[#333336] px-4 py-3 text-sm font-semibold text-white disabled:opacity-50 transition-all shadow-md active:scale-95 cursor-pointer"
-                  >
-                    {addingLoading ? 'กำลังบันทึก...' : 'บันทึกสินค้าใหม่'}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* BOM Recipe Modal */}
       <AnimatePresence>
@@ -1604,16 +1676,373 @@ export default function InventoryPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center gap-2.5">
                 <button
                   type="button"
                   onClick={() => downloadQRCodeAsPNG(selectedQrProduct.itemCode)}
-                  className="w-full rounded-xl bg-[#BE1111] hover:bg-[#A00F0F] py-3 text-sm font-bold text-white shadow-md shadow-[#BE1111]/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                  className="flex-1 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 py-3 text-xs font-bold text-gray-800 shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                 >
-                  <Download className="w-4 h-4" />
-                  <span>ดาวน์โหลดรูปภาพ PNG</span>
+                  <Download className="w-4 h-4 text-gray-600" />
+                  <span>ดาวน์โหลด PNG</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePrintQRCode(selectedQrProduct)}
+                  className="flex-1 rounded-xl bg-[#BE1111] hover:bg-[#A00F0F] py-3 text-xs font-bold text-white shadow-md shadow-[#BE1111]/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>พิมพ์ QR Code</span>
                 </button>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal ทดสอบเพิ่มสินค้าใหม่ */}
+      <AnimatePresence>
+        {showAddModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 overflow-y-auto"
+            onClick={() => setShowAddModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              transition={{ type: "tween", ease: "easeOut", duration: 0.2 }}
+              className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white shadow-2xl border border-gray-100 p-6 md:p-7 text-left"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className="absolute right-4 top-4 rounded-full bg-gray-100 p-2 text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition-colors cursor-pointer z-10"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-red-50 text-[#BE1111] rounded-2xl flex items-center justify-center font-bold shrink-0">
+                  <Plus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-display font-bold text-gray-900 tracking-tight">
+                    เพิ่มสินค้าใหม่
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    กรอกข้อมูลสินค้าสำหรับตาราง BillOfMaterial
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveProductWithBom} className="space-y-5">
+                {submitError && (
+                  <div className="rounded-2xl border border-red-200 bg-red-50 p-3.5 text-xs font-semibold text-red-800 shadow-2xs flex items-center justify-between">
+                    <span>{submitError}</span>
+                    <button type="button" onClick={() => setSubmitError('')} className="text-red-600 hover:text-red-900 font-bold ml-2">✕</button>
+                  </div>
+                )}
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">ข้อมูลสินค้าหลัก (Parent Product)</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        รหัสสินค้าหลัก (parentItemCode) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={bomForm.parentItemCode}
+                        onChange={(e) => setBomForm({ ...bomForm, parentItemCode: e.target.value })}
+                        placeholder="เช่น 90793-AT401"
+                        className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        รหัสชิ้นส่วน / สินค้า (componentItemCode) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={bomForm.componentItemCode}
+                        onChange={(e) => setBomForm({ ...bomForm, componentItemCode: e.target.value })}
+                        placeholder="เช่น PK-001 หรือ 3510192050"
+                        className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      รายละเอียดสินค้า (description) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={bomForm.description}
+                      onChange={(e) => setBomForm({ ...bomForm, description: e.target.value })}
+                      placeholder="เช่น DRUM YAMALUBE 4 STROKE (สกีนหน้าถัง)"
+                      className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        หน่วยนับ (uom)
+                      </label>
+                      <input
+                        type="text"
+                        value={bomForm.uom}
+                        onChange={(e) => setBomForm({ ...bomForm, uom: e.target.value })}
+                        placeholder="เช่น PCS, BOX, GALLON, ชิ้น"
+                        className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        คลังสินค้า (warehouse)
+                      </label>
+                      <select
+                        value={bomForm.warehouse}
+                        onChange={(e) => setBomForm({ ...bomForm, warehouse: e.target.value })}
+                        className={`w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white transition-colors ${
+                          !bomForm.warehouse ? 'text-gray-400' : 'text-gray-900'
+                        }`}
+                      >
+                        <option value="" disabled hidden className="text-gray-400">เลือกคลังสินค้า...</option>
+                        <option value="WPK" className="text-gray-900">WPK (คลังบรรจุภัณฑ์)</option>
+                        <option value="WFG" className="text-gray-900">WFG (คลังสินค้าสำเร็จรูป)</option>
+                        <option value="WIP" className="text-gray-900">WIP (คลังระหว่างผลิต)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        จำนวน (quantity)
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        min="0"
+                        value={bomForm.quantity}
+                        onChange={(e) => setBomForm({ ...bomForm, quantity: e.target.value })}
+                        placeholder="ระบุตัวเลขจำนวน"
+                        className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      ประเภท BOM (bomType)
+                    </label>
+                    <select
+                      value={bomForm.bomType}
+                      onChange={(e) => setBomForm({ ...bomForm, bomType: e.target.value })}
+                      className={`w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white transition-colors ${
+                        !bomForm.bomType ? 'text-gray-400' : 'text-gray-900'
+                      }`}
+                    >
+                      <option value="" disabled hidden className="text-gray-400">เลือกประเภท BOM...</option>
+                      <option value="FG" className="text-gray-900">FG (สินค้าหลัก,สินค้าสำเร็จรูป)</option>
+                      <option value="Packaging" className="text-gray-900">Packaging (บรรจุภัณฑ์)</option>
+                      <option value="Raw Material" className="text-gray-900">Raw Material (วัตถุดิบ)</option>
+                      <option value="Bulk" className="text-gray-900">Bulk (ถังแทงก์)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Section: QR Code Status Check & Live Preview */}
+                <div className="pt-4 border-t border-gray-100">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <QrCode className="w-3.5 h-3.5 text-[#BE1111]" />
+                    <span>QR Code</span>
+                  </h4>
+                  {bomForm.bomType === 'Packaging' && bomForm.warehouse === 'WPK' ? (
+                    <div className="space-y-3">
+                      <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-bold flex items-center gap-2.5 shadow-2xs">
+                        <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 shrink-0" />
+                        <span>สามารถสร้าง QR Code ได้ (Packaging + WPK)</span>
+                      </div>
+                      {(() => {
+                        const previewCode = (bomForm.componentItemCode || bomForm.parentItemCode).trim()
+                        if (!previewCode) return null
+                        return (
+                          <div className="p-4 rounded-2xl bg-white border border-gray-200/90 shadow-2xs flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+                            <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200 shrink-0">
+                              <QRCode value={previewCode} size={90} />
+                            </div>
+                            <div className="space-y-1 text-xs">
+                              <div className="font-extrabold text-gray-900 font-mono text-sm">{previewCode}</div>
+                              <div className="text-gray-600 font-medium line-clamp-1">{bomForm.description || 'ยังไม่ได้ระบุรายละเอียด'}</div>
+                              <div className="text-[11px] text-gray-500">
+                                ประเภท: <span className="font-bold text-blue-700">Packaging</span> | คลัง: <span className="font-bold text-gray-800">WPK</span>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })()}
+                    </div>
+                  ) : (
+                    <div className="p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200/80 text-amber-900 text-xs font-medium flex items-start gap-2.5 shadow-2xs">
+                      <AlertCircle className="w-4.5 h-4.5 text-amber-600 shrink-0 mt-0.5" />
+                      <span>สามารถสร้าง QR Code ได้เฉพาะวัตถุดิบบรรจุภัณฑ์ (Packaging) ที่จัดเก็บในคลัง WPK เท่านั้น</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Section: Bill of Materials (BOM) */}
+                <div className="pt-4 border-t border-gray-100 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-display font-bold text-gray-900 flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-[#BE1111]" />
+                        <span>Bill of Materials (BOM)</span>
+                        <span className="text-[11px] font-normal text-gray-400">(Optional)</span>
+                      </h4>
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        Parent: <strong>{bomForm.parentItemCode || bomForm.componentItemCode || 'ยังไม่ได้ระบุ'}</strong>
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddBomComponent}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-[#BE1111] text-xs font-bold transition-colors cursor-pointer shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>+ เพิ่มส่วนประกอบ</span>
+                    </button>
+                  </div>
+
+                  {bomComponents.length === 0 ? (
+                    <div className="p-4 text-center rounded-2xl bg-gray-50/70 border border-dashed border-gray-200 text-xs text-gray-400">
+                      ยังไม่มีส่วนประกอบในสูตร BOM กดปุ่ม <strong>"+ เพิ่มส่วนประกอบ"</strong> ด้านบนเพื่อเพิ่มรายการ (ถ้ามี)
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                      {bomComponents.map((comp, index) => (
+                        <div
+                          key={comp.id}
+                          className="p-3.5 rounded-2xl bg-gray-50/90 border border-gray-200/80 space-y-2.5 relative group"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-bold text-gray-600">
+                              ส่วนประกอบที่ {index + 1} (Component {index + 1})
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveBomComponent(comp.id)}
+                              className="text-xs text-red-500 hover:text-red-700 font-semibold inline-flex items-center gap-1 cursor-pointer"
+                              title="ลบส่วนประกอบนี้"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>ลบ</span>
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 mb-0.5">
+                                Component Item Code <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                value={comp.componentItemCode}
+                                onChange={(e) => handleUpdateBomComponent(comp.id, 'componentItemCode', e.target.value)}
+                                placeholder="เช่น PK-001 หรือ FL-102"
+                                className="w-full rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-mono bg-white focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 mb-0.5">
+                                Component Description <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                value={comp.description}
+                                onChange={(e) => handleUpdateBomComponent(comp.id, 'description', e.target.value)}
+                                placeholder="รายละเอียดส่วนประกอบ"
+                                className="w-full rounded-xl border border-gray-200 px-3 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2.5">
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 mb-0.5">
+                                Warehouse (คลัง)
+                              </label>
+                              <input
+                                type="text"
+                                value={comp.warehouse}
+                                onChange={(e) => handleUpdateBomComponent(comp.id, 'warehouse', e.target.value)}
+                                placeholder="WPK, WRM, WFG-JX..."
+                                className="w-full rounded-xl border border-gray-200 px-3 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 mb-0.5">
+                                Quantity Required
+                              </label>
+                              <input
+                                type="number"
+                                step="any"
+                                min="0"
+                                value={comp.quantity}
+                                onChange={(e) => handleUpdateBomComponent(comp.id, 'quantity', e.target.value)}
+                                placeholder="ระบุจำนวน"
+                                className="w-full rounded-xl border border-gray-200 px-3 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 mb-0.5">
+                                UoM (หน่วยนับ)
+                              </label>
+                              <input
+                                type="text"
+                                value={comp.uom}
+                                onChange={(e) => handleUpdateBomComponent(comp.id, 'uom', e.target.value)}
+                                placeholder="PCS, BOX, SET"
+                                className="w-full rounded-xl border border-gray-200 px-3 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    disabled={submittingProduct}
+                    className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingProduct}
+                    className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#BE1111] hover:bg-[#a00e0e] text-sm font-bold text-white shadow-md shadow-[#BE1111]/20 disabled:opacity-50 transition-all cursor-pointer"
+                  >
+                    {submittingProduct ? 'กำลังบันทึก...' : 'บันทึกสินค้า'}
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </motion.div>
         )}

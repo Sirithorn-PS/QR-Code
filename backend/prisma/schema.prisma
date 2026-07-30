@@ -9,14 +9,15 @@ datasource db {
 }
 
 model User {
-  id                   Int           @id @default(autoincrement())
-  username             String        @unique
+  id                   Int            @id @default(autoincrement())
+  username             String         @unique
   password             String
   fullName             String
-  role                 String        @default("warehouse_staff")
-  createdAt            DateTime      @default(now())
-  approvedTransactions Transaction[] @relation("ApprovedTransactions")
-  createdTransactions  Transaction[] @relation("CreatedTransactions")
+  role                 String         @default("warehouse_staff")
+  createdAt            DateTime       @default(now())
+  approvedTransactions Transaction[]  @relation("ApprovedTransactions")
+  createdTransactions  Transaction[]  @relation("CreatedTransactions")
+  notifications        Notification[]
 }
 
 model Product {
@@ -31,6 +32,7 @@ model Product {
   updatedAt    DateTime      @updatedAt
   productId    String?
   itemType     String        @default("FG")
+  minStock     Float?
   transactions Transaction[]
 
   @@index([itemCode])
@@ -56,19 +58,41 @@ model BillOfMaterial {
 }
 
 model Transaction {
-  id           Int       @id @default(autoincrement())
+  id           Int            @id @default(autoincrement())
   productId    Int
   type         String
   quantity     Float
-  status       String    @default("pending")
+  status       String         @default("pending")
   itemSnapshot Json
   note         String?
   createdById  Int
   approvedById Int?
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime       @default(now())
   confirmedAt  DateTime?
   rejectedAt   DateTime?
-  approvedBy   User?     @relation("ApprovedTransactions", fields: [approvedById], references: [id])
-  createdBy    User      @relation("CreatedTransactions", fields: [createdById], references: [id])
-  product      Product   @relation(fields: [productId], references: [id])
+  approvedBy   User?          @relation("ApprovedTransactions", fields: [approvedById], references: [id])
+  createdBy    User           @relation("CreatedTransactions", fields: [createdById], references: [id])
+  product      Product        @relation(fields: [productId], references: [id])
+  notifications Notification[]
 }
+
+model Notification {
+  id            Int          @id @default(autoincrement())
+  userId        Int?
+  targetRole    String?
+  type          String       // 'pending_approval' | 'approval_result' | 'low_stock'
+  title         String
+  message       String
+  link          String?
+  isRead        Boolean      @default(false)
+  transactionId Int?
+  createdAt     DateTime     @default(now())
+
+  user          User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transaction   Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([targetRole])
+  @@index([isRead])
+}
+

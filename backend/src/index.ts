@@ -516,6 +516,139 @@ app.get('/boms', authenticate, async (req, res) => {
   }
 })
 
+app.post('/products/with-bom', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    const { parentItemCode, componentItemCode, description, uom, warehouse, quantity, bomType, components } = req.body
+
+    const mainCode = (componentItemCode || parentItemCode || '').trim()
+    const parentCode = (parentItemCode || componentItemCode || '').trim()
+    const desc = (description || '').trim()
+
+    if (!mainCode) {
+      return res.status(400).json({ error: 'กรุณาระบุรหัสสินค้า (Item Code)' })
+    }
+    if (!desc) {
+      return res.status(400).json({ error: 'กรุณาระบุรายละเอียดสินค้า (Description)' })
+    }
+    const qtyNum = Number(quantity || 0)
+    if (isNaN(qtyNum) || qtyNum < 0) {
+      return res.status(400).json({ error: 'จำนวนสินค้าต้องเป็นตัวเลขที่ไม่ติดลบ' })
+    }
+
+    // Check duplicate itemCode in Product
+    const existing = await prisma.product.findFirst({
+      where: {
+        itemCode: {
+          equals: mainCode,
+          mode: 'insensitive'
+        }
+      }
+    })
+
+    if (existing) {
+      return res.status(400).json({ error: `รหัสสินค้า ${mainCode} มีอยู่ในระบบแล้ว` })
+    }
+
+    const finalWarehouse = (warehouse || 'WPK').trim()
+    const finalUom = (uom || 'PCS').trim()
+    const finalBomType = (bomType || 'FG').trim()
+
+    // Validate components if present
+    const validComponents: Array<{ componentItemCode: string; description: string; warehouse: string; quantity: number; uom: string }> = []
+    if (Array.isArray(components) && components.length > 0) {
+      for (const comp of components) {
+        const cCode = (comp.componentItemCode || '').trim()
+        const cDesc = (comp.description || '').trim()
+        if (!cCode || !cDesc) {
+          return res.status(400).json({ error: 'กรุณากรอกรหัสชิ้นส่วนและรายละเอียดส่วนประกอบ BOM ให้ครบถ้วน' })
+        }
+        const cQty = Number(comp.quantity || 1)
+        if (isNaN(cQty) || cQty < 0) {
+          return res.status(400).json({ error: `จำนวนชิ้นส่วน ${cCode} ต้องเป็นตัวเลขที่ไม่ติดลบ` })
+        }
+        validComponents.push({
+          componentItemCode: cCode,
+          description: cDesc,
+          warehouse: (comp.warehouse || finalWarehouse).trim(),
+          quantity: cQty,
+          uom: (comp.uom || 'PCS').trim(),
+        })
+      }
+    }
+
+    // Perform database operations in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create main Product
+      const product = await tx.product.create({
+        data: {
+          itemCode: mainCode,
+          description: desc,
+          unit: finalUom,
+          warehouse: finalWarehouse,
+          location: '-',
+          quantity: qtyNum,
+          itemType: finalBomType,
+        }
+      })
+
+      // 2. Create main BillOfMaterial record
+      await tx.billOfMaterial.create({
+        data: {
+          parentItemCode: parentCode,
+          componentItemCode: mainCode,
+          description: desc,
+          uom: finalUom,
+          quantity: qtyNum || 1,
+          warehouse: finalWarehouse,
+          depth: 1,
+          bomType: finalBomType,
+        }
+      })
+
+      // 3. Create component BOM records and ensure component Products exist
+      for (const comp of validComponents) {
+        await tx.billOfMaterial.create({
+          data: {
+            parentItemCode: parentCode,
+            componentItemCode: comp.componentItemCode,
+            description: comp.description,
+            uom: comp.uom,
+            quantity: comp.quantity,
+            warehouse: comp.warehouse,
+            depth: 1,
+            bomType: finalBomType,
+          }
+        })
+
+        const compProductExists = await tx.product.findFirst({
+          where: { itemCode: { equals: comp.componentItemCode, mode: 'insensitive' } }
+        })
+
+        if (!compProductExists) {
+          await tx.product.create({
+            data: {
+              itemCode: comp.componentItemCode,
+              description: comp.description,
+              unit: comp.uom,
+              warehouse: comp.warehouse,
+              location: '-',
+              quantity: 0,
+              itemType: comp.warehouse === 'WPK' ? 'Packaging' : 'Raw Material',
+            }
+          })
+        }
+      }
+
+      return product
+    })
+
+    return res.status(201).json({ message: 'บันทึกข้อมูลสินค้าและ BOM เรียบร้อยแล้ว', product: result })
+  } catch (error) {
+    console.error('Error creating product with BOM:', error)
+    return res.status(500).json({ error: 'ไม่สามารถบันทึกข้อมูลสินค้าได้ กรุณาลองใหม่อีกครั้ง' })
+  }
+})
+
 app.get('/products/:itemCode', authenticate, async (req, res) => {
   try {
     const rawCode = decodeURIComponent(req.params.itemCode || '').trim()
@@ -759,6 +892,22 @@ app.post('/transactions', authenticate, async (req: AuthenticatedRequest, res: R
       },
     })
 
+    // สร้าง Notification แจ้งเตือน Supervisor (Role: admin)
+    try {
+      await prisma.notification.create({
+        data: {
+          targetRole: 'admin',
+          type: 'pending_approval',
+          title: `มีรายการ${type === 'receive' ? 'รับเข้า' : 'เบิกออก'}ใหม่รออนุมัติ`,
+          message: `${product.description}\nจำนวน ${quantity.toLocaleString()} ${product.unit}`,
+          link: '/transactions',
+          transactionId: transaction.id,
+        },
+      })
+    } catch (notifErr) {
+      console.error('Failed to create pending_approval notification:', notifErr)
+    }
+
     return res.status(201).json(transaction)
   } catch (error) {
     console.error(error)
@@ -823,6 +972,22 @@ app.post(
         })
       })
 
+      // สร้าง Notification แจ้งเตือน Staff เจ้าของรายการ
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: transaction.createdById,
+            type: 'approval_result',
+            title: 'รายการได้รับการอนุมัติแล้ว',
+            message: `รายการ${transaction.type === 'receive' ? 'รับเข้า' : 'เบิกออก'}ของคุณได้รับการอนุมัติแล้ว\n${transaction.product.description}\nจำนวน ${transaction.quantity.toLocaleString()} ${transaction.product.unit}`,
+            link: '/transactions',
+            transactionId: transaction.id,
+          },
+        })
+      } catch (notifErr) {
+        console.error('Failed to create confirm notification:', notifErr)
+      }
+
       return res.json(result)
     } catch (error) {
       console.error(error)
@@ -841,7 +1006,10 @@ app.post(
         return res.status(400).json({ error: 'Invalid transaction id' })
       }
 
-      const transaction = await prisma.transaction.findUnique({ where: { id } })
+      const transaction = await prisma.transaction.findUnique({
+        where: { id },
+        include: { product: true },
+      })
       if (!transaction) {
         return res.status(404).json({ error: 'Transaction not found' })
       }
@@ -850,11 +1018,13 @@ app.post(
         return res.status(409).json({ error: 'Transaction is not pending' })
       }
 
+      const rejectNote = normalizeText(req.body?.note) || transaction.note || ''
+
       const result = await prisma.transaction.update({
         where: { id },
         data: {
           status: 'rejected',
-          note: normalizeText(req.body?.note) || transaction.note,
+          note: rejectNote || undefined,
           approvedById: req.user!.id,
           rejectedAt: new Date(),
         },
@@ -869,6 +1039,22 @@ app.post(
         },
       })
 
+      // สร้าง Notification แจ้งเตือน Staff เจ้าของรายการ
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: transaction.createdById,
+            type: 'approval_result',
+            title: 'รายการถูกปฏิเสธ',
+            message: `รายการ${transaction.type === 'receive' ? 'รับเข้า' : 'เบิกออก'}ของคุณถูกปฏิเสธ${rejectNote ? ` (${rejectNote})` : ''}\nกรุณาตรวจสอบรายละเอียดรายการ`,
+            link: '/transactions',
+            transactionId: transaction.id,
+          },
+        })
+      } catch (notifErr) {
+        console.error('Failed to create reject notification:', notifErr)
+      }
+
       return res.json(result)
     } catch (error) {
       console.error(error)
@@ -876,6 +1062,82 @@ app.post(
     }
   },
 )
+
+// Notification API Routes
+app.get('/notifications', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id
+    const userRole = req.user!.role
+
+    const notifications = await prisma.notification.findMany({
+      where: {
+        OR: [
+          { userId },
+          { targetRole: userRole },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    })
+
+    const unreadCount = await prisma.notification.count({
+      where: {
+        OR: [
+          { userId },
+          { targetRole: userRole },
+        ],
+        isRead: false,
+      },
+    })
+
+    return res.json({ notifications, unreadCount })
+  } catch (error) {
+    console.error('Error fetching notifications:', error)
+    return res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลการแจ้งเตือนได้' })
+  }
+})
+
+app.patch('/notifications/:id/read', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const id = Number(req.params.id)
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ error: 'Invalid notification id' })
+    }
+
+    const notification = await prisma.notification.update({
+      where: { id },
+      data: { isRead: true },
+    })
+
+    return res.json(notification)
+  } catch (error) {
+    console.error('Error marking notification as read:', error)
+    return res.status(500).json({ error: 'ไม่สามารถอัปเดตการแจ้งเตือนได้' })
+  }
+})
+
+app.post('/notifications/read-all', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id
+    const userRole = req.user!.role
+
+    await prisma.notification.updateMany({
+      where: {
+        OR: [
+          { userId },
+          { targetRole: userRole },
+        ],
+        isRead: false,
+      },
+      data: { isRead: true },
+    })
+
+    return res.json({ success: true })
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error)
+    return res.status(500).json({ error: 'ไม่สามารถอัปเดตการแจ้งเตือนได้' })
+  }
+})
 
 app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
   console.error('Unhandled API Error:', err)

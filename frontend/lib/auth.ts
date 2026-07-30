@@ -178,6 +178,31 @@ export function fetchProducts(search = '', itemType = '') {
   return apiRequest<Product[]>(`/products${queryString}`)
 }
 
+export interface CreateProductWithBomData {
+  parentItemCode: string
+  componentItemCode: string
+  description: string
+  uom: string
+  warehouse: string
+  quantity: string | number
+  depth?: string | number
+  bomType: string
+  components?: Array<{
+    componentItemCode: string
+    description: string
+    warehouse: string
+    quantity: string | number
+    uom: string
+  }>
+}
+
+export function createProductWithBom(data: CreateProductWithBomData) {
+  return apiRequest<{ message: string; product: Product }>('/products/with-bom', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
 export function fetchProduct(itemCode: string) {
   return apiRequest<Product>(`/products/${encodeURIComponent(itemCode)}`)
 }
@@ -246,5 +271,34 @@ export function rejectTransaction(id: number, note?: string) {
   return apiRequest<StockTransaction>(`/transactions/${id}/reject`, {
     method: 'POST',
     body: JSON.stringify({ note }),
+  })
+}
+
+export interface NotificationItem {
+  id: number
+  userId: number | null
+  targetRole: string | null
+  type: 'pending_approval' | 'approval_result' | 'low_stock'
+  title: string
+  message: string
+  link: string | null
+  isRead: boolean
+  transactionId: number | null
+  createdAt: string
+}
+
+export function fetchNotifications() {
+  return apiRequest<{ notifications: NotificationItem[]; unreadCount: number }>('/notifications')
+}
+
+export function markNotificationAsRead(id: number) {
+  return apiRequest<NotificationItem>(`/notifications/${id}/read`, {
+    method: 'PATCH',
+  })
+}
+
+export function markAllNotificationsAsRead() {
+  return apiRequest<{ success: boolean }>('/notifications/read-all', {
+    method: 'POST',
   })
 }

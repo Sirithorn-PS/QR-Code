@@ -1,6 +1,72 @@
 # บันทึกการทำงาน (Memories)
 
 ## 30 ก.ค. 2026
+- **ทดสอบระบบและการบันทึกข้อมูลจริงสู่ Supabase (Step 8)**:
+  - ดำเนินการทดสอบระบบ 15 Test Cases ครบถ้วนตามข้อกำหนด โดยอ้างอิงตาราง `BillOfMaterial` และ `Product` บน Supabase Database
+  - ผลการทดสอบ: ผ่านทุก Test Case 100% (15/15 Passed)
+  - ไม่พบการแก้ไข Database Schema หรือการสร้างตาราง BOM ใหม่แต่อย่างใด
+  - ผ่านการทดสอบ TypeScript Compilation และ Next.js Build 100% (0 errors)
+- **พัฒนาระบบสร้างและสั่งพิมพ์ QR Code สำหรับสินค้าประเภท Packaging ในคลัง WPK (Step 7)**:
+  - เพิ่มการบังคับใช้เงื่อนไข `itemType === 'Packaging'` AND `warehouse === 'WPK'` ในการสร้าง, แสดงผล และขยาย QR Code ในหน้าสต็อก (`frontend/app/inventory/page.tsx`)
+  - ยืนยันรูปแบบ QR Data Format: เข้ารหัสด้วย `itemCode` ตรงตามมาตรฐานเดิมของระบบ เพื่อให้หน้า สแกน (`frontend/app/scan/page.tsx`) สามารถสแกนและสืบค้นสินค้าใหม่ทำรายการรับเข้า/เบิกออกได้ทันที
+  - เพิ่มระบบ Preview QR Code แบบ Live ใน Modal "เพิ่มสินค้าใหม่" เมื่อตรงเงื่อนไข `Packaging` + `WPK`
+  - เพิ่มฟังก์ชัน **"พิมพ์ QR Code" (Print QR Code)** ใน Modal แสดงผล QR Code เพื่อสั่งพิมพ์รูปภาพ QR พร้อมรายละเอียด Item Code, Description, Material Type และ Warehouse ลงกระดาษการ์ดมาตรฐานได้อย่างสวยงาม
+  - เพิ่มฟังก์ชัน **"ดาวน์โหลด PNG"** ให้สามารถบันทึกไฟล์รูปภาพ QR Code ความละเอียดสูงไปใช้งานต่อได้
+  - ผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) และ Production Build (`npm run build`) สำเร็จ 100% (0 errors)
+- **เพิ่ม Section "QR Code" ตรวจสอบสิทธิ์การสร้าง QR Code แบบ Real-time (Step 6)**:
+  - เพิ่มส่วนการแสดงผลสิทธิ์การสร้าง QR Code ภายใน Modal "เพิ่มสินค้าใหม่" ในหน้าสต็อก (`frontend/app/inventory/page.tsx`)
+  - ตรวจสอบเงื่อนไขตรงตัวตามที่กำหนด: ต้องเป็น `bomType === 'Packaging'` AND `warehouse === 'WPK'` พร้อมกันทั้ง 2 เงื่อนไข
+  - แสดงผล Badge สถานะแบบ Real-time ทันทีเมื่อผู้ใช้เลือกประเภทสินค้าและคลังจัดเก็บ:
+    - ตรงเงื่อนไข (`Packaging` + `WPK`): แสดง Badge สีเขียว *"สามารถสร้าง QR Code ได้"*
+    - ไม่ตรงเงื่อนไข: แสดง Notice สีส้ม *"สามารถสร้าง QR Code ได้เฉพาะวัตถุดิบบรรจุภัณฑ์ (Packaging) ที่จัดเก็บในคลัง WPK เท่านั้น"*
+  - เงื่อนไขนี้ใช้เฉพาะสิทธิ์ QR Code เท่านั้น ไม่กระทบหรือจำกัดข้อมูล BOM อื่นๆ
+  - ผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) และ Production Build (`npm run build`) สำเร็จ 100% (0 errors)
+- **พัฒนาระบบบันทึกข้อมูลสินค้าและ BOM ลงตาราง BillOfMaterial และ Product บน Supabase (Step 5)**:
+  - เพิ่ม API Endpoint `POST /products/with-bom` ใน Backend (`backend/src/index.ts`) รองรับการบันทึกข้อมูลสินค้าและ BOM ภายใน Transaction เดียวกันสู่ Supabase Database
+  - เพิ่ม Helper `createProductWithBom` ใน Frontend (`frontend/lib/auth.ts`) และผูกการทำงานกับปุ่ม **"บันทึกสินค้า"** ใน Modal หน้าสต็อก (`frontend/app/inventory/page.tsx`)
+  - รองรับระบบ Validation: ตรวจสอบรหัสสินค้าและคำอธิบายไม่ให้เป็นค่าว่าง, ตรวจสอบรหัสสินค้าซ้ำในระบบ, ตรวจสอบจำนวนไม่ให้ติดลบ
+  - เมื่อบันทึกสำเร็จ: ระบบจะทำการปิด Modal, รีเซ็ตค่าในฟอร์ม, รีเฟรชตารางสต็อกทันทีเพื่อให้สินค้าใหม่ขึ้นแสดงผล และสามารถคลิกปุ่ม **"ดูสูตร BOM"** เพื่อตรวจสอบโครงสร้างสูตร BOM ที่เพิ่งบันทึกได้ทันที
+  - ผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) และ Production Build (`npm run build`) สำเร็จ 100% (0 errors)
+- **ปรับให้ทุกช่องใน Modal เพิ่มสินค้าใหม่แสดงเป็น Placeholder สีเทาเมื่อยังไม่ได้เลือก/กรอกข้อมูล**:
+  - กำหนดค่าเริ่มต้นของ `uom`, `warehouse` และ `bomType` ให้เป็นค่าว่าง (`''`) เพื่อแสดงข้อความตัวอย่างสีเทา (Grey Placeholder Text) เช่นเดียวกับช่อง หน่วยนับ และ จำนวน ใน `frontend/app/inventory/page.tsx`
+  - เมื่อผู้ใช้ทำการเลือกตัวเลือกใน Select Dropdown ตัวหนังสือจะเปลี่ยนเป็นสีดำปกติเรียบร้อย
+- **ปรับเปลี่ยนตัวเลือกในช่องประเภท BOM (bomType) ใน Modal เพิ่มสินค้าใหม่**:
+  - ปรับเปลี่ยนตัวเลือกของ **ประเภท BOM (bomType)** ให้เป็น 4 ตัวเลือกตามที่ระบุ: `FG (สินค้าหลัก,สินค้าสำเร็จรูป)`, `Packaging (บรรจุภัณฑ์)`, `Raw Material (วัตถุดิบ)`, `Bulk (ถังแทงก์)` ใน `frontend/app/inventory/page.tsx`
+- **เพิ่ม Section "Bill of Materials (BOM)" ใน Modal เพิ่มสินค้าใหม่ (Step 4)**:
+  - เพิ่มส่วนการระบุสูตร BOM อ้างอิงโครงสร้างตาราง `BillOfMaterial` ใน Modal หน้าสต็อก (`frontend/app/inventory/page.tsx`)
+  - ปรับช่องกรอก **จำนวน (Quantity)** ให้เป็นช่องว่างแบบ Manual Number Input พร้อม Placeholder ชัดเจน เพื่อให้ผู้ใช้พิมพ์ตัวเลขที่ต้องการลงไปได้โดยตรง
+  - นำช่องกรอก **ระดับชั้น BOM (depth)** ออกจาก UI ตามคำขอของผู้ใช้ โดยระบบจะกำหนดค่าพื้นฐานเป็น `1` ในระดับเบื้องหลังโดยอัตโนมัติ
+  - เพิ่มปุ่ม **"+ เพิ่มส่วนประกอบ"** ให้สามารถ เพิ่ม, แก้ไข (Component Item Code, Description, Warehouse, Quantity Required, UoM) และ ลบ รายการส่วนประกอบย่อยได้แบบ Dynamic
+  - กำหนดให้ BOM เป็น Optional (สามารถบันทึกสินค้าได้แม้ไม่มีสูตร BOM) และรองรับ Warehouse ได้ทุกประเภท (`WPK`, `WRM`, `WFG-JX`, `WFG-INT`, `HTH07` ฯลฯ)
+  - ผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) และ Production Build (`npm run build`) สำเร็จ 100% (0 errors)
+- **สร้าง UI Form สำหรับข้อมูลสินค้า Mapping ตรงกับคอลัมน์ของตาราง BillOfMaterial (Step 3)**:
+  - เพิ่มฟอร์มกรอกข้อมูลสินค้าภายใน Modal "เพิ่มสินค้าใหม่" ในหน้าสต็อก (`frontend/app/inventory/page.tsx`)
+  - กำหนดฟิลด์บน UI ให้ตรงกับคอลัมน์ของตาราง `BillOfMaterial` ใน Supabase อย่างถูกต้อง ได้แก่ `parentItemCode`, `componentItemCode`, `description`, `uom`, `warehouse`, `quantity`, `depth`, `bomType`
+  - ยังไม่ทำการบันทึกข้อมูลลงฐานข้อมูล ยังไม่ทำ BOM Component Form และยังไม่ทำ QR Code ตามข้อกำหนด Step 3
+  - ผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) และ Production Build (`npm run build`) สำเร็จ 100% (0 errors)
+- **เพิ่มปุ่ม "เพิ่มสินค้าใหม่" และ Modal ทดสอบในหน้าสต็อก (Step 2)**:
+  - เพิ่มปุ่ม **"เพิ่มสินค้าใหม่"** (พร้อมไอคอน `+` สวยงาม ไม่ซ้ำซ้อน) สลับตำแหน่งมาอยู่ด้านขวาถัดจากปุ่ม *"ประวัติการแก้ไขสต็อก"* บริเวณส่วนบนของหน้าสต็อก (`frontend/app/inventory/page.tsx`) สำหรับสิทธิ์ Supervisor
+  - สร้าง **Modal ทดสอบ** แสดงเฉพาะหัวข้อ "เพิ่มสินค้าใหม่" และปุ่ม "ยกเลิก" สำหรับทดสอบการโต้ตอบปุ่ม
+  - ใช้ Design System, Theme และ Layout เดิมของระบบ โดยยังไม่มีการแก้ไข Database หรือระบบส่วนอื่น
+  - ผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) และ Production Build (`npm run build`) สำเร็จ 100% (0 errors)
+- **ยกเลิกการแก้ไข "ฟังก์ชันเพิ่มสินค้าและ BOM ใหม่" ย้อนกลับสู่เวอร์ชันเสถียรก่อนหน้า**:
+  - ยกเลิกปุ่ม "+ เพิ่มสินค้าและ BOM ใหม่" และ Modal Form ในหน้าจัดการสต็อก (`frontend/app/inventory/page.tsx`)
+  - ยกเลิก API Endpoint `POST /products/with-bom` ใน Backend (`backend/src/index.ts`) และ Helper ใน `frontend/lib/auth.ts`
+  - คืนค่าระบบกลับสู่เวอร์ชันที่มี **ระบบการแจ้งเตือน (Notification System)** และ **ป้ายรออนุมัติ** สมบูรณ์เรียบร้อย 100%
+  - ผ่านการทดสอบ TypeScript และ Production Build (`npm run build`) ผ่านสำเร็จ 100% (0 errors)
+- **พัฒนาระบบการแจ้งเตือน (Notification System) แบบครบวงจร**:
+  - เพิ่ม `Notification` model ใน Prisma Schema พร้อม Push ตารางสู่ Supabase Database
+  - สร้าง API Endpoints ใน Backend (`GET /notifications`, `PATCH /notifications/:id/read`, `POST /notifications/read-all`)
+  - สร้าง Notification อัตโนมัติในสถานการณ์สำคัญ:
+    1. เมื่อ Staff สแกนสร้างรายการรับเข้า/เบิกออกใหม่ ➔ แจ้งเตือน Supervisor (Role: admin) เพื่ออนุมัติ
+    2. เมื่อ Supervisor อนุมัติ/ปฏิเสธรายการ ➔ แจ้งเตือน Staff เจ้าของรายการ
+    3. เตรียมโครงสร้างสำหรับ Low Stock Notification
+  - เพิ่มไอคอนกระดิ่ง 🔔 บน Navigation Bar ด้านขวาติดกับชื่อผู้ใช้ พร้อม **Unread Notification Badge** สีแดง (นับเฉพาะที่ยังไม่ได้อ่าน)
+  - เพิ่ม Popover Dropdown เปิดแสดงรายการแจ้งเตือนย่อย คลิกเพื่อเปลี่ยนสถานะเป็น "อ่านแล้ว" และนำทางไปยังรายการนั้นทันที
+  - ผ่านการทดสอบ TypeScript และ `npm run build` ทั้ง Frontend และ Backend สำเร็จ 100% (0 errors)
+- **นำลิงก์ย้อนกลับ "← กลับหน้าหลัก" ออกจากทุกหน้าของระบบ**:
+  - ลบลิงก์ "← กลับหน้าหลัก" ออกจากหน้ารายการ (`frontend/app/transactions/page.tsx`), หน้าจัดการสต็อก (`frontend/app/inventory/page.tsx`), และหน้ารายงาน (`frontend/app/reports/page.tsx`) ให้หน้าจอสะอาด เรียบง่าย มินิมอล 100%
+  - ผ่านการทดสอบ TypeScript (`tsc --noEmit`) และ `npm run build` สำเร็จ 100% (0 errors)
 - **ขยายขนาดวงกลมกราฟ Donut Chart บน Dashboard ให้ใหญ่และโปร่งยิ่งขึ้น (`frontend/app/dashboard/page.tsx`)**:
   - ขยายขนาด Container กราฟ Donut จากเดิม `144px` (`w-36 h-36`) เพิ่มขึ้นเป็น **`192px - 208px`** (`w-48 h-48 sm:w-52 sm:h-52`)
   - ปรับขนาดรูกึ่งกลางวงกลมให้กว้างขึ้น ป้องกันข้อความตัวเลขและป้ายกำกับ **"รวม 42 รายการ"** อึดอัดเบียดกัน ทำให้ตัวเลขอ่านง่าย ชัดเจน มีพื้นที่โปร่งสบายตา 100%

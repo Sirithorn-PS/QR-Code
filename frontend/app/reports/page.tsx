@@ -158,10 +158,6 @@ export default function ReportsPage() {
         {/* Top Header */}
         <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-[#BE1111] transition-colors mb-2">
-              <ArrowLeft className="w-4 h-4" />
-              <span>กลับหน้าหลัก</span>
-            </Link>
             <h1 className="text-2xl md:text-3xl font-display font-bold text-gray-900 tracking-tight">รายงานธุรกรรม</h1>
           </div>
           

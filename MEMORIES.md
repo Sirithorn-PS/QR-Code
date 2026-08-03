@@ -1,6 +1,10 @@
 # บันทึกการทำงาน (Memories)
 
 ## 3 ส.ค. 2026
+- **ปรับปรุงระบบสแกน QR Code ให้เปิดกล้องหลัง (Back Camera) อัตโนมัติในโทรศัพท์มือถือ**:
+  - สาเหตุ: เดิมใช้ `Html5QrcodeScanner` ซึ่งเป็นสำเร็จรูป UI Widget ของไลบรารี `html5-qrcode` ที่บังคับแสดง Dropdown "Select Camera" และเลือกกล้องหน้าขึ้นมาก่อน
+  - การแก้ไข: ปรับเปลี่ยน [frontend/components/QRScanner.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/components/QRScanner.tsx) มาใช้ Class `Html5Qrcode` โดยตรง และส่งพารามิเตอร์ `{ facingMode: "environment" }` เพื่อสั่งเปิดใช้งาน **กล้องหลัง** อัตโนมัติทันทีที่เข้าหน้าสแกน โดยซ่อน UI Dropdown เลือกรุ่นกล้องทิ้งทั้งหมด
+  - ผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) สำเร็จ 100% (0 errors)
 - **แก้ไขปัญหากราฟและยอดรวมวัตถุดิบบรรจุภัณฑ์ใน Dashboard ไม่ตรงกับหน้าจัดคลังสต็อก (Packaging Stock)**:
   - สาเหตุ: `dashboard/page.tsx` นำตัวแปร `totalProductsCount` (ยอดรวมสินค้าทุกประเภท 44 รายการ) ไปแสดงตรงกลางกราฟ Donut และใช้ keyword search ดึงหมวดหมู่จากสินค้าทั้งหมดโดยไม่ได้กรอง `itemType === 'Packaging'` ทำให้ยอดรวมตรงกลาง (44) กับผลรวมหมวดหมู่กราฟ (24) และข้อมูลในหน้าสต็อกไม่ตรงกัน
   - การแก้ไข: ปรับปรุง `frontend/app/dashboard/page.tsx` ให้กรองเฉพาะ `p.itemType === 'Packaging'` (รวม 24 รายการ) และใช้วิธีจัดกลุ่มหมวดหมู่ย่อย (แกลลอน, ฝา, ฟอยล์, กล่อง, ฉลาก, อื่นๆ) รูปแบบเดียวกับหน้าสต็อก พร้อมอัปเดตตัวเลขตรงกลาง Donut Chart ให้แสดงยอดรวม 24 รายการตรงกันเป๊ะ

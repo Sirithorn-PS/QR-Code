@@ -1,6 +1,38 @@
 # บันทึกการทำงาน (Memories)
 
 ## 3 ส.ค. 2026
+- **ปรับแต่งข้อความ `PACKAGING MATERIAL WAREHOUSE MANAGEMENT SYSTEM` ให้แสดงผลบรรทัดเดียวกันแบบ Single Line**:
+  - แก้ไขในหน้า [login/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/login/page.tsx) และ [register/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/register/page.tsx)
+  - กำหนด `whitespace-nowrap` พร้อมปรับระดับความกว้างและขนาดฟอนต์แบบ Responsive (`text-[10px] min-[360px]:text-[11px] sm:text-xs md:text-sm`) ทำให้ข้อความแสดงผลในบรรทัดเดียวกันทั้งหมด สวยงาม ไม่มีการตกบรรทัด
+- **ดำเนินการ STEP 5: ปรับปรุงความ Responsive ของหน้า Login และ Register (Mobile, Tablet, Desktop)**:
+  - เพิ่มและปรับแต่ง Class Responsive Utility ใน [login/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/login/page.tsx) และ [register/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/register/page.tsx) ให้แสดงผลได้อย่างสมบูรณ์แบบบนหน้าจอทุกขนาด (Desktop, Tablet, Mobile)
+  - ปรับความกว้างของ Card (`max-w-[360px] sm:max-w-[420px]`), ขนาดฟอนต์ยืดหยุ่นตามหน้าจอ (`text-2xl sm:text-3xl lg:text-4xl`), Padding สอดคล้องกับขนาดอุปกรณ์ (`p-6 sm:p-8 lg:p-9`) และขนาด Touch Target สำหรับมือถือ (ความสูงขั้นต่ำ 48px)
+  - ปรับขนาดโลโก้และไอคอนฉากหลังให้เหมาะสมบนอุปกรณ์มือถือ ไม่บังเนื้อหา
+  - ไม่มีการแก้ไขหน้าอื่นของเว็บไซต์ และผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) สำเร็จ 100% (0 errors)
+- **ดำเนินการ STEP 4: ปรับปรุง UI ของ Form บนหน้า Login และ Register**:
+  - ปรับดีไซน์ช่อง Input ใน [login/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/login/page.tsx) และ [register/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/register/page.tsx) ให้เป็นขอบโค้งมน (`rounded-2xl`), พื้นหลังสีขาวบริสุทธิ์ (`bg-white`), เส้นขอบสีเทาอ่อน (`border-slate-200`) และเน้นสถานะ Focus ด้วยสีแดงประจำแบรนด์ (`focus:border-[#BE1111]`)
+  - ใส่ไอคอนประกอบช่องกรอกเฉพาะที่จำเป็น: `User` (ชื่อผู้ใช้), `Lock` (รหัสผ่าน), `UserCheck` (ชื่อ-นามสกุล), และ `KeyRound` (ยืนยันรหัสผ่าน)
+  - ปรับปุ่ม Submit ให้ใช้สีแดงประจำแบรนด์ (`bg-[#BE1111] hover:bg-[#A00F0F]`) พร้อมเพิ่มเงาละมุน (`shadow-md shadow-[#BE1111]/15`)
+  - เพิ่มระยะ Spacing ในแบบฟอร์ม (`space-y-6`) ให้ดูโปร่ง สบายตา
+  - ไม่มีการเปลี่ยน Validation, ไม่มีการเปลี่ยน API, ไม่มีการเปลี่ยน Authentication Flow และไม่มีการแก้ไขหน้าอื่นของเว็บไซต์
+  - ผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) สำเร็จ 100% (0 errors)
+- **ดำเนินการ STEP 3: เพิ่มข้อความและจัดวาง Branding ระบบบนหน้า Login และ Register**:
+  - ปรับเพิ่มและจัดวาง Branding บนส่วน Header ด้านบนของหน้า [login/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/login/page.tsx) และ [register/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/register/page.tsx) อย่างเรียบง่าย สวยงาม ด้วย Typography ทันสมัย
+  - แสดงผลครบถ้วน 4 ส่วนหลัก:
+    1. Logo ไอคอนพัสดุ `<Package />` 
+    2. ชื่อแอป **WPK MMS**
+    3. คำอธิบายภาษาอังกฤษ **Packaging Material Warehouse Management System**
+    4. คำอธิบายภาษาไทย **ระบบบริหารจัดการคลังวัตถุดิบบรรจุภัณฑ์**
+  - ไม่มีการแก้ไขหน้าอื่นของเว็บไซต์ และผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) สำเร็จ 100% (0 errors)
+- **ดำเนินการ STEP 2: ปรับแต่ง Layout หน้า Login และ Register ใหม่ตามสไตล์ Modern Minimal Clean**:
+  - ปรับแต่ง [frontend/app/login/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/login/page.tsx) และ [frontend/app/register/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/register/page.tsx)
+  - กำหนดให้ใช้โทนสีขาวหลัก (True White Background) เพิ่มพื้นที่ White Space กว้างสบายตา ปรับ Layout วางตำแหน่งโลโก้ `<Package />` และชื่อระบบ **WPK MMS** (*Packaging Material Warehouse Management System*) ไว้ด้านบนกึ่งกลางหน้าจอ
+  - ตกแต่งด้วย Graphic ลวดลายชั้นวางคลังสินค้า/กล่อง (`Warehouse`, `Boxes`, `Layers`) โทนโปร่งแสงจางๆ (`opacity-[0.02]` ถึง `[0.03]`) ไม่รบกวนสายตา
+  - วาง Card สำหรับกรอกแบบฟอร์มไว้ด้านล่างกึ่งกลางหน้าจออย่างเป็นระเบียบ โดยคงฟอร์ม ปุ่ม ข้อมูล Validation และ Authentication สื่อสาร API ทั้งหมดไว้ครบถ้วนเหมือนเดิม 100%
+  - ผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) สำเร็จ 100% (0 errors)
+- **อ่านข้อมูลจากไฟล์ Excel `CODE NO^.xlsx` และเจนรูปภาพ QR Code สำเร็จ 195 รายการ**:
+  - ดำเนินการอัปเดตสคริปต์ [scripts/Qrcode.py](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/scripts/Qrcode.py) ให้รองรับการอ่านไฟล์ `CODE NO^.xlsx` และดึง Item Code ทั้งหมด 195 รายการมาสร้างเป็นไฟล์รูปภาพ QR Code `.png` คุณภาพสูง
+  - ไฟล์รูปภาพ QR Code ทั้ง 195 รายการถูกบันทึกไว้อย่างเป็นระเบียบที่โฟลเดอร์ `QR_Code_Output/`
 - **ปรับปรุงระบบสแกน QR Code ให้เปิดกล้องหลัง (Back Camera) อัตโนมัติในโทรศัพท์มือถือ**:
   - สาเหตุ: เดิมใช้ `Html5QrcodeScanner` ซึ่งเป็นสำเร็จรูป UI Widget ของไลบรารี `html5-qrcode` ที่บังคับแสดง Dropdown "Select Camera" และเลือกกล้องหน้าขึ้นมาก่อน
   - การแก้ไข: ปรับเปลี่ยน [frontend/components/QRScanner.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/components/QRScanner.tsx) มาใช้ Class `Html5Qrcode` โดยตรง และส่งพารามิเตอร์ `{ facingMode: "environment" }` เพื่อสั่งเปิดใช้งาน **กล้องหลัง** อัตโนมัติทันทีที่เข้าหน้าสแกน โดยซ่อน UI Dropdown เลือกรุ่นกล้องทิ้งทั้งหมด

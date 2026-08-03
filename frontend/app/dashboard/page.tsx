@@ -82,21 +82,54 @@ export default function DashboardPage() {
   const maxTxIn7Days = Math.max(...last7Days.map(d => Math.max(d.receiveCount, d.issueCount)), 5)
 
   // --- 3. คำนวณสัดส่วนหมวดบรรจุภัณฑ์ (Donut Chart Data) ---
+  const packagingProducts = products.filter(p => p.itemType === 'Packaging')
+  const totalPackagingCount = packagingProducts.length
+
+  const getSubCategory = (item: Product): 'gallon' | 'foil' | 'cap' | 'box' | 'label' | 'other' => {
+    const code = (item.itemCode || '').toLowerCase()
+    const name = (item.name || '').toLowerCase()
+    const unit = (item.unit || '').toLowerCase()
+
+    if (code.includes('lbl') || name.includes('label') || name.includes('sticker') || name.includes('ฉลาก')) {
+      return 'label'
+    }
+    if (
+      name.includes('gallon') || name.includes('pail') || name.includes('drum') || name.includes('can') ||
+      name.includes('ถัง') || name.includes('ขวด') || name.includes('แกลลอน') ||
+      unit.includes('gallon') || unit.includes('pail') || unit.includes('drum')
+    ) {
+      return 'gallon'
+    }
+    if (
+      name.includes('foil') || name.includes('film') || name.includes('seal') || name.includes('shrink') ||
+      name.includes('ฟอยล์') || name.includes('ซีล') || name.includes('ฟิล์ม')
+    ) {
+      return 'foil'
+    }
+    if (name.includes('cap') || name.includes('lid') || name.includes('ฝา') || code.startsWith('355')) {
+      return 'cap'
+    }
+    if (name.includes('box') || name.includes('carton') || name.includes('กล่อง') || name.includes('ลัง')) {
+      return 'box'
+    }
+    return 'other'
+  }
+
   const categoriesDef = [
-    { key: 'gallon', label: 'แกลลอน', keywords: ['แกลลอน', 'gallon', '20l', '5l', '4l', '1l'], color: '#10B981' }, // Emerald Green
-    { key: 'cap', label: 'ฝา', keywords: ['ฝา', 'cap', 'lid', 'จุก'], color: '#3B82F6' }, // Royal Blue
-    { key: 'foil', label: 'ฟอยล์', keywords: ['ฟอยล์', 'foil', 'แผ่น'], color: '#8B5CF6' }, // Purple
-    { key: 'box', label: 'กล่อง', keywords: ['กล่อง', 'box', 'ลัง', 'carton'], color: '#F472B6' }, // Coral Pink
-    { key: 'label', label: 'ฉลาก', keywords: ['ฉลาก', 'label', 'สติกเกอร์', 'sticker'], color: '#14B8A6' } // Teal
+    { key: 'gallon', label: 'แกลลอน', color: '#10B981' }, // Emerald Green
+    { key: 'cap', label: 'ฝา', color: '#3B82F6' }, // Royal Blue
+    { key: 'foil', label: 'ฟอยล์', color: '#8B5CF6' }, // Purple
+    { key: 'box', label: 'กล่อง', color: '#F472B6' }, // Coral Pink
+    { key: 'label', label: 'ฉลาก', color: '#14B8A6' }, // Teal
+    { key: 'other', label: 'อื่นๆ', color: '#64748B' } // Slate
   ]
 
-  let categoryCounts = categoriesDef.map(cat => {
-    const count = products.filter(p => {
-      const desc = (p.name || '').toLowerCase()
-      return cat.keywords.some(kw => desc.includes(kw))
-    }).length
-    return { ...cat, count }
-  })
+  const categoryCounts = categoriesDef
+    .map(cat => {
+      const count = packagingProducts.filter(p => getSubCategory(p) === cat.key).length
+      return { ...cat, count }
+    })
+    .filter(cat => cat.count > 0)
 
   const totalCategorized = categoryCounts.reduce((acc, curr) => acc + curr.count, 0) || 1
 
@@ -369,7 +402,7 @@ export default function DashboardPage() {
                     </svg>
                     <div className="absolute flex flex-col items-center justify-center text-center">
                       <span className="text-xs text-slate-400 font-medium">รวม</span>
-                      <span className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 leading-tight my-0.5">{totalProductsCount}</span>
+                      <span className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 leading-tight my-0.5">{totalPackagingCount}</span>
                       <span className="text-xs text-slate-400 font-medium">รายการ</span>
                     </div>
                   </div>

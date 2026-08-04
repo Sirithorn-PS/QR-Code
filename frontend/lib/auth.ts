@@ -9,6 +9,7 @@ interface RegisterData {
   username: string
   password: string
   fullName: string
+  employeeId?: string
 }
 
 interface AuthResponse {
@@ -140,6 +141,20 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
   }
 
   return response.json()
+}
+
+export async function verifyEmployee(data: { username: string; employeeId: string }): Promise<{ success: boolean; message: string }> {
+  return apiRequest<{ success: boolean; message: string }>('/auth/verify-employee', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export async function resetPassword(data: { username: string; employeeId: string; newPassword: string }): Promise<{ success: boolean; message: string }> {
+  return apiRequest<{ success: boolean; message: string }>('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
 }
 
 export function getToken(): string | null {

@@ -74,6 +74,7 @@ interface RegisterBody {
   username: string
   password: string
   fullName: string
+  employeeId?: string
 }
 
 interface LoginBody {
@@ -173,6 +174,7 @@ app.post('/auth/register', async (req: Request<{}, {}, RegisterBody>, res: Respo
     const username = normalizeText(req.body.username)
     const password = normalizeText(req.body.password)
     const fullName = normalizeText(req.body.fullName)
+    const employeeId = normalizeText(req.body.employeeId)
 
     if (!username || !password || !fullName) {
       return res.status(400).json({ error: 'Missing required fields' })
@@ -198,6 +200,7 @@ app.post('/auth/register', async (req: Request<{}, {}, RegisterBody>, res: Respo
           username,
           password: hashedPassword,
           fullName,
+          employeeId: employeeId || null,
           role: 'warehouse_staff',
         },
       })
@@ -208,7 +211,7 @@ app.post('/auth/register', async (req: Request<{}, {}, RegisterBody>, res: Respo
       })
     } catch (dbError) {
       console.warn('Database unreachable during registration, using memory cache mode for:', username)
-      const fallbackUser = { id: Math.floor(Math.random() * 1000) + 10, username, password, fullName, role: 'warehouse_staff', createdAt: new Date() }
+      const fallbackUser = { id: Math.floor(Math.random() * 1000) + 10, username, password, fullName, employeeId: employeeId || null, role: 'warehouse_staff', createdAt: new Date() }
       fallbackUsersCache.set(username, fallbackUser)
       return res.status(201).json({
         token: signToken(fallbackUser),
@@ -218,6 +221,67 @@ app.post('/auth/register', async (req: Request<{}, {}, RegisterBody>, res: Respo
   } catch (error) {
     console.error(error)
     return res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+app.post('/auth/verify-employee', async (req: Request, res: Response) => {
+  try {
+    const username = normalizeText(req.body.username)
+    const employeeId = normalizeText(req.body.employeeId)
+
+    if (!username || !employeeId) {
+      return res.status(400).json({ error: 'กรุณากรอกชื่อผู้ใช้และรหัสพนักงานให้ครบถ้วน' })
+    }
+
+    const user = await prisma.user.findUnique({ where: { username } })
+    if (!user) {
+      return res.status(404).json({ error: 'ไม่พบชื่อผู้ใช้นี้ในระบบ' })
+    }
+
+    if (!user.employeeId || user.employeeId.trim().toLowerCase() !== employeeId.toLowerCase()) {
+      return res.status(400).json({ error: 'รหัสพนักงานไม่ถูกต้อง หรือไม่ตรงกับชื่อผู้ใช้ที่ระบุ' })
+    }
+
+    return res.json({ success: true, message: 'ยืนยันตัวตนสำเร็จ' })
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล' })
+  }
+})
+
+app.post('/auth/reset-password', async (req: Request, res: Response) => {
+  try {
+    const username = normalizeText(req.body.username)
+    const employeeId = normalizeText(req.body.employeeId)
+    const newPassword = normalizeText(req.body.newPassword)
+
+    if (!username || !employeeId || !newPassword) {
+      return res.status(400).json({ error: 'กรุณากรอกข้อมูลให้ครบถ้วน' })
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร' })
+    }
+
+    const user = await prisma.user.findUnique({ where: { username } })
+    if (!user) {
+      return res.status(404).json({ error: 'ไม่พบชื่อผู้ใช้นี้ในระบบ' })
+    }
+
+    if (!user.employeeId || user.employeeId.trim().toLowerCase() !== employeeId.toLowerCase()) {
+      return res.status(400).json({ error: 'รหัสพนักงานไม่ถูกต้อง ไม่สามารถเปลี่ยนรหัสผ่านได้' })
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    await prisma.user.update({
+      where: { username },
+      data: { password: hashedPassword }
+    })
+
+    return res.json({ success: true, message: 'เปลี่ยนรหัสผ่านใหม่เรียบร้อยแล้ว' })
+  } catch (err) {
+    console.error(err)
+    return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน' })
   }
 })
 

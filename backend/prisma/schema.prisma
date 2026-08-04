@@ -13,6 +13,7 @@ model User {
   username             String         @unique
   password             String
   fullName             String
+  employeeId           String?
   role                 String         @default("warehouse_staff")
   createdAt            DateTime       @default(now())
   approvedTransactions Transaction[]  @relation("ApprovedTransactions")

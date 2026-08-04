@@ -271,6 +271,10 @@ export function Navigation({ children }: { children: React.ReactNode }) {
               <span className="text-[#0F172A]">WPK</span>
               <span className="text-[#BE1111]">MMS</span>
             </h1>
+            <p className="hidden md:block text-[10px] xl:text-[11px] text-slate-400 font-semibold leading-tight border-l border-slate-200 pl-2.5 select-none shrink-0">
+              <span className="block whitespace-nowrap">Packaging Material</span>
+              <span className="block whitespace-nowrap">Warehouse Management System</span>
+            </p>
           </div>
           
           <nav className="flex items-center space-x-1 overflow-x-auto no-scrollbar shrink min-w-0">

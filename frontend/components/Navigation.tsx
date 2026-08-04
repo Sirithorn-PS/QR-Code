@@ -263,39 +263,39 @@ export function Navigation({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
       {/* Top Navbar (Desktop) */}
-      <header className="hidden md:flex items-center justify-between h-20 px-8 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs z-10 shrink-0">
-        <div className="flex items-center gap-8">
-          <div className="flex items-center gap-4 select-none">
+      <header className="hidden md:flex items-center justify-between h-20 px-4 xl:px-8 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs z-10 shrink-0">
+        <div className="flex items-center gap-3 xl:gap-8">
+          <div className="flex items-center gap-3 select-none shrink-0">
             <div className="flex items-center gap-2.5">
               <Package className="w-7 h-7 text-[#BE1111] stroke-[2.2] shrink-0" />
-              <h1 className="text-2xl font-display font-extrabold tracking-tight flex items-center gap-2">
+              <h1 className="text-xl xl:text-2xl font-display font-extrabold tracking-tight flex items-center gap-1.5 xl:gap-2 whitespace-nowrap">
                 <span className="text-[#0F172A]">WPK</span>
                 <span className="text-[#BE1111]">MMS</span>
               </h1>
             </div>
-            <p className="hidden lg:block text-[11px] text-slate-400 font-semibold leading-snug border-l border-slate-200 pl-4 select-none">
+            <p className="hidden xl:block text-[11px] text-slate-400 font-semibold leading-snug border-l border-slate-200 pl-4 select-none">
               <span className="block whitespace-nowrap">Packaging Material</span>
               <span className="block whitespace-nowrap">Warehouse Management System</span>
             </p>
           </div>
           
-          <nav className="flex items-center space-x-1.5">
+          <nav className="flex items-center space-x-1 xl:space-x-1.5 overflow-x-auto no-scrollbar">
             {navItems.map((item) => {
               const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
               const showBadge = item.href === '/transactions' && pendingCount > 0
 
               return (
                 <Link key={item.href} href={item.href}
-                  className={`flex items-center gap-2.5 px-4.5 py-2.5 rounded-xl text-base transition-all duration-200 ${
+                  className={`flex items-center gap-2 px-3 xl:px-4 py-2.5 rounded-xl text-sm xl:text-base whitespace-nowrap shrink-0 transition-all duration-200 ${
                     isActive 
                       ? 'bg-red-50/90 text-[#BE1111] font-extrabold shadow-2xs border border-red-100/80' 
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-semibold'
                   }`}
                 >
-                  <item.icon className={`w-5 h-5 stroke-[2.2] transition-colors ${isActive ? 'text-[#BE1111]' : 'text-slate-400 group-hover:text-slate-600'}`} />
-                  <span>{item.label}</span>
+                  <item.icon className={`w-4.5 h-4.5 xl:w-5 xl:h-5 stroke-[2.2] shrink-0 transition-colors ${isActive ? 'text-[#BE1111]' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                  <span className="whitespace-nowrap">{item.label}</span>
                   {showBadge && (
-                    <span className="inline-flex items-center justify-center min-w-[22px] h-5.5 px-2 rounded-full bg-[#BE1111] text-white text-xs font-bold font-display shadow-xs animate-pulse">
+                    <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-[#BE1111] text-white text-[11px] xl:text-xs font-bold font-display shadow-xs animate-pulse shrink-0">
                       {pendingCount}
                     </span>
                   )}
@@ -305,9 +305,9 @@ export function Navigation({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
 
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-3 xl:gap-5 shrink-0">
           {/* Notification Bell Button */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
               type="button"
               onClick={() => setShowNotifPopover(!showNotifPopover)}
@@ -336,23 +336,23 @@ export function Navigation({ children }: { children: React.ReactNode }) {
             )}
           </div>
 
-          <div className="h-9 w-px bg-slate-200/80"></div>
+          <div className="h-9 w-px bg-slate-200/80 shrink-0"></div>
 
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-extrabold text-sm flex items-center justify-center shrink-0 shadow-2xs select-none">
+          <div className="flex items-center gap-2.5 xl:gap-3 shrink-0">
+            <div className="w-10 h-10 xl:w-11 xl:h-11 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-extrabold text-xs xl:text-sm flex items-center justify-center shrink-0 shadow-2xs select-none">
               {getInitials(user.username || user.fullName)}
             </div>
-            <div className="text-left">
-              <p className="text-base font-bold text-slate-900 leading-tight">{user.username || user.fullName}</p>
-              <span className="text-[11px] font-bold text-slate-500 bg-slate-100 border border-slate-200/60 px-2 py-0.5 rounded-md inline-block mt-0.5 leading-none">
+            <div className="text-left shrink-0">
+              <p className="text-sm xl:text-base font-bold text-slate-900 leading-tight whitespace-nowrap">{user.username || user.fullName}</p>
+              <span className="text-[10px] xl:text-[11px] font-bold text-slate-500 bg-slate-100 border border-slate-200/60 px-1.5 xl:px-2 py-0.5 rounded-md inline-block mt-0.5 leading-none whitespace-nowrap">
                 {user.role === 'admin' ? 'ผู้ควบคุมดูแลระบบ (Supervisor)' : user.role === 'warehouse_staff' ? 'พนักงานทั่วไป (Staff)' : user.role}
               </span>
             </div>
           </div>
-          <div className="h-9 w-px bg-slate-200/80"></div>
-          <button onClick={handleLogout} className="group flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 rounded-xl hover:bg-red-50 hover:text-[#BE1111] transition-all border border-transparent hover:border-red-100">
-            <LogOut className="w-4.5 h-4.5 text-slate-400 group-hover:text-[#BE1111] transition-colors" />
-            <span>ออกจากระบบ</span>
+          <div className="h-9 w-px bg-slate-200/80 shrink-0"></div>
+          <button onClick={handleLogout} className="group flex items-center gap-2 px-2.5 xl:px-3 py-2 text-sm font-semibold text-slate-600 rounded-xl hover:bg-red-50 hover:text-[#BE1111] transition-all border border-transparent hover:border-red-100 whitespace-nowrap shrink-0">
+            <LogOut className="w-4.5 h-4.5 text-slate-400 group-hover:text-[#BE1111] transition-colors shrink-0" />
+            <span className="whitespace-nowrap">ออกจากระบบ</span>
           </button>
         </div>
       </header>

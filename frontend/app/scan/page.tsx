@@ -16,7 +16,7 @@ export default function ScanPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [scanCooldown, setScanCooldown] = useState(false)
-  const [user, setUser] = useState<{ fullName: string } | null>(null)
+  const [user, setUser] = useState<{ username?: string; fullName: string } | null>(null)
 
   const [bomList, setBomList] = useState<BillOfMaterial[]>([])
   const [showBom, setShowBom] = useState(false)
@@ -275,7 +275,7 @@ export default function ScanPage() {
             สแกนสินค้า
           </h2>
           <p className="text-sm text-gray-500 mt-2">
-            ยินดีต้อนรับกลับมา, {user?.fullName || 'ผู้ใช้งาน'}
+            ยินดีต้อนรับกลับมา, {user?.username || user?.fullName || 'ผู้ใช้งาน'}
           </p>
           <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3.5 py-1 text-xs font-bold text-[#BE1111] border border-red-100/80 shadow-2xs">
             <span className="w-1.5 h-1.5 rounded-full bg-[#BE1111] animate-pulse"></span>

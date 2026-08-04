@@ -237,6 +237,9 @@ export default function InventoryPage() {
       setSubmitError('')
 
       loadProducts(search)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('productUpdated'))
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการบันทึกสินค้า'
       setSubmitError(msg)
@@ -529,13 +532,6 @@ export default function InventoryPage() {
         {/* Header */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-[#BE1111] transition-colors mb-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              กลับหน้าหลัก
-            </Link>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-red-50 text-[#BE1111] rounded-xl flex items-center justify-center shadow-sm">
                 <Box className="w-5 h-5" />

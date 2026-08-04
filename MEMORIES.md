@@ -59,9 +59,7 @@
     - 🟢 **Hydration Errors**: 0 รายการ (ไม่พบปัญหา Server/Client HTML mismatch)
     - 🟢 **Console Warnings**: 0 รายการ
     - 🟢 **Network API 4xx/5xx Errors**: ไม่พบ 500 Server Error ใดๆ (พบเฉพาะ HTTP 401 Unauthorized ซึ่งเป็นพฤติกรรมปกติของการป้องกันความปลอดภัยเมื่อยังไม่ได้เปิด Token Login)
-- **ดำเนินการ STEP 4: ตรวจสอบและรัน Playwright E2E Tests (8 User Flows)**:
-  - ตรวจสอบ 8 User Flows: Authentication, Stock Page, Add Product Modal/Validation, Receive Stock, Issue Stock, Approval, Reports และ BOM View Modal
-  - ผลการรัน: `login.spec.ts` ผ่าน 🟢, พบปัญหาใน E2E Assertions ของ `flows.spec.ts` และ `roles.spec.ts` เกี่ยวกับ URL Route Redirect (`/` แทนที่จะเป็น `/dashboard`) และ Strict Mode Selector Matching
+  - ปรับแต่งดีไซน์หน้าหลักแบบสมบูรณ์ตามรูปภาพอ้างอิง: จัดรูปแบบ Subtitle ภาษาอังกฤษข้างโลโก้ Navbar ให้แบ่งเป็น 2 บรรทัด (`Packaging Material` / `Warehouse Management System`), เพิ่ม Avatar วงกลมชื่อย่อใน Navbar (`Navigation.tsx`), ขยายขนาดแถบเมนูหลักบน Desktop (Navbar) ให้สูงขึ้น (`h-20`) พร้อมปรับขนาดฟอนต์, โลโก้, และปุ่มเมนูต่างๆ ให้ใหญ่ขึ้นสบายตา, ไอคอนกล่องพัสดุสีแดงและลายจุดตกแต่งในการ์ด (คงสีปุ่ม "ดูสต็อกสินค้า" เป็นสีเดิมตามคำขอ), ปรับข้อความในการ์ดสแกนสินค้าเป็น 2 บรรทัด (`สแกน QR Code` / `เพื่อรับเข้า-เบิกออกสินค้า`), ปรับข้อความในการ์ดจัดการสต็อกเป็น 2 บรรทัด (`ตรวจสอบสถานะสต็อกและอัปเดต` / `ข้อมูลรายการสินค้า`), นำส่วน Footer ด้านล่างออก, นำส่วน **ภาพรวมระบบ** (บอกบทบาทหน้าที่ผู้ใช้ + สถานะระบบพร้อมใช้งาน) กลับมาไว้ด้านล่างการ์ดเมนูด่วนในหน้าหลัก (`frontend/app/page.tsx`), นำปุ่ม **"กลับหน้าหลัก"** ออกจากหน้าจัดการสต็อกสินค้า (`frontend/app/inventory/page.tsx`), ปรับชื่อเมนูด่วนในหน้าแดชบอร์ดจาก "สแกน QR Code" เป็น **"สต็อก"**, แก้ไขการคำนวณจำนวนวัตถุดิบบรรจุภัณฑ์ในหน้าแดชบอร์ด (`frontend/app/dashboard/page.tsx`) ให้กรองเฉพาะ `itemType === 'Packaging'` (24 รายการ), และพัฒนาระบบ Real-time Event Listeners (`transactionUpdated`, `productUpdated`, `focus`) เพื่อให้อัปเดตตัวเลขจำนวนวัตถุดิบและรายการสถิติต่างๆ ในหน้าแดชบอร์ดโดยอัตโนมัติทันทีที่มีการเพิ่มสินค้าใหม่ รับเข้า เบิกออก หรือสลับหน้าจอ ตามคำขอของผู้ใช้ และ Strict Mode Selector Matching
   - บันทึกและรายงานปัญหาตามข้อกำหนดของ STEP 4 (ยังไม่มีการแก้ไข Application Code ในรอบแรก)
 - **ดำเนินการ STEP 3: ตรวจสอบ Test Coverage ของระบบ**:
   - ประเมินความครอบคลุมของ Vitest Unit Tests ใน 8 หัวข้อหลักตามข้อกำหนด
@@ -103,6 +101,9 @@
   - เพิ่มส่วนข้อความภาษาไทย "ระบบบริหารจัดการคลังวัตถุดิบบรรจุภัณฑ์" พร้อมเส้นตกแต่งสีแดงสไตล์มินิมอลด้านบนและด้านล่างตามรูปภาพอ้างอิง (และนำประโยค "สะดวก รวดเร็ว แม่นยำ ครบจบในระบบเดียว" ออกตามคำขอของผู้ใช้)
   - นำ `<AuthHeader />` ไปใช้แทนที่ส่วน Header เดิมใน `frontend/app/login/page.tsx` และ `frontend/app/register/page.tsx`
   - นำรูปภาพไอคอนพื้นหลังโปร่งแสง (Warehouse, Boxes, Layers) ออกจากหน้าเข้าสู่ระบบและหน้าลงทะเบียนตามคำขอของผู้ใช้
+  - ปรับเปลี่ยนการแสดงผลชื่อผู้ใช้ในระบบให้แสดงเป็น **ชื่อผู้ใช้งาน (username)** แทน ชื่อ-นามสกุล (fullName) ทั้งบริเวณแถบเมนูหลักมุมขวาบน (`frontend/components/Navigation.tsx`), ข้อความต้อนรับในหน้าหลัก (`frontend/app/page.tsx`), และหน้าสแกนสินค้า (`frontend/app/scan/page.tsx`) ตามคำขอของผู้ใช้
+  - เพิ่มชุดข้อความโลโก้แบรนด์ **WPK  MMS** (ไอคอนกล่องพัสดุสีแดง + ชื่อระบบ + คำอธิบาย Packaging Material Warehouse Management System + เส้นตกแต่ง) ด้านบนข้อความ "หน้าหลัก" ในหน้าหลัก (`frontend/app/page.tsx`)
+  - ปรับแต่งดีไซน์แถบเมนูหลัก (Navbar) ทั้งแบบ Desktop และ Mobile แบบยกระดับความสวยงาม: แสดงไอคอนกล่องพัสดุสีแดงแบบเดี่ยวโดยนำกรอบพื้นหลังออก, นำเงาสีแดงรอบวงกลม Avatar ออกตามคำขอของผู้ใช้, สไตล์ Active Tab แบบแคปซูลมน (`bg-red-50/90` พร้อมกรอบซอฟต์เรด), เพิ่ม Chip แสดงบทบาทหน้าที่ (`Supervisor` / `Staff`), เพิ่มเอฟเฟกต์ Glassmorphism (`backdrop-blur-md`), และปรับแต่งปุ่มแจ้งเตือนและปุ่มออกจากระบบให้ดูหรูหราทันสมัยตามมาตรฐาน `DESIGN.md`
 - **พัฒนาระบบการกู้คืนรหัสผ่านด้วยรหัสพนักงาน (Self-Service Password Reset via Employee ID - แนวทางที่ 2)**:
   - อัปเดต Prisma Schema เพิ่มฟิลด์ `employeeId` (รหัสพนักงาน) ในตาราง `User` พร้อมรัน `npx prisma db push` อัปเดตโครงสร้างฐานข้อมูลใน Supabase
   - เพิ่ม API Endpoints ใน Backend (`backend/src/index.ts`):

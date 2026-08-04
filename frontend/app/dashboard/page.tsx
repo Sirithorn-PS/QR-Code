@@ -42,6 +42,24 @@ export default function DashboardPage() {
       }
     }
     loadData()
+
+    const handleRefresh = () => {
+      loadData()
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('transactionUpdated', handleRefresh)
+      window.addEventListener('productUpdated', handleRefresh)
+      window.addEventListener('focus', handleRefresh)
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('transactionUpdated', handleRefresh)
+        window.removeEventListener('productUpdated', handleRefresh)
+        window.removeEventListener('focus', handleRefresh)
+      }
+    }
   }, [])
 
   // --- 1. คำนวณสถิติ KPI Cards ---
@@ -64,7 +82,7 @@ export default function DashboardPage() {
   const pendingCount = transactions.filter(t => t.status === 'pending').length
 
   // สินค้าทั้งหมดในคลัง (คลัง WPK / Packaging)
-  const totalProductsCount = products.length
+  const totalProductsCount = products.filter(p => p.itemType === 'Packaging').length
 
   // --- 2. คำนวณกราฟสรุป 7 วันล่าสุด ---
   const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -476,14 +494,14 @@ export default function DashboardPage() {
                 </Link>
 
                 <Link 
-                  href="/scan" 
+                  href="/inventory" 
                   className="flex items-center justify-between p-3.5 rounded-2xl bg-purple-50/70 border border-purple-100/80 text-purple-800 hover:bg-purple-100/70 transition-all group font-semibold text-sm shadow-2xs"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs">
-                      <ScanLine className="w-4 h-4" />
+                      <Package className="w-4 h-4" />
                     </div>
-                    <span>สแกน QR Code</span>
+                    <span>สต็อก</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-purple-600 group-hover:translate-x-1 transition-transform" />
                 </Link>

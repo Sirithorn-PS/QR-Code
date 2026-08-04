@@ -263,37 +263,37 @@ export function Navigation({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
       {/* Top Navbar (Desktop) */}
-      <header className="hidden lg:flex items-center justify-between h-16 px-4 xl:px-6 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs z-10 shrink-0 max-w-full overflow-hidden">
-        <div className="flex items-center gap-2 xl:gap-6 shrink min-w-0">
-          <div className="flex items-center gap-2 select-none shrink-0 pr-1">
-            <Package className="w-6 h-6 text-[#BE1111] stroke-[2.2] shrink-0" />
-            <h1 className="text-lg xl:text-xl font-display font-extrabold tracking-tight flex items-center gap-1 whitespace-nowrap">
+      <header className="hidden lg:flex items-center justify-between h-18 px-4 xl:px-8 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs z-10 shrink-0 max-w-full overflow-hidden">
+        <div className="flex items-center gap-3 xl:gap-6 shrink min-w-0">
+          <div className="flex items-center gap-3 select-none shrink-0 pr-1">
+            <Package className="w-7 h-7 text-[#BE1111] stroke-[2.2] shrink-0" />
+            <h1 className="text-xl xl:text-2xl font-display font-extrabold tracking-tight flex items-center gap-1.5 whitespace-nowrap">
               <span className="text-[#0F172A]">WPK</span>
               <span className="text-[#BE1111]">MMS</span>
             </h1>
-            <p className="hidden md:block text-[10px] xl:text-[11px] text-slate-400 font-semibold leading-tight border-l border-slate-200 pl-2.5 select-none shrink-0">
+            <p className="hidden md:block text-[11px] xl:text-xs text-slate-400 font-semibold leading-snug border-l border-slate-200 pl-3 select-none shrink-0">
               <span className="block whitespace-nowrap">Packaging Material</span>
               <span className="block whitespace-nowrap">Warehouse Management System</span>
             </p>
           </div>
           
-          <nav className="flex items-center space-x-1 overflow-x-auto no-scrollbar shrink min-w-0">
+          <nav className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar shrink min-w-0">
             {navItems.map((item) => {
               const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
               const showBadge = item.href === '/transactions' && pendingCount > 0
 
               return (
                 <Link key={item.href} href={item.href}
-                  className={`flex items-center gap-1.5 px-2.5 xl:px-3.5 py-1.5 rounded-xl text-xs xl:text-sm whitespace-nowrap shrink-0 transition-all duration-200 ${
+                  className={`flex items-center gap-2 px-3 xl:px-4 py-2 rounded-xl text-sm xl:text-base whitespace-nowrap shrink-0 transition-all duration-200 ${
                     isActive 
-                      ? 'bg-red-50/90 text-[#BE1111] font-bold shadow-2xs border border-red-100/80' 
+                      ? 'bg-red-50/90 text-[#BE1111] font-extrabold shadow-2xs border border-red-100/80' 
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-semibold'
                   }`}
                 >
-                  <item.icon className={`w-4 h-4 stroke-[2.2] shrink-0 transition-colors ${isActive ? 'text-[#BE1111]' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                  <item.icon className={`w-4.5 h-4.5 xl:w-5 xl:h-5 stroke-[2.2] shrink-0 transition-colors ${isActive ? 'text-[#BE1111]' : 'text-slate-400 group-hover:text-slate-600'}`} />
                   <span className="whitespace-nowrap">{item.label}</span>
                   {showBadge && (
-                    <span className="inline-flex items-center justify-center min-w-[18px] h-4.5 px-1.5 rounded-full bg-[#BE1111] text-white text-[10px] xl:text-[11px] font-bold font-display shadow-xs animate-pulse shrink-0">
+                    <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-[#BE1111] text-white text-xs font-bold font-display shadow-xs animate-pulse shrink-0">
                       {pendingCount}
                     </span>
                   )}
@@ -303,18 +303,18 @@ export function Navigation({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
 
-        <div className="flex items-center gap-2 xl:gap-3 shrink-0 ml-2">
+        <div className="flex items-center gap-3 xl:gap-4 shrink-0 ml-2">
           {/* Notification Bell Button */}
           <div className="relative shrink-0">
             <button
               type="button"
               onClick={() => setShowNotifPopover(!showNotifPopover)}
-              className="relative p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 transition-all cursor-pointer border border-transparent hover:border-slate-200/60"
+              className="relative p-2.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 transition-all cursor-pointer border border-transparent hover:border-slate-200/60"
               title="การแจ้งเตือน"
             >
-              <Bell className="w-5 h-5" />
+              <Bell className="w-5.5 h-5.5" />
               {unreadNotifCount > 0 && (
-                <span className="absolute top-1 right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#BE1111] px-1 text-[10px] font-bold font-display text-white shadow-2xs animate-pulse">
+                <span className="absolute top-1.5 right-1.5 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-[#BE1111] px-1 text-[11px] font-bold font-display text-white shadow-2xs animate-pulse">
                   {unreadNotifCount}
                 </span>
               )}
@@ -334,19 +334,19 @@ export function Navigation({ children }: { children: React.ReactNode }) {
             )}
           </div>
 
-          <div className="h-7 w-px bg-slate-200/80 shrink-0"></div>
+          <div className="h-8 w-px bg-slate-200/80 shrink-0"></div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-extrabold text-xs flex items-center justify-center shrink-0 shadow-2xs select-none">
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-extrabold text-sm flex items-center justify-center shrink-0 shadow-2xs select-none">
               {getInitials(user.username || user.fullName)}
             </div>
             <div className="text-left shrink-0">
-              <p className="text-xs xl:text-sm font-bold text-slate-900 leading-tight whitespace-nowrap">{user.username || user.fullName}</p>
+              <p className="text-sm xl:text-base font-bold text-slate-900 leading-tight whitespace-nowrap">{user.username || user.fullName}</p>
             </div>
           </div>
-          <div className="h-7 w-px bg-slate-200/80 shrink-0"></div>
-          <button onClick={handleLogout} className="group flex items-center gap-1.5 px-2.5 py-1.5 text-xs xl:text-sm font-semibold text-slate-600 rounded-xl hover:bg-red-50 hover:text-[#BE1111] transition-all border border-transparent hover:border-red-100 whitespace-nowrap shrink-0" title="ออกจากระบบ">
-            <LogOut className="w-4 h-4 text-slate-400 group-hover:text-[#BE1111] transition-colors shrink-0" />
+          <div className="h-8 w-px bg-slate-200/80 shrink-0"></div>
+          <button onClick={handleLogout} className="group flex items-center gap-2 px-3 py-2 text-sm xl:text-base font-semibold text-slate-600 rounded-xl hover:bg-red-50 hover:text-[#BE1111] transition-all border border-transparent hover:border-red-100 whitespace-nowrap shrink-0" title="ออกจากระบบ">
+            <LogOut className="w-4.5 h-4.5 text-slate-400 group-hover:text-[#BE1111] transition-colors shrink-0" />
             <span className="whitespace-nowrap">ออกจากระบบ</span>
           </button>
         </div>

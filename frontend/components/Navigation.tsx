@@ -263,7 +263,7 @@ export function Navigation({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
       {/* Top Navbar (Desktop) */}
-      <header className="hidden md:flex items-center justify-between h-20 px-4 xl:px-8 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs z-10 shrink-0">
+      <header className="hidden lg:flex items-center justify-between h-20 px-4 xl:px-8 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs z-10 shrink-0">
         <div className="flex items-center gap-3 xl:gap-8">
           <div className="flex items-center gap-3 select-none shrink-0">
             <div className="flex items-center gap-2.5">
@@ -273,7 +273,7 @@ export function Navigation({ children }: { children: React.ReactNode }) {
                 <span className="text-[#BE1111]">MMS</span>
               </h1>
             </div>
-            <p className="hidden xl:block text-[11px] text-slate-400 font-semibold leading-snug border-l border-slate-200 pl-4 select-none">
+            <p className="hidden 2xl:block text-[11px] text-slate-400 font-semibold leading-snug border-l border-slate-200 pl-4 select-none">
               <span className="block whitespace-nowrap">Packaging Material</span>
               <span className="block whitespace-nowrap">Warehouse Management System</span>
             </p>
@@ -286,13 +286,13 @@ export function Navigation({ children }: { children: React.ReactNode }) {
 
               return (
                 <Link key={item.href} href={item.href}
-                  className={`flex items-center gap-2 px-3 xl:px-4 py-2.5 rounded-xl text-sm xl:text-base whitespace-nowrap shrink-0 transition-all duration-200 ${
+                  className={`flex items-center gap-1.5 xl:gap-2 px-2.5 xl:px-4 py-2 rounded-xl text-sm xl:text-base whitespace-nowrap shrink-0 transition-all duration-200 ${
                     isActive 
                       ? 'bg-red-50/90 text-[#BE1111] font-extrabold shadow-2xs border border-red-100/80' 
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-semibold'
                   }`}
                 >
-                  <item.icon className={`w-4.5 h-4.5 xl:w-5 xl:h-5 stroke-[2.2] shrink-0 transition-colors ${isActive ? 'text-[#BE1111]' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                  <item.icon className={`w-4 h-4 xl:w-5 xl:h-5 stroke-[2.2] shrink-0 transition-colors ${isActive ? 'text-[#BE1111]' : 'text-slate-400 group-hover:text-slate-600'}`} />
                   <span className="whitespace-nowrap">{item.label}</span>
                   {showBadge && (
                     <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-[#BE1111] text-white text-[11px] xl:text-xs font-bold font-display shadow-xs animate-pulse shrink-0">
@@ -305,7 +305,7 @@ export function Navigation({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
 
-        <div className="flex items-center gap-3 xl:gap-5 shrink-0">
+        <div className="flex items-center gap-2.5 xl:gap-5 shrink-0">
           {/* Notification Bell Button */}
           <div className="relative shrink-0">
             <button
@@ -336,73 +336,88 @@ export function Navigation({ children }: { children: React.ReactNode }) {
             )}
           </div>
 
-          <div className="h-9 w-px bg-slate-200/80 shrink-0"></div>
+          <div className="h-8 w-px bg-slate-200/80 shrink-0"></div>
 
-          <div className="flex items-center gap-2.5 xl:gap-3 shrink-0">
+          <div className="flex items-center gap-2 xl:gap-3 shrink-0">
             <div className="w-10 h-10 xl:w-11 xl:h-11 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-extrabold text-xs xl:text-sm flex items-center justify-center shrink-0 shadow-2xs select-none">
               {getInitials(user.username || user.fullName)}
             </div>
             <div className="text-left shrink-0">
               <p className="text-sm xl:text-base font-bold text-slate-900 leading-tight whitespace-nowrap">{user.username || user.fullName}</p>
-              <span className="text-[10px] xl:text-[11px] font-bold text-slate-500 bg-slate-100 border border-slate-200/60 px-1.5 xl:px-2 py-0.5 rounded-md inline-block mt-0.5 leading-none whitespace-nowrap">
+              <span className="hidden 2xl:inline-block text-[10px] xl:text-[11px] font-bold text-slate-500 bg-slate-100 border border-slate-200/60 px-1.5 xl:px-2 py-0.5 rounded-md mt-0.5 leading-none whitespace-nowrap">
                 {user.role === 'admin' ? 'ผู้ควบคุมดูแลระบบ (Supervisor)' : user.role === 'warehouse_staff' ? 'พนักงานทั่วไป (Staff)' : user.role}
               </span>
             </div>
           </div>
-          <div className="h-9 w-px bg-slate-200/80 shrink-0"></div>
-          <button onClick={handleLogout} className="group flex items-center gap-2 px-2.5 xl:px-3 py-2 text-sm font-semibold text-slate-600 rounded-xl hover:bg-red-50 hover:text-[#BE1111] transition-all border border-transparent hover:border-red-100 whitespace-nowrap shrink-0">
+          <div className="h-8 w-px bg-slate-200/80 shrink-0"></div>
+          <button onClick={handleLogout} className="group flex items-center gap-1.5 px-2.5 xl:px-3 py-2 text-sm font-semibold text-slate-600 rounded-xl hover:bg-red-50 hover:text-[#BE1111] transition-all border border-transparent hover:border-red-100 whitespace-nowrap shrink-0" title="ออกจากระบบ">
             <LogOut className="w-4.5 h-4.5 text-slate-400 group-hover:text-[#BE1111] transition-colors shrink-0" />
-            <span className="whitespace-nowrap">ออกจากระบบ</span>
+            <span className="hidden xl:inline whitespace-nowrap">ออกจากระบบ</span>
           </button>
         </div>
       </header>
 
-      {/* Mobile Top Header for Notification Bell */}
-      <header className="md:hidden flex items-center justify-between h-16 px-4 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs z-10 shrink-0">
+      {/* Mobile & Tablet Top Header */}
+      <header className="lg:hidden flex items-center justify-between h-16 px-4 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs z-10 shrink-0">
         <div className="flex items-center gap-2 select-none">
-          <Package className="w-5 h-5 text-[#BE1111] stroke-[2.2] shrink-0" />
-          <h1 className="text-base font-display font-extrabold tracking-tight flex items-center gap-1.5">
+          <Package className="w-5.5 h-5.5 text-[#BE1111] stroke-[2.2] shrink-0" />
+          <h1 className="text-lg font-display font-extrabold tracking-tight flex items-center gap-1">
             <span className="text-[#0F172A]">WPK</span>
             <span className="text-[#BE1111]">MMS</span>
           </h1>
         </div>
 
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setShowNotifPopover(!showNotifPopover)}
-            className="relative p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
-            title="การแจ้งเตือน"
-          >
-            <Bell className="w-5 h-5" />
-            {unreadNotifCount > 0 && (
-              <span className="absolute top-1 right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#BE1111] px-1 text-[10px] font-bold font-display text-white shadow-2xs animate-pulse">
-                {unreadNotifCount}
-              </span>
-            )}
-          </button>
+        <div className="flex items-center gap-2.5">
+          {/* Notification Bell */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowNotifPopover(!showNotifPopover)}
+              className="relative p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
+              title="การแจ้งเตือน"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadNotifCount > 0 && (
+                <span className="absolute top-1 right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#BE1111] px-1 text-[10px] font-bold font-display text-white shadow-2xs animate-pulse">
+                  {unreadNotifCount}
+                </span>
+              )}
+            </button>
 
-          {showNotifPopover && (
-            <>
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setShowNotifPopover(false)}
-              />
-              <div className="absolute right-0 mt-2 z-50">
-                {NotificationPopoverContent}
-              </div>
-            </>
-          )}
+            {showNotifPopover && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowNotifPopover(false)}
+                />
+                <div className="absolute right-0 mt-2 z-50">
+                  {NotificationPopoverContent}
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="h-5 w-px bg-slate-200"></div>
+
+          {/* User Avatar Circle */}
+          <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-extrabold text-xs flex items-center justify-center shrink-0 select-none" title={user.username || user.fullName}>
+            {getInitials(user.username || user.fullName)}
+          </div>
+
+          {/* Logout Icon */}
+          <button onClick={handleLogout} className="p-1.5 text-slate-500 hover:text-[#BE1111] hover:bg-red-50 rounded-lg transition-all" title="ออกจากระบบ">
+            <LogOut className="w-4.5 h-4.5" />
+          </button>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto pb-16 md:pb-0 relative">
+      <main className="flex-1 overflow-y-auto pb-16 lg:pb-0 relative">
         {children}
       </main>
 
-      {/* Mobile Bottom Tabs */}
-      <nav className="md:hidden fixed bottom-0 w-full bg-white border-t border-gray-200 pb-safe z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.02)]">
+      {/* Mobile & Tablet Bottom Navigation Tabs */}
+      <nav className="lg:hidden fixed bottom-0 w-full bg-white border-t border-gray-200 pb-safe z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.02)]">
         <div className="flex justify-around items-center h-16 px-2">
           {navItems.map((item) => {
             const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))

@@ -225,9 +225,29 @@ export default function TransactionsPage() {
                           </span>
                         )}
                       </div>
-                      <h2 className="text-lg sm:text-xl font-display font-bold text-slate-900 leading-snug tracking-tight">
-                        {transaction.product?.description || transaction.itemSnapshot.name}
-                      </h2>
+                      {(() => {
+                        const fullDesc = transaction.product?.description || transaction.itemSnapshot.name || ''
+                        const openParenIndex = fullDesc.indexOf('(')
+                        let mainTitle = fullDesc
+                        let subDetail = ''
+                        if (openParenIndex !== -1) {
+                          mainTitle = fullDesc.substring(0, openParenIndex).trim()
+                          subDetail = fullDesc.substring(openParenIndex).trim()
+                        }
+
+                        return (
+                          <div>
+                            <h2 className="text-base sm:text-lg md:text-xl font-display font-extrabold text-slate-900 leading-snug tracking-tight">
+                              {mainTitle}
+                            </h2>
+                            {subDetail && (
+                              <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-0.5 leading-snug">
+                                {subDetail}
+                              </p>
+                            )}
+                          </div>
+                        )
+                      })()}
                       <div className="mt-3 grid gap-x-6 gap-y-2 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-3 bg-slate-50/60 p-3.5 rounded-xl border border-slate-200/60">
                         <div><span className="text-slate-400 text-[11px] uppercase tracking-wider block mb-0.5">Item Code</span> <span className="font-semibold text-slate-800">{transaction.product?.itemCode || transaction.itemSnapshot.itemCode}</span></div>
                         <div><span className="text-slate-400 text-[11px] uppercase tracking-wider block mb-0.5">จำนวน</span> <span className="font-extrabold text-slate-900 text-base">{transaction.quantity}</span></div>

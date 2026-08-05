@@ -1,5 +1,8 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import { useEffect, useState, useMemo } from 'react'
 import { confirmTransaction, fetchTransactions, rejectTransaction, StockTransaction } from '@/lib/auth'
 import { Loader2, CheckCircle2, AlertCircle, XCircle, Clock, Filter } from 'lucide-react'

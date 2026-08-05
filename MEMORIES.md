@@ -1,5 +1,15 @@
 # บันทึกการทำงาน (Memories)
 
+## 5 ส.ค. 2026
+- **ปรับแต่ง Layout หน้าเว็บแอป WPK MMS ให้แสดงผลลงตัวที่ขนาดหน้าจอ 100% (ตรงตามสัดส่วนของรูป 90%)**:
+  - แก้ไขใน [Navigation.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/components/Navigation.tsx):
+    - ปรับขนาดความสูง Header จาก `h-20` เป็น `h-16 lg:h-18` และปรับ Padding, Gap และขนาด Font Size ของเมนูหลัก 6 เมนูให้กะทัดรัดขึ้น
+    - ยกเลิก `overflow-x-auto` บน `<nav>` ทำให้แถบเมนูด้านบนบนหน้าจอ Desktop และ Tablet แสดงผลเรียงครบทุกเมนูในบรรทัดเดียวอย่างสวยงาม สมบูรณ์แบบ โดยไม่มีลูกศรหรือแถบ Horizontal Scrollbar ล้นออกมาเหมือนในรูปที่ 1
+  - แก้ไขใน [app/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/page.tsx):
+    - ปรับลดระยะ Padding ด้านบนและล่าง (`pt-5 pb-10 md:pt-8 md:pb-12`), ระยะเว้นระหว่างส่วนต่างๆ (`mb-4`, `mb-8`, `mb-10`) และขนาดการ์ดเมนูด่วน (`p-6 sm:p-8 rounded-3xl`)
+    - ทำให้เมื่อเปิดหน้าเว็บที่ Zoom 100% ปุ่ม **"เริ่มสแกน"** และ **"ดูสต็อกสินค้า"** รวมถึงองค์ประกอบต่างๆ พอดีกับหน้าจอ ไม่ต้องเลื่อนสกอร์ลลงล่าง มองเห็นปุ่มได้ทันทีเสมือนดูที่ Zoom 90% ตามรูปที่ 2
+  - ผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) สำเร็จ 100% (0 errors)
+
 ## 3 ส.ค. 2026
 - **ปรับแต่งข้อความ `PACKAGING MATERIAL WAREHOUSE MANAGEMENT SYSTEM` ให้แสดงผลบรรทัดเดียวกันแบบ Single Line**:
   - แก้ไขในหน้า [login/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/login/page.tsx) และ [register/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/register/page.tsx)

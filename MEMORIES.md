@@ -1,9 +1,9 @@
 # บันทึกการทำงาน (Memories)
 
 ## 5 ส.ค. 2026
-- **ปิดการเก็บ Dynamic HTML Cache ของ Vercel ให้หน้าเว็บดึงข้อมูลสดตลอดเวลา**:
+- **ปลด export const revalidate ออกจาก Client Component เพื่อแก้ไข Runtime Error**:
   - แก้ไขใน [app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/transactions/page.tsx) และ [app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/inventory/page.tsx):
-    - เพิ่ม `export const dynamic = 'force-dynamic'` และ `export const revalidate = 0` เพื่อสั่งให้ Next.js บน Vercel ไม่เก็บ Static HTML Cache เก่าไว้บน Vercel Edge CDN ช่วยให้ทุกครั้งที่มีการ Render หน้าจอ ระบบจะโหลดโค้ดและข้อมูลล่าสุด 100%
+    - ถอน `export const revalidate` ออก เนื่องจากไฟล์ที่ใช้ `'use client'` จะทำหน้าที่ Render ฝั่ง Client อยู่แล้วโดยอัตโนมัติ การใส่ `export const revalidate` ซ้ำซ้อนจะก่อให้เกิด Next.js Runtime Error
   - ผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) สำเร็จ 100% (0 errors)
 - **แก้ไขปัญหากรณี Console Error 500 ในการดึงประวัติการทำรายการและการแจ้งเตือน (Fix Console Error handling)**:
   - แก้ไขใน [backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/backend/src/index.ts):

@@ -167,79 +167,21 @@ export default function TransactionsPage() {
           </div>
         )}
 
-        {/* แท็บกรองสถานะรายการ */}
-        <div className="mt-6 flex flex-wrap items-center gap-2.5 border-b border-slate-200/80 pb-4">
-          <button
-            type="button"
-            onClick={() => setStatusFilter('pending')}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-              statusFilter === 'pending'
-                ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/60'
-            }`}
-          >
-            <Clock className="w-4 h-4" />
-            <span>รออนุมัติ</span>
-            <span className={`px-2 py-0.5 rounded-full text-xs ${
-              statusFilter === 'pending' ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-600 font-display'
-            }`}>
-              {pendingCount}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setStatusFilter('all')}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-              statusFilter === 'all'
-                ? 'bg-slate-900 text-white shadow-md'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/60'
-            }`}
-          >
-            <Filter className="w-4 h-4" />
-            <span>ทั้งหมด</span>
-            <span className={`px-2 py-0.5 rounded-full text-xs ${
-              statusFilter === 'all' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 font-display'
-            }`}>
-              {totalCount}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setStatusFilter('confirmed')}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-              statusFilter === 'confirmed'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/60'
-            }`}
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>อนุมัติแล้ว</span>
-            <span className={`px-2 py-0.5 rounded-full text-xs ${
-              statusFilter === 'confirmed' ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600 font-display'
-            }`}>
-              {confirmedCount}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setStatusFilter('rejected')}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-              statusFilter === 'rejected'
-                ? 'bg-[#BE1111] text-white shadow-md shadow-red-600/20'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/60'
-            }`}
-          >
-            <XCircle className="w-4 h-4" />
-            <span>ปฏิเสธ</span>
-            <span className={`px-2 py-0.5 rounded-full text-xs ${
-              statusFilter === 'rejected' ? 'bg-red-800 text-white' : 'bg-slate-100 text-slate-600 font-display'
-            }`}>
-              {rejectedCount}
-            </span>
-          </button>
+        {/* ตัวกรองเลือกสถานะรายการ (Dropdown) */}
+        <div className="mt-6 border-b border-slate-200/80 pb-4">
+          <div className="flex items-center gap-2.5 bg-white backdrop-blur-sm rounded-2xl border border-slate-200/90 px-4 py-2.5 shadow-xs hover:border-slate-300 transition-all max-w-xs sm:max-w-sm">
+            <Filter className="w-4.5 h-4.5 text-[#BE1111] shrink-0" />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as 'pending' | 'all' | 'confirmed' | 'rejected')}
+              className="w-full text-xs sm:text-sm font-bold text-slate-900 focus:outline-none bg-transparent cursor-pointer"
+            >
+              <option value="pending">รออนุมัติ ({pendingCount})</option>
+              <option value="all">ทั้งหมด ({totalCount})</option>
+              <option value="confirmed">อนุมัติแล้ว ({confirmedCount})</option>
+              <option value="rejected">ปฏิเสธ ({rejectedCount})</option>
+            </select>
+          </div>
         </div>
 
         <div className="mt-6 grid gap-4">

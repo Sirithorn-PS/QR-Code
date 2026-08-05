@@ -119,10 +119,15 @@ async function authenticate(req: AuthenticatedRequest, res: Response, next: Next
 
   try {
     const payload = jwt.verify(token, jwtSecret) as jwt.JwtPayload
+    const userId = Number(payload.userId)
+    if (!Number.isInteger(userId) || userId <= 0) {
+      res.status(401).json({ error: 'Invalid or expired token' })
+      return
+    }
     req.user = {
-      id: Number(payload.userId),
-      username: String(payload.username),
-      role: String(payload.role),
+      id: userId,
+      username: String(payload.username || ''),
+      role: String(payload.role || ''),
     }
     return next()
   } catch {
@@ -890,14 +895,16 @@ app.get('/transactions', authenticate, async (req, res) => {
     
     if (startDate && endDate) {
       const start = new Date(startDate)
-      start.setHours(0, 0, 0, 0)
-      
       const end = new Date(endDate)
-      end.setHours(23, 59, 59, 999)
       
-      whereClause.createdAt = {
-        gte: start,
-        lte: end,
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+        start.setHours(0, 0, 0, 0)
+        end.setHours(23, 59, 59, 999)
+        
+        whereClause.createdAt = {
+          gte: start,
+          lte: end,
+        }
       }
     }
 

@@ -1,6 +1,13 @@
 # บันทึกการทำงาน (Memories)
 
 ## 5 ส.ค. 2026
+- **แก้ไขปัญหากรณี Console Error 500 ในการดึงประวัติการทำรายการและการแจ้งเตือน (Fix Console Error handling)**:
+  - แก้ไขใน [backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/backend/src/index.ts):
+    - เพิ่มการตรวจสอบ `Number.isInteger(userId)` ใน `authenticate` Middleware ป้องกันกรณี Token เก่าหรือ Payload `userId` เป็น `NaN` ไม่ให้เกิด SQL Syntax Error ใน Prisma
+    - เพิ่มการตรวจสอบ `!isNaN(start.getTime()) && !isNaN(end.getTime())` ใน `GET /transactions` เพื่อป้องกันกรณีค่า Date Query สื่อสารผิดพลาดแล้วก่อให้เกิด Error 500
+  - แก้ไขใน [frontend/lib/auth.ts](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/lib/auth.ts):
+    - เพิ่มระบบจัดการ Token หมดอายุ / Invalid Token (HTTP 401) ใน `apiRequest` โดยจะทำการล้าง `token` และ `user` เก่าใน `localStorage` อัตโนมัติ พร้อมนำทางไปยังหน้าเข้าสู่ระบบ `/login` เพื่อให้ผู้ใช้นำ Token ใหม่สดมาใช้งานได้อย่างราบรื่น
+  - ผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) ทั้ง Frontend และ Backend สำเร็จ 100% (0 errors)
 - **ปรับการจัดวางชื่อสินค้าในการ์ดรายการรอการยืนยัน (Transactions) ให้โดดเด่น อ่านง่าย**:
   - แก้ไขใน [app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/transactions/page.tsx):
     - แยกการจัดวางชื่อสินค้าเป็น 2 บรรทัดตามคำขอของผู้ใช้:

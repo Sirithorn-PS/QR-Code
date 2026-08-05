@@ -1,6 +1,11 @@
 # บันทึกการทำงาน (Memories)
 
 ## 5 ส.ค. 2026
+- **ปรับการจัดวางชื่อสินค้าในการ์ดรายการรอการยืนยัน (Transactions) ให้โดดเด่น อ่านง่าย**:
+  - แก้ไขใน [app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/transactions/page.tsx):
+    - จัดวาง **ชื่อสินค้าเต็ม** เป็นหัวข้อหลักขนาดใหญ่ (`text-lg sm:text-xl font-display font-bold text-slate-900 leading-snug`) เด่นชัดอ่านง่ายสะดุดตา
+    - จัดระเบียบส่วนข้อมูลย่อย (Item Code, จำนวน, ผู้สร้างรายการ) ไว้ในกล่องข้อมูลด้านล่าง พร้อมรักษาสไตล์สีเดิมและโครงสร้างเดิมอย่างสมบูรณ์แบบ
+  - ผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) สำเร็จ 100% (0 errors)
 - **ปรับแต่งหน้าหน้ารายการ (Transactions) ให้ใช้ Dropdown เลือกสถานะ และตั้งค่าเริ่มต้นเป็น "รออนุมัติ" (Pending)**:
   - แก้ไขใน [app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/transactions/page.tsx):
     - เปลี่ยนปุ่มตัวกรองสถานะเดิมทั้ง 4 ปุ่ม (รออนุมัติ, ทั้งหมด, อนุมัติแล้ว, ปฏิเสธ) ให้เป็น **Dropdown ตัวเลือกสถานะสไตล์ Custom Modern** สวยงาม พร้อมไอคอนตัวกรอง `<Filter />`

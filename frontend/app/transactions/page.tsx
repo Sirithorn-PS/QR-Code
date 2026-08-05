@@ -212,9 +212,9 @@ export default function TransactionsPage() {
                   className="rounded-2xl border border-slate-100 bg-white p-5 md:p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)]"
                 >
                   <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-                    <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="text-sm font-display font-bold text-slate-400 bg-slate-50 px-2.5 py-0.5 rounded-md border border-slate-100">#{transaction.id}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2.5 mb-2">
+                        <span className="text-xs sm:text-sm font-display font-bold text-slate-400 bg-slate-50 px-2.5 py-0.5 rounded-md border border-slate-200/80">#{transaction.id}</span>
                         {transaction.type === 'receive' ? (
                           <span className="inline-flex items-center justify-center rounded-full bg-green-50 border border-green-100 px-2.5 py-0.5 text-xs font-bold text-green-700">
                             รับเข้า
@@ -225,12 +225,12 @@ export default function TransactionsPage() {
                           </span>
                         )}
                       </div>
-                      <h2 className="text-xl font-bold text-slate-900 mt-1">
+                      <h2 className="text-lg sm:text-xl font-display font-bold text-slate-900 leading-snug tracking-tight">
                         {transaction.product?.description || transaction.itemSnapshot.name}
                       </h2>
-                      <div className="mt-3 grid gap-x-6 gap-y-2 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-3 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-                        <div><span className="text-slate-400 text-[11px] uppercase tracking-wider block mb-0.5">Item Code</span> <span className="font-semibold text-slate-700">{transaction.product?.itemCode || transaction.itemSnapshot.itemCode}</span></div>
-                        <div><span className="text-slate-400 text-[11px] uppercase tracking-wider block mb-0.5">จำนวน</span> <span className="font-bold text-slate-900 text-base">{transaction.quantity}</span></div>
+                      <div className="mt-3 grid gap-x-6 gap-y-2 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-3 bg-slate-50/60 p-3.5 rounded-xl border border-slate-200/60">
+                        <div><span className="text-slate-400 text-[11px] uppercase tracking-wider block mb-0.5">Item Code</span> <span className="font-semibold text-slate-800">{transaction.product?.itemCode || transaction.itemSnapshot.itemCode}</span></div>
+                        <div><span className="text-slate-400 text-[11px] uppercase tracking-wider block mb-0.5">จำนวน</span> <span className="font-extrabold text-slate-900 text-base">{transaction.quantity}</span></div>
                         <div><span className="text-slate-400 text-[11px] uppercase tracking-wider block mb-0.5">ผู้สร้างรายการ</span> <span className="font-medium text-slate-700">{transaction.createdBy?.fullName || '-'}</span></div>
                       </div>
                     </div>

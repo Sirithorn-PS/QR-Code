@@ -1,6 +1,13 @@
 # บันทึกการทำงาน (Memories)
 
 ## 5 ส.ค. 2026
+- **ปรับแต่ง Layout หน้าแสดงสูตร BOM สินค้า (Bill of Materials) ในหน้าสต็อกให้แสดงชื่อสินค้าเต็มบนมือถือ**:
+  - แก้ไขใน [app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/inventory/page.tsx):
+    - ปรับรูปแบบการจัดวางรายการวัตถุดิบประกอบ BOM บนหน้าจอมือถือเป็น 2 บรรทัด ( Responsive Multi-line Layout):
+      - แถบบน: แสดง **รหัสสินค้า** (Component Item Code) และ **คลังจัดเก็บ** (Warehouse Badge) ขนานกันซ้าย-ขวา
+      - แถบล่าง: แสดง **ชื่อสินค้าเต็ม** (`c.description`) โดยปลด `truncate` ออก ให้ข้อความขึ้นบรรทัดใหม่อัตโนมัติ อ่านชื่อเต็มได้ครบถ้วน 100% ไม่ถูกตัดคำเป็นจุดไข่ปลา (...)
+    - คงรูปแบบ Single-line บนหน้าจอขนาดใหญ่ (Desktop/Tablet) ไว้อย่างสวยงามเป็นระเบียบ
+  - ผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) สำเร็จ 100% (0 errors)
 - **ปรับแต่ง Layout หน้าเว็บแอป WPK MMS ให้แสดงผลลงตัวที่ขนาดหน้าจอ 100% (ตรงตามสัดส่วนของรูป 90%)**:
   - แก้ไขใน [Navigation.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/components/Navigation.tsx):
     - ปรับขนาดความสูง Header จาก `h-20` เป็น `h-16 lg:h-18` และปรับ Padding, Gap และขนาด Font Size ของเมนูหลัก 6 เมนูให้กะทัดรัดขึ้น

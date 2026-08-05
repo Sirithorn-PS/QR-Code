@@ -1561,29 +1561,37 @@ export default function InventoryPage() {
                       <p className="text-sm">ไม่พบข้อมูลสูตร BOM สำหรับสินค้ารายการนี้</p>
                     </div>
                   ) : (
-                    <div className="space-y-2 py-1">
+                    <div className="space-y-2.5 py-1">
                       {(() => {
                         const filteredComponents = [...bomList].sort((a, b) => a.id - b.id)
                         return filteredComponents.map((c) => (
                           <div
                             key={c.id}
-                            className="flex items-center justify-between text-xs p-3.5 rounded-2xl border border-gray-200/80 bg-white hover:bg-slate-50/80 transition-all shadow-2xs font-display"
+                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 p-3.5 sm:p-4 rounded-2xl border border-gray-200/80 bg-white hover:bg-slate-50/80 transition-all shadow-2xs font-display text-xs sm:text-sm"
                           >
-                            <div className="flex items-center gap-3 overflow-hidden min-w-0 pr-2">
-                              <div className="shrink-0 whitespace-nowrap font-bold px-2.5 py-1 rounded-lg border text-[#BE1111] bg-red-50/80 border-red-100 font-display text-xs">
+                            {/* Header row for mobile (Item Code & Warehouse Badge) / Left side on desktop */}
+                            <div className="flex items-center justify-between sm:justify-start gap-2.5 min-w-0">
+                              <div className="shrink-0 font-bold px-2.5 py-1 rounded-lg border text-[#BE1111] bg-red-50/80 border-red-100 font-display text-xs sm:text-xs tracking-tight">
                                 {c.componentItemCode}
                               </div>
-                              <div className="truncate font-semibold text-gray-800" title={c.description}>
-                                {c.description}
-                              </div>
-                            </div>
-                            <div className="shrink-0 flex items-center gap-3">
                               {c.warehouse && (
-                                <span className="text-[11px] font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-200/60 font-medium">
+                                <span className="sm:hidden shrink-0 text-[11px] font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200/60">
                                   คลัง: {c.warehouse}
                                 </span>
                               )}
                             </div>
+
+                            {/* Product Description Text (Full text on mobile without truncate) */}
+                            <div className="flex-1 min-w-0 font-semibold text-slate-800 leading-snug sm:leading-normal break-words sm:truncate" title={c.description}>
+                              {c.description}
+                            </div>
+
+                            {/* Warehouse Badge for Desktop */}
+                            {c.warehouse && (
+                              <span className="hidden sm:inline-block shrink-0 text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200/60">
+                                คลัง: {c.warehouse}
+                              </span>
+                            )}
                           </div>
                         ))
                       })()}

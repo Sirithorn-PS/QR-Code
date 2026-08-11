@@ -31,13 +31,13 @@ Call log:
      |                ^ Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/login
   8  | 
   9  |     // 2. ตรวจสอบว่ามีหัวข้อเกี่ยวกับการเข้าสู่ระบบหรือไม่
-  10 |     await expect(page.locator('text=ระบบจัดการสินค้า')).toBeVisible({ timeout: 10000 }).catch(() => {});
-  11 |     await expect(page.locator('text=เข้าสู่ระบบ')).toBeVisible({ timeout: 10000 }).catch(() => {});
-  12 |     
+  10 |     await expect(page.locator('text=ยินดีต้อนรับกลับมา')).toBeVisible({ timeout: 10000 }).catch(() => { });
+  11 |     await expect(page.locator('text=เข้าสู่ระบบ')).toBeVisible({ timeout: 10000 }).catch(() => { });
+  12 | 
   13 |     // 3. ตรวจสอบว่ามีช่องกรอก Username และ Password
   14 |     const usernameInput = page.locator('input[type="text"], input[name="username"], input[id="username"]');
   15 |     const passwordInput = page.locator('input[type="password"]');
-  16 |     
+  16 | 
   17 |     // เราไม่ได้ assert แน่นอนเพื่อป้องกันเทสต์พังถ้า ID เปลี่ยน แต่อันนี้เป็นตัวอย่าง
   18 |     // คุณสามารถเขียนเทสต์ให้กรอกข้อมูลแล้วกดปุ่มเข้าสู่ระบบได้แบบนี้:
   19 |     /*

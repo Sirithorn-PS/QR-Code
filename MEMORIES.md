@@ -1,6 +1,22 @@
 # บันทึกการทำงาน (Memories)
 
 ## 13 ส.ค. 2026
+- **ปรับปรุงความคมชัดของรูปภาพ Screenshot หน้า 02 HOME (หน้าหลัก) ใน Quick Guide (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการนำไฟล์รูปภาพ Screenshot ต้นฉบับความละเอียดสูงทั้ง 2 ครึ่งของหน้า Home มาต่อกันแบบคู่ขนาน (Side-by-side) ด้วย Python PIL (LANCZOS Resampling Quality 98%) 
+  - บันทึกทับไฟล์ [frontend/public/images/guide-home.png](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/public/images/guide-home.png) ทำให้รูปภาพในขั้นตอนที่ 2 (HOME) คมชัดระดับ High Definition เทียบเท่ากับขั้นตอนที่ 5 (STOCK)
+- **อัปเดตรูปภาพ Screenshot ในหน้า 05 STOCK / INVENTORY (สต็อกสินค้า) ใน Quick Guide (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการนำรูปภาพ 2 รูปที่คุณแพรลูกแนบมา (หน้าหมวดหมู่สต็อก + หน้ารายละเอียดสินค้าพร้อม QR Code) มาต่อกันแบบคู่ขนาน (Side-by-side) ด้วย Python PIL แล้วบันทึกไว้ที่ [frontend/public/images/guide-inventory.jpg](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/public/images/guide-inventory.jpg)
+  - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx): อัปเดต Path รูปภาพขั้นตอนที่ 5 (STOCK / INVENTORY) ให้เรียกใช้ `/images/guide-inventory.jpg`
+- **อัปเดตรูปภาพ Screenshot และเส้นกรอบสีเทาในหน้า 04 PENDING TRANSACTIONS (รายการรอการยืนยัน) ใน Quick Guide (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการคัดลอกไฟล์รูปภาพล่าสุดที่คุณแพรลูกอัปโหลดไปไว้ที่ [frontend/public/images/guide-pending.jpg](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/public/images/guide-pending.jpg)
+  - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx): 
+    - อัปเดต Path รูปภาพขั้นตอนที่ 4 (PENDING TRANSACTIONS) ให้เรียกใช้ `/images/guide-pending.jpg`
+    - เพิ่มเส้นกรอบสีเทาอ่อน (`border-slate-200/80`) พร้อมมุมโค้งมนและเงาบางๆ ให้กับรูปภาพในขั้นตอนที่ 4
+- **อัปเดตรูปภาพ Screenshot และเส้นกรอบสีเทาในหน้า 03 SCAN (รับเข้า - เบิกออก) ใน Quick Guide (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการคัดลอกไฟล์รูปภาพล่าสุดที่คุณแพรลูกอัปโหลดไปไว้ที่ [frontend/public/images/guide-scan.jpg](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/public/images/guide-scan.jpg)
+  - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx): 
+    - อัปเดต Path รูปภาพขั้นตอนที่ 3 (SCAN) ให้เรียกใช้ `/images/guide-scan.jpg`
+    - เพิ่มเส้นกรอบสีเทาอ่อน (`border-slate-200/80`) พร้อมมุมโค้งมนและเงาบางๆ ให้กับรูปภาพในขั้นตอนที่ 3 (SCAN) เช่นเดียวกับขั้นตอนที่ 1 (Login)
 - **ย้อนกลับไปใช้ดีไซน์ดั้งเดิม พร้อมปรับขนาดและ Opacity การ์ดที่ไม่โดนโฟกัสให้เล็กลงอย่างชัดเจน (เสร็จสมบูรณ์ 100%)**:
   - ดำเนินการแก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):
     - ปรับลดขนาดการ์ดด้านข้าง (Side Cards / Unfocused Cards) ให้เล็กลงจากเดิม (Desktop: 200x300 px, Tablet: 175x260 px, Mobile: 140x220 px)

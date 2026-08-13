@@ -54,7 +54,7 @@ const guideSteps: GuideStep[] = [
     shortTitle: 'รับเข้า - เบิกออก',
     shortDescription: 'สแกน QR Code และระบุจำนวนสินค้าเพื่อทำรายการ',
     icon: ScanLine,
-    image: '/images/guide-scan.png'
+    image: '/images/guide-scan.jpg'
   },
   {
     id: 4,
@@ -63,7 +63,7 @@ const guideSteps: GuideStep[] = [
     shortTitle: 'รายการรอการยืนยัน',
     shortDescription: 'ตรวจสอบและยืนยันอนุมัติรายการเบิกจ่ายโดย Supervisor',
     icon: Clock,
-    image: '/images/guide-pending.png'
+    image: '/images/guide-pending.jpg'
   },
   {
     id: 5,
@@ -72,7 +72,7 @@ const guideSteps: GuideStep[] = [
     shortTitle: 'สต็อกสินค้า',
     shortDescription: 'ตรวจสอบจำนวนสินค้าคงเหลือแบบ Real-time และตำแหน่งจัดเก็บ',
     icon: Package,
-    image: '/images/guide-inventory.png'
+    image: '/images/guide-inventory.jpg'
   },
   {
     id: 6,
@@ -276,7 +276,7 @@ export function QuickGuideCarousel() {
                           src={step.image}
                           alt={step.title}
                           className={`w-full h-full object-contain ${
-                            step.id === 1 ? 'border border-slate-200/80 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)]' : ''
+                            step.id === 1 || step.id === 3 || step.id === 4 ? 'border border-slate-200/80 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)]' : ''
                           }`}
                         />
                       </div>

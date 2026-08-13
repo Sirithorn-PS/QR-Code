@@ -273,7 +273,7 @@ export function Navigation({ children }: { children: React.ReactNode }) {
                 <span className="text-[#BE1111]">MMS</span>
               </h1>
             </div>
-            <p className="hidden xl:block text-[10px] lg:text-[10.5px] text-slate-400 font-semibold leading-tight border-l border-slate-200 pl-2.5 select-none shrink-0">
+            <p className="hidden xl:block text-[10px] lg:text-[10.5px] text-slate-400 font-normal leading-tight border-l border-slate-200 pl-2.5 select-none shrink-0">
               <span className="block whitespace-nowrap">Packaging Material</span>
               <span className="block whitespace-nowrap">Warehouse Management System</span>
             </p>
@@ -288,14 +288,14 @@ export function Navigation({ children }: { children: React.ReactNode }) {
                 <Link key={item.href} href={item.href}
                   className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-xl text-xs lg:text-sm whitespace-nowrap shrink-0 transition-all duration-200 ${
                     isActive 
-                      ? 'bg-red-50/90 text-[#BE1111] font-extrabold shadow-2xs border border-red-100/80' 
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-semibold'
+                      ? 'bg-red-50/90 text-[#BE1111] font-medium shadow-2xs border border-red-100/80' 
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-normal'
                   }`}
                 >
                   <item.icon className={`w-4 h-4 lg:w-4.5 lg:h-4.5 stroke-[2.2] shrink-0 transition-colors ${isActive ? 'text-[#BE1111]' : 'text-slate-400 group-hover:text-slate-600'}`} />
                   <span className="whitespace-nowrap">{item.label}</span>
                   {showBadge && (
-                    <span className="inline-flex items-center justify-center min-w-[18px] h-4.5 px-1.5 rounded-full bg-[#BE1111] text-white text-[11px] font-bold font-display shadow-xs animate-pulse shrink-0">
+                    <span className="inline-flex items-center justify-center min-w-[18px] h-4.5 px-1.5 rounded-full bg-[#BE1111] text-white text-[11px] font-medium font-display shadow-xs animate-pulse shrink-0">
                       {pendingCount}
                     </span>
                   )}
@@ -316,7 +316,7 @@ export function Navigation({ children }: { children: React.ReactNode }) {
             >
               <Bell className="w-5 h-5" />
               {unreadNotifCount > 0 && (
-                <span className="absolute top-1 right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#BE1111] px-1 text-[10px] font-bold font-display text-white shadow-2xs animate-pulse">
+                <span className="absolute top-1 right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#BE1111] px-1 text-[10px] font-medium font-display text-white shadow-2xs animate-pulse">
                   {unreadNotifCount}
                 </span>
               )}
@@ -339,15 +339,15 @@ export function Navigation({ children }: { children: React.ReactNode }) {
           <div className="h-6 w-px bg-slate-200/80 shrink-0"></div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-extrabold text-xs lg:text-sm flex items-center justify-center shrink-0 shadow-2xs select-none">
+            <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-bold text-xs lg:text-sm flex items-center justify-center shrink-0 shadow-2xs select-none">
               {getInitials(user.username || user.fullName)}
             </div>
             <div className="text-left shrink-0">
-              <p className="text-xs lg:text-sm font-bold text-slate-900 leading-tight whitespace-nowrap">{user.username || user.fullName}</p>
+              <p className="text-xs lg:text-sm font-medium text-slate-900 leading-tight whitespace-nowrap">{user.username || user.fullName}</p>
             </div>
           </div>
           <div className="h-6 w-px bg-slate-200/80 shrink-0"></div>
-          <button onClick={handleLogout} className="group flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 text-xs lg:text-sm font-semibold text-slate-600 rounded-xl hover:bg-red-50 hover:text-[#BE1111] transition-all border border-transparent hover:border-red-100 whitespace-nowrap shrink-0" title="ออกจากระบบ">
+          <button onClick={handleLogout} className="group flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 text-xs lg:text-sm font-normal text-slate-600 rounded-xl hover:bg-red-50 hover:text-[#BE1111] transition-all border border-transparent hover:border-red-100 whitespace-nowrap shrink-0" title="ออกจากระบบ">
             <LogOut className="w-4 h-4 lg:w-4.5 lg:h-4.5 text-slate-400 group-hover:text-[#BE1111] transition-colors shrink-0" />
             <span className="whitespace-nowrap">ออกจากระบบ</span>
           </button>

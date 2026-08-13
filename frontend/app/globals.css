@@ -15,10 +15,10 @@
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-primary-focus: var(--primary-focus);
-  --font-display: var(--font-jakarta-sans), var(--font-prompt-sans), "Plus Jakarta Sans", "Prompt", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-sans: var(--font-jakarta-sans), var(--font-prompt-sans), "Plus Jakarta Sans", "Prompt", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-body: var(--font-jakarta-sans), var(--font-prompt-sans), "Plus Jakarta Sans", "Prompt", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: var(--font-jakarta-sans), var(--font-prompt-sans), "Plus Jakarta Sans", "Prompt", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: "SF Pro TH", "SF Pro Display", "SF Pro Text", "Sukhumvit Set", "Thonburi", var(--font-inter), var(--font-prompt-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: "SF Pro TH", "SF Pro Text", "SF Pro Display", "Sukhumvit Set", "Thonburi", var(--font-inter), var(--font-prompt-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-body: "SF Pro TH", "SF Pro Text", "SF Pro Display", "Sukhumvit Set", "Thonburi", var(--font-inter), var(--font-prompt-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "SF Mono", "SFProMono-Regular", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   --animate-shine: shine 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 
@@ -45,16 +45,18 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-jakarta-sans), var(--font-prompt-sans), "Plus Jakarta Sans", "Prompt", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-  letter-spacing: -0.01em;
+  font-family: "SF Pro TH", "SF Pro Text", "SF Pro Display", "Sukhumvit Set", "Thonburi", var(--font-inter), var(--font-prompt-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  letter-spacing: -0.011em;
 }
 
 @layer utilities {
   .font-display,
   .font-sans,
-  .font-body,
+  .font-body {
+    font-family: "SF Pro TH", "SF Pro Text", "SF Pro Display", "Sukhumvit Set", "Thonburi", var(--font-inter), var(--font-prompt-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  }
   .font-mono {
-    font-family: var(--font-jakarta-sans), var(--font-prompt-sans), "Plus Jakarta Sans", "Prompt", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    font-family: "SF Mono", "SFProMono-Regular", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
   }
 }
 

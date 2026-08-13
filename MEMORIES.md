@@ -1,5 +1,50 @@
 # บันทึกการทำงาน (Memories)
 
+## 13 ส.ค. 2026
+- **ย้อนกลับไปใช้ดีไซน์ดั้งเดิม พร้อมปรับขนาดและ Opacity การ์ดที่ไม่โดนโฟกัสให้เล็กลงอย่างชัดเจน (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการแก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):
+    - ปรับลดขนาดการ์ดด้านข้าง (Side Cards / Unfocused Cards) ให้เล็กลงจากเดิม (Desktop: 200x300 px, Tablet: 175x260 px, Mobile: 140x220 px)
+    - เพิ่มเอฟเฟกต์จางการ์ดด้านข้างด้วย `opacity: 0.5` ทำให้การ์ดตรงกลางที่กำลังโฟกัสอยู่ (`320x420 px`, `opacity: 1`) โดดเด่น คมชัด และสร้างมิติความลึกได้อย่างชัดเจนยิ่งขึ้น
+- **ปรับปรุงดีไซน์และสัดส่วน Carousel ในหน้า Quick Guide (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการแก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/components/QuickGuideCarousel.tsx):
+    - ปรับใช้กรอบอ้างอิงตาม Breakpoint ใหม่ที่ผู้ใช้กำหนดอย่างเคร่งครัด
+      - **Desktop (≥ 1280px):** Viewport 1280x420, Active Card 320x420, Side Card 240x360
+      - **Tablet (768px - 1279px):** Viewport 960x360, Active Card 280x380, Side Card 200x300
+      - **Mobile (≤ 767px):** Viewport 100%x340, Active Card 220x320, Side Card 160x240
+    - ปรับระยะห่างระหว่างการ์ด (Gap) เป็น 24px และใช้สมการคำนวณระยะแกน X (xOffset) ตาม Breakpoint
+    - ปรับปุ่มเปลี่ยนทิศทางซ้าย-ขวาให้มีขนาด 48x48 px และจัดให้อยู่กึ่งกลางแนวตั้งภายในกรอบเทา
+    - ปรับ Card ด้านในให้เป็นสีขาว (White) มุมโค้งมน (rounded-2xl) พร้อมเงา `0px 12px 30px rgba(0,0,0,0.08)` และตัวหนังสือสีแดง/ดำด้านบน พร้อมภาพ Screenshot ด้านล่าง (ไม่มีกรอบหน้าต่างแอป) ตาม Mockup ล่าสุด
+    - แก้ไขข้อความ Badge ด้านบนสุดของ Section จาก "SYSTEM WORKFLOW" เป็น "QUICK GUIDE" และปรับฟอนต์ของคำอธิบายย่อยให้เป็น `font-display` แบบเดียวกับเมนูบาร์
+- **ปรับปรุงดีไซน์ Section "ขั้นตอนการใช้งานระบบ" (QuickGuideCarousel.tsx) ให้ได้สเปกพิกเซลเป๊ะตามแบบที่ 1 (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการแก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///D:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):
+    - **พื้นที่ Carousel Container:** กำหนดเป็น `1280 × 420 px` (`max-w-[1280px]`, `h-[420px]`)
+    - **Card ตรงกลาง (Active Card):** กำหนดขนาด `320 × 420 px`
+    - **Card ด้านข้าง (Side Cards):** กำหนดขนาด `240 × 360 px` (ย่อลงมาจาก Active)
+    - **ระยะห่าง Card (Gap):** กำหนดระยะ `24 px` (คำนวณตำแหน่ง Offset X = `304px` ได้ระยะห่างพอดีเป๊ะ)
+    - **ปุ่มลูกศร Navigation (← →):** กำหนดขนาด `48 × 48 px` (`w-12 h-12`)
+    - **ภาพ Screenshot หน้าจอในการ์ดแนวตั้ง 320x420 px:** แสดงภาพ Screenshot จริงของระบบ WPK MMS ได้อย่างสมบูรณ์แบบ
+  - ผ่านการทดสอบ Build ส่วน Frontend (`npm run build:frontend`) สำเร็จ 100% (Exit code: 0)
+
+## 11 ส.ค. 2026
+- **เพิ่มส่วนคู่มือการใช้งานแบบย่อ (QUICK GUIDE) ดีไซน์ Carousel (สายพานหมุน) ในหน้าหลัก (Home Page)**:
+  - สร้าง Component ใหม่ [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/components/QuickGuideCarousel.tsx):
+    - พัฒนาโครงสร้างดีไซน์รูปแบบ **1. Carousel (สายพานหมุน)** ตามเอกสารข้อกำหนดอย่างสมบูรณ์
+    - การ์ดตรงกลางที่แอ็กทีฟจะขยายใหญ่ขึ้นเล็กน้อย (`scale-105`), มีเส้นขอบเน้นและเงามีมิติ (Elevated Shadow)
+    - รองรับการกดปุ่มเปลี่ยนทิศทางซ้าย-ขวา (`ChevronLeft` / `ChevronRight`) และจุดเลือกหน้า (Pagination Dots)
+    - แสดงผลเนื้อหาคู่มือ 6 ขั้นตอนตามเอกสาร WPK MMS Quick Guide (01 LOGIN, 02 HOME, 03 SCAN, 04 PENDING TRANSACTIONS, 05 STOCK/INVENTORY, 06 REPORTS)
+    - เพิ่มส่วนสรุปบทบาทผู้ใช้งาน (User Roles: Warehouse Staff vs Supervisor) ด้านล่าง Carousel
+  - แก้ไขใน [frontend/app/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/page.tsx):
+    - นำเข้าและเรียกใช้งาน `QuickGuideCarousel` ในหน้าหลักอย่างลงตัว
+  - ผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) สำเร็จ 100% (0 errors)
+- **นำแบบอักษรตามมาตรฐาน Apple Thailand (apple.com/th) มาใช้งาน พร้อมปรับแถบเมนูด้านบนไม่ให้เป็นตัวหนา**:
+  - แก้ไขใน [frontend/app/layout.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/layout.tsx):
+    - นำเข้าฟอนต์ `Inter` ร่วมกับ `Prompt` สำหรับ Next.js
+  - แก้ไขใน [frontend/app/globals.css](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/globals.css):
+    - กำหนด Font Stack เป็น `"SF Pro TH", "SF Pro Text", "SF Pro Display", "Sukhumvit Set", "Thonburi", var(--font-inter), var(--font-prompt-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`
+  - แก้ไขใน [frontend/components/Navigation.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/components/Navigation.tsx):
+    - กำหนดตัวอักษรแถบเมนูด้านบนเป็น `font-normal` (และ `font-medium` สำหรับ Active state) ไม่ให้เป็นตัวหนา
+  - ผ่านการทดสอบ TypeScript (`npx tsc --noEmit`) สำเร็จ 100% (0 errors)
+
 ## 5 ส.ค. 2026
 - **ปลด export const revalidate ออกจาก Client Component เพื่อแก้ไข Runtime Error**:
   - แก้ไขใน [app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/transactions/page.tsx) และ [app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/%E0%B8%A3%E0%B8%A7%E0%B8%A1%E0%B8%9B%E0%B8%B5%204/%E0%B8%9B%E0%B8%B5%204%20%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A1%201/%E0%B8%9D%E0%B8%B6%E0%B8%81%E0%B8%87%E0%B8%B2%E0%B8%99/QR%20Code%20Webapp/frontend/app/inventory/page.tsx):

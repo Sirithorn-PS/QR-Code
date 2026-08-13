@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="100%" height="100%">
+  <rect width="1200" height="675" fill="#f8fafc" rx="16"/>
+  <!-- Top Window Bar -->
+  <rect width="1200" height="40" fill="#0f172a" rx="16"/>
+  <rect y="24" width="1200" height="16" fill="#0f172a"/>
+  <circle cx="24" cy="20" r="6" fill="#ef4444"/>
+  <circle cx="44" cy="20" r="6" fill="#f59e0b"/>
+  <circle cx="64" cy="20" r="6" fill="#10b981"/>
+  <rect x="100" y="10" width="400" height="20" rx="6" fill="#1e293b"/>
+  <text x="120" y="24" fill="#94a3b8" font-family="sans-serif" font-size="11">https://wpk-mms.internal/transactions</text>
+
+  <!-- Sidebar -->
+  <rect x="0" y="40" width="220" height="635" fill="#0f172a"/>
+  <text x="24" y="80" fill="#ffffff" font-family="sans-serif" font-weight="bold" font-size="18">WPK <tspan fill="#be1111">MMS</tspan></text>
+  <text x="40" y="135" fill="#94a3b8" font-family="sans-serif" font-size="14">สแกน QR Code</text>
+  <text x="40" y="180" fill="#94a3b8" font-family="sans-serif" font-size="14">หน้าหลัก</text>
+  <rect x="16" y="200" width="188" height="40" rx="8" fill="#be1111" opacity="0.15"/>
+  <rect x="20" y="205" width="4" height="30" rx="2" fill="#be1111"/>
+  <text x="40" y="225" fill="#be1111" font-family="sans-serif" font-weight="bold" font-size="14">รายการรออนุมัติ</text>
+  <text x="40" y="270" fill="#94a3b8" font-family="sans-serif" font-size="14">รายงาน</text>
+
+  <!-- Main Content -->
+  <text x="260" y="90" fill="#0f172a" font-family="sans-serif" font-weight="bold" font-size="24">รายการรอการยืนยัน (Pending Approval)</text>
+  
+  <!-- Table Container -->
+  <rect x="260" y="120" width="900" height="440" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+  <!-- Table Header -->
+  <rect x="260" y="120" width="900" height="48" rx="16" fill="#f1f5f9"/>
+  <text x="290" y="150" fill="#475569" font-family="sans-serif" font-weight="bold" font-size="13">เวลาทำรายการ</text>
+  <text x="440" y="150" fill="#475569" font-family="sans-serif" font-weight="bold" font-size="13">รหัสสินค้า / รายการ</text>
+  <text x="680" y="150" fill="#475569" font-family="sans-serif" font-weight="bold" font-size="13">ประเภท</text>
+  <text x="780" y="150" fill="#475569" font-family="sans-serif" font-weight="bold" font-size="13">จำนวน</text>
+  <text x="880" y="150" fill="#475569" font-family="sans-serif" font-weight="bold" font-size="13">ผู้ทำรายการ</text>
+  <text x="1030" y="150" fill="#475569" font-family="sans-serif" font-weight="bold" font-size="13">อนุมัติ / ปฏิเสธ</text>
+
+  <!-- Row 1 -->
+  <line x1="260" y1="168" x2="1160" y2="168" stroke="#e2e8f0"/>
+  <text x="290" y="200" fill="#0f172a" font-family="sans-serif" font-size="13">10:15:30</text>
+  <text x="440" y="200" fill="#0f172a" font-family="sans-serif" font-weight="bold" font-size="13">YM-PK-88412 (กล่องน้ำมันเครื่อง 4L)</text>
+  <rect x="680" y="184" width="60" height="24" rx="6" fill="#dcfce7"/>
+  <text x="692" y="201" fill="#166534" font-family="sans-serif" font-weight="bold" font-size="11">รับเข้า</text>
+  <text x="780" y="200" fill="#0f172a" font-family="sans-serif" font-weight="bold" font-size="13">+200 ชิ้น</text>
+  <text x="880" y="200" fill="#64748b" font-family="sans-serif" font-size="13">สมชาย พนักงานคลัง</text>
+  <rect x="1025" y="184" width="55" height="26" rx="6" fill="#16a34a"/>
+  <text x="1038" y="201" fill="#ffffff" font-family="sans-serif" font-weight="bold" font-size="11">อนุมัติ</text>
+  <rect x="1088" y="184" width="55" height="26" rx="6" fill="#ef4444"/>
+  <text x="1098" y="201" fill="#ffffff" font-family="sans-serif" font-weight="bold" font-size="11">ปฏิเสธ</text>
+
+  <!-- Row 2 -->
+  <line x1="260" y1="228" x2="1160" y2="228" stroke="#e2e8f0"/>
+  <text x="290" y="260" fill="#0f172a" font-family="sans-serif" font-size="13">09:42:10</text>
+  <text x="440" y="260" fill="#0f172a" font-family="sans-serif" font-weight="bold" font-size="13">YM-PK-55102 (แกลลอน 1L)</text>
+  <rect x="680" y="244" width="60" height="24" rx="6" fill="#fee2e2"/>
+  <text x="692" y="261" fill="#991b1b" font-family="sans-serif" font-weight="bold" font-size="11">เบิกออก</text>
+  <text x="780" y="260" fill="#0f172a" font-family="sans-serif" font-weight="bold" font-size="13">-50 ชิ้น</text>
+  <text x="880" y="260" fill="#64748b" font-family="sans-serif" font-size="13">วิชัย ฝ่ายผลิต</text>
+  <rect x="1025" y="244" width="55" height="26" rx="6" fill="#16a34a"/>
+  <text x="1038" y="261" fill="#ffffff" font-family="sans-serif" font-weight="bold" font-size="11">อนุมัติ</text>
+  <rect x="1088" y="244" width="55" height="26" rx="6" fill="#ef4444"/>
+  <text x="1098" y="261" fill="#ffffff" font-family="sans-serif" font-weight="bold" font-size="11">ปฏิเสธ</text>
+</svg>

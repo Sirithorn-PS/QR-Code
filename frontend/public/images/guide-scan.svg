@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="100%" height="100%">
+  <rect width="1200" height="675" fill="#f8fafc" rx="16"/>
+  <!-- Top Window Bar -->
+  <rect width="1200" height="40" fill="#0f172a" rx="16"/>
+  <rect y="24" width="1200" height="16" fill="#0f172a"/>
+  <circle cx="24" cy="20" r="6" fill="#ef4444"/>
+  <circle cx="44" cy="20" r="6" fill="#f59e0b"/>
+  <circle cx="64" cy="20" r="6" fill="#10b981"/>
+  <rect x="100" y="10" width="400" height="20" rx="6" fill="#1e293b"/>
+  <text x="120" y="24" fill="#94a3b8" font-family="sans-serif" font-size="11">https://wpk-mms.internal/scan</text>
+
+  <!-- Sidebar -->
+  <rect x="0" y="40" width="220" height="635" fill="#0f172a"/>
+  <text x="24" y="80" fill="#ffffff" font-family="sans-serif" font-weight="bold" font-size="18">WPK <tspan fill="#be1111">MMS</tspan></text>
+  <rect x="16" y="110" width="188" height="40" rx="8" fill="#be1111" opacity="0.15"/>
+  <rect x="20" y="115" width="4" height="30" rx="2" fill="#be1111"/>
+  <text x="40" y="135" fill="#be1111" font-family="sans-serif" font-weight="bold" font-size="14">สแกน QR Code</text>
+  <text x="40" y="180" fill="#94a3b8" font-family="sans-serif" font-size="14">หน้าหลัก</text>
+  <text x="40" y="220" fill="#94a3b8" font-family="sans-serif" font-size="14">คลังสินค้า</text>
+  <text x="40" y="260" fill="#94a3b8" font-family="sans-serif" font-size="14">รายงาน</text>
+
+  <!-- Main Content -->
+  <text x="260" y="90" fill="#0f172a" font-family="sans-serif" font-weight="bold" font-size="24">สแกน QR Code (รับเข้า - เบิกออก)</text>
+  
+  <!-- Toggle Receive / Issue -->
+  <rect x="260" y="115" width="300" height="44" rx="10" fill="#e2e8f0"/>
+  <rect x="264" y="119" width="144" height="36" rx="8" fill="#be1111"/>
+  <text x="312" y="142" fill="#ffffff" font-family="sans-serif" font-weight="bold" font-size="14">รับเข้า (Receive)</text>
+  <text x="444" y="142" fill="#64748b" font-family="sans-serif" font-weight="bold" font-size="14">เบิกออก (Issue)</text>
+
+  <!-- Camera Scanner Area -->
+  <rect x="260" y="180" width="500" height="380" rx="16" fill="#1e293b"/>
+  <!-- Scanner Target Box -->
+  <rect x="410" y="270" width="200" height="200" rx="12" fill="none" stroke="#be1111" stroke-width="3" stroke-dasharray="8 8"/>
+  <line x1="390" y1="370" x2="630" y2="370" stroke="#ef4444" stroke-width="3" opacity="0.8"/>
+  <text x="510" y="500" fill="#94a3b8" font-family="sans-serif" text-anchor="middle" font-size="13">วาง QR Code ให้อยู่ในกรอบเพื่อสแกน</text>
+
+  <!-- Form Details Right Box -->
+  <rect x="790" y="180" width="370" height="380" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+  <text x="820" y="220" fill="#0f172a" font-family="sans-serif" font-weight="bold" font-size="16">ข้อมูลรายการสแกน</text>
+  <rect x="820" y="240" width="310" height="44" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="835" y="267" fill="#64748b" font-family="sans-serif" font-size="13">รหัสสินค้า: YM-PK-88412</text>
+  <rect x="820" y="300" width="310" height="44" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="835" y="327" fill="#0f172a" font-family="sans-serif" font-size="13">จำนวน: 50 ชิ้น</text>
+  <rect x="820" y="480" width="310" height="50" rx="10" fill="#be1111"/>
+  <text x="975" y="511" fill="#ffffff" font-family="sans-serif" font-weight="bold" font-size="15" text-anchor="middle">ยืนยันทำรายการ</text>
+</svg>

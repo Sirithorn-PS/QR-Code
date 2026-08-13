@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="100%" height="100%">
+  <rect width="1200" height="675" fill="#f8fafc" rx="16"/>
+  <!-- Top Window Bar -->
+  <rect width="1200" height="40" fill="#0f172a" rx="16"/>
+  <rect y="24" width="1200" height="16" fill="#0f172a"/>
+  <circle cx="24" cy="20" r="6" fill="#ef4444"/>
+  <circle cx="44" cy="20" r="6" fill="#f59e0b"/>
+  <circle cx="64" cy="20" r="6" fill="#10b981"/>
+  <rect x="100" y="10" width="400" height="20" rx="6" fill="#1e293b"/>
+  <text x="120" y="24" fill="#94a3b8" font-family="sans-serif" font-size="11">https://wpk-mms.internal/reports</text>
+
+  <!-- Sidebar -->
+  <rect x="0" y="40" width="220" height="635" fill="#0f172a"/>
+  <text x="24" y="80" fill="#ffffff" font-family="sans-serif" font-weight="bold" font-size="18">WPK <tspan fill="#be1111">MMS</tspan></text>
+  <text x="40" y="135" fill="#94a3b8" font-family="sans-serif" font-size="14">สแกน QR Code</text>
+  <text x="40" y="180" fill="#94a3b8" font-family="sans-serif" font-size="14">หน้าหลัก</text>
+  <text x="40" y="225" fill="#94a3b8" font-family="sans-serif" font-size="14">สต็อกสินค้า</text>
+  <rect x="16" y="250" width="188" height="40" rx="8" fill="#be1111" opacity="0.15"/>
+  <rect x="20" y="255" width="4" height="30" rx="2" fill="#be1111"/>
+  <text x="40" y="275" fill="#be1111" font-family="sans-serif" font-weight="bold" font-size="14">รายงานธุรกรรม</text>
+
+  <!-- Main Content -->
+  <text x="260" y="90" fill="#0f172a" font-family="sans-serif" font-weight="bold" font-size="24">รายงานประวัติการเบิกจ่าย (Transaction Reports)</text>
+  
+  <!-- Chart Card -->
+  <rect x="260" y="120" width="900" height="440" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+  <text x="290" y="160" fill="#0f172a" font-family="sans-serif" font-weight="bold" font-size="16">สถิติการรับเข้าและเบิกออกประจำเดือน</text>
+  
+  <!-- Chart Lines Representation -->
+  <line x1="320" y1="480" x2="1100" y2="480" stroke="#cbd5e1" stroke-width="2"/>
+  <line x1="320" y1="200" x2="320" y2="480" stroke="#cbd5e1" stroke-width="2"/>
+  
+  <!-- Line 1: Receive (Green) -->
+  <path d="M 320 420 L 450 350 L 580 390 L 710 260 L 840 300 L 970 210 L 1100 240" fill="none" stroke="#16a34a" stroke-width="4"/>
+  
+  <!-- Line 2: Issue (Red) -->
+  <path d="M 320 450 L 450 400 L 580 320 L 710 380 L 840 280 L 970 330 L 1100 290" fill="none" stroke="#be1111" stroke-width="4"/>
+
+  <!-- Legend -->
+  <circle cx="950" cy="155" r="6" fill="#16a34a"/>
+  <text x="965" y="160" fill="#475569" font-family="sans-serif" font-size="13">รับเข้า (Receive)</text>
+  <circle cx="1060" cy="155" r="6" fill="#be1111"/>
+  <text x="1075" y="160" fill="#475569" font-family="sans-serif" font-size="13">เบิกออก (Issue)</text>
+</svg>

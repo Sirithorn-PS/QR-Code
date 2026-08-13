@@ -1,0 +1,384 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence, PanInfo } from 'framer-motion'
+import {
+  ChevronLeft,
+  ChevronRight,
+  LogIn,
+  Home,
+  ScanLine,
+  Clock,
+  Package,
+  FileSpreadsheet,
+  UserCheck,
+  ShieldCheck,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles
+} from 'lucide-react'
+
+interface GuideStep {
+  id: number
+  stepNumber: string
+  title: string
+  shortTitle: string
+  shortDescription: string
+  icon: React.ElementType
+  image: string
+}
+
+const guideSteps: GuideStep[] = [
+  {
+    id: 1,
+    stepNumber: '01',
+    title: 'LOGIN',
+    shortTitle: 'เข้าสู่ระบบ',
+    shortDescription: 'กรอก Username และ Password เพื่อเข้าสู่ระบบบริหารจัดการคลัง',
+    icon: LogIn,
+    image: '/images/guide-login.jpg'
+  },
+  {
+    id: 2,
+    stepNumber: '02',
+    title: 'HOME',
+    shortTitle: 'หน้าหลัก',
+    shortDescription: 'ตรวจสอบภาพรวมระบบ เข้าถึงเมนูด่วน และดูสถานะสิทธิ์การใช้งาน',
+    icon: Home,
+    image: '/images/guide-home.png'
+  },
+  {
+    id: 3,
+    stepNumber: '03',
+    title: 'SCAN',
+    shortTitle: 'รับเข้า - เบิกออก',
+    shortDescription: 'สแกน QR Code และระบุจำนวนสินค้าเพื่อทำรายการ',
+    icon: ScanLine,
+    image: '/images/guide-scan.png'
+  },
+  {
+    id: 4,
+    stepNumber: '04',
+    title: 'PENDING TRANSACTIONS',
+    shortTitle: 'รายการรอการยืนยัน',
+    shortDescription: 'ตรวจสอบและยืนยันอนุมัติรายการเบิกจ่ายโดย Supervisor',
+    icon: Clock,
+    image: '/images/guide-pending.png'
+  },
+  {
+    id: 5,
+    stepNumber: '05',
+    title: 'STOCK / INVENTORY',
+    shortTitle: 'สต็อกสินค้า',
+    shortDescription: 'ตรวจสอบจำนวนสินค้าคงเหลือแบบ Real-time และตำแหน่งจัดเก็บ',
+    icon: Package,
+    image: '/images/guide-inventory.png'
+  },
+  {
+    id: 6,
+    stepNumber: '06',
+    title: 'REPORTS',
+    shortTitle: 'รายงานธุรกรรม',
+    shortDescription: 'ตรวจสอบประวัติการทำรายการย้อนหลังและสถิติรับเข้า-เบิกออก',
+    icon: FileSpreadsheet,
+    image: '/images/guide-reports.png'
+  }
+]
+
+export function QuickGuideCarousel() {
+  const [activeIndex, setActiveIndex] = useState(2)
+  const [breakpoint, setBreakpoint] = useState<'mobile' | 'tablet' | 'desktop'>('desktop')
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setBreakpoint('mobile')
+      } else if (window.innerWidth < 1280) {
+        setBreakpoint('tablet')
+      } else {
+        setBreakpoint('desktop')
+      }
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const handlePrev = useCallback(() => {
+    setActiveIndex((prev) => (prev === 0 ? guideSteps.length - 1 : prev - 1))
+  }, [])
+
+  const handleNext = useCallback(() => {
+    setActiveIndex((prev) => (prev === guideSteps.length - 1 ? 0 : prev + 1))
+  }, [])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') handlePrev()
+      else if (e.key === 'ArrowRight') handleNext()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleNext, handlePrev])
+
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    const swipeThreshold = 40
+    if (info.offset.x < -swipeThreshold) handleNext()
+    else if (info.offset.x > swipeThreshold) handlePrev()
+  }
+
+  // Dimensions based on Breakpoint Specification
+  const isMobile = breakpoint === 'mobile'
+  const isTablet = breakpoint === 'tablet'
+
+  const activeWidth = isMobile ? 220 : isTablet ? 280 : 320
+  const activeHeight = isMobile ? 320 : isTablet ? 380 : 420
+  const normalWidth = isMobile ? 140 : isTablet ? 175 : 200
+  const normalHeight = isMobile ? 220 : isTablet ? 260 : 300
+  
+  const viewportWidth = isMobile ? '100%' : isTablet ? 960 : 1280
+  const viewportHeight = isMobile ? 340 : isTablet ? 360 : 420
+
+  const getXOffset = (distance: number) => {
+    if (distance === 0) return 0
+    const gap = 24
+    const sign = Math.sign(distance)
+    const absDist = Math.abs(distance)
+    
+    // Distance 1 offset
+    let offset = (activeWidth / 2) + gap + (normalWidth / 2)
+    
+    // Additional distance
+    if (absDist > 1) {
+      offset += (absDist - 1) * (normalWidth + gap)
+    }
+    
+    return sign * offset
+  }
+
+  return (
+    <section className="w-full mx-auto my-10 select-none overflow-hidden sm:overflow-visible">
+      {/* Section Header */}
+      <div className="text-center mb-10 select-none px-4">
+        <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-red-50 text-[#BE1111] text-xs font-bold tracking-wide mb-2.5">
+          <Sparkles className="w-3.5 h-3.5 text-[#BE1111]" />
+          <span className="uppercase">QUICK GUIDE</span>
+        </div>
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-extrabold text-slate-900 tracking-tight">
+          ขั้นตอนการใช้งานระบบ
+        </h2>
+        <p className="text-sm sm:text-base text-slate-500 font-display font-normal mt-1.5">
+          “เรียนรู้การใช้งาน WPK MMS ทีละขั้นตอน”
+        </p>
+      </div>
+
+      {/* Viewport Frame */}
+      <div className="relative mx-auto px-4 sm:px-0 w-full flex flex-col items-center">
+        <div 
+          className="relative"
+          style={{ width: viewportWidth, maxWidth: '100%' }}
+        >
+          {/* Navigation Arrow Left (48x48) - Placed outside the overflow-hidden frame */}
+          <button
+            onClick={handlePrev}
+            type="button"
+            className="absolute -left-3 sm:-left-6 top-1/2 -translate-y-1/2 z-[60] w-12 h-12 rounded-full bg-white text-[#0F172A] flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer border border-slate-100/50"
+            aria-label="Previous Step"
+          >
+            <ChevronLeft className="w-6 h-6 stroke-[3]" />
+          </button>
+
+          {/* Navigation Arrow Right (48x48) - Placed outside the overflow-hidden frame */}
+          <button
+            onClick={handleNext}
+            type="button"
+            className="absolute -right-3 sm:-right-6 top-1/2 -translate-y-1/2 z-[60] w-12 h-12 rounded-full bg-white text-[#0F172A] flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer border border-slate-100/50"
+            aria-label="Next Step"
+          >
+            <ChevronRight className="w-6 h-6 stroke-[3]" />
+          </button>
+
+          {/* The Overflow-Hidden Gray Frame */}
+          <div 
+            className="relative w-full bg-[#F4F6F8] rounded-[2rem] flex items-center justify-center overflow-hidden touch-pan-y"
+            style={{ height: viewportHeight }}
+          >
+            {/* Carousel Cards */}
+            <div className="relative flex items-center justify-center w-full h-full">
+              <AnimatePresence mode="popLayout" initial={false}>
+                {guideSteps.map((step, index) => {
+                  const getDistance = (idx: number, activeIdx: number, length: number) => {
+                    let dist = idx - activeIdx
+                    if (dist > length / 2) dist -= length
+                    if (dist < -length / 2) dist += length
+                    return dist
+                  }
+                  
+                  const distance = getDistance(index, activeIndex, guideSteps.length)
+                  const isActive = distance === 0
+                  const isVisible = Math.abs(distance) <= 2
+
+                  if (!isVisible) return null
+
+                  return (
+                    <motion.div
+                      key={step.id}
+                      onClick={() => setActiveIndex(index)}
+                      drag={isActive ? 'x' : false}
+                      dragConstraints={{ left: 0, right: 0 }}
+                      dragSnapToOrigin
+                      onDragEnd={handleDragEnd}
+                      initial={{
+                        width: normalWidth,
+                        height: normalHeight,
+                        opacity: 0,
+                        x: getXOffset(distance)
+                      }}
+                      animate={{
+                        width: isActive ? activeWidth : normalWidth,
+                        height: isActive ? activeHeight : normalHeight,
+                        opacity: isActive ? 1 : 0.5,
+                        x: getXOffset(distance),
+                        zIndex: 50 - Math.abs(distance),
+                      }}
+                      exit={{
+                        width: normalWidth,
+                        height: normalHeight,
+                        opacity: 0,
+                        x: getXOffset(distance)
+                      }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 350,
+                        damping: 35,
+                        mass: 1
+                      }}
+                      className={`absolute bg-white rounded-2xl flex flex-col overflow-hidden transition-shadow duration-500 ${
+                        isActive
+                          ? 'shadow-[0_12px_30px_rgba(0,0,0,0.08)] cursor-default'
+                          : 'cursor-pointer hover:shadow-lg'
+                      }`}
+                    >
+                      {/* Card Header (Text) */}
+                      <div className="flex flex-col items-center justify-center text-center pt-5 sm:pt-6 pb-2 px-3">
+                        <span className="text-[13px] sm:text-base font-bold text-[#BE1111] mb-0.5 sm:mb-1">{step.stepNumber}</span>
+                        <h3 className="text-sm sm:text-lg font-display font-black text-slate-900 tracking-wide mb-0.5 uppercase leading-tight">
+                          {step.title}
+                        </h3>
+                        <p className="text-[11px] sm:text-[13px] font-display font-normal text-slate-500">
+                          {step.shortTitle}
+                        </p>
+                      </div>
+
+                      {/* Card Body (Image) */}
+                      <div className="flex-1 w-full p-2 sm:p-4 pt-0 flex justify-center items-center relative pointer-events-none min-h-0">
+                        <img
+                          src={step.image}
+                          alt={step.title}
+                          className={`w-full h-full object-contain ${
+                            step.id === 1 ? 'border border-slate-200/80 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)]' : ''
+                          }`}
+                        />
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+
+        {/* Indicators: Dots */}
+        <div className="flex items-center justify-center gap-2.5 mt-8 z-20">
+          {guideSteps.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setActiveIndex(index)}
+              type="button"
+              className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
+                index === activeIndex
+                  ? 'w-8 bg-[#BE1111]'
+                  : 'w-2.5 bg-slate-300 hover:bg-slate-400'
+              }`}
+              title={`ไปยังขั้นตอนที่ ${index + 1}`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* User Role Summary Section */}
+      <div className="mt-16 pt-8 border-t border-slate-200/60 text-left max-w-[1280px] mx-auto px-4 sm:px-6">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-800 text-xs font-bold mb-1.5">
+            <UserCheck className="w-3.5 h-3.5 text-[#BE1111]" />
+            <span>USER ROLES</span>
+          </div>
+          <h3 className="text-lg sm:text-xl font-display font-extrabold text-slate-900">
+            บทบาทผู้ใช้งาน (User Role)
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Warehouse Staff */}
+          <div className="p-6 rounded-2xl bg-white border border-slate-200/70 shadow-xs">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center shrink-0">
+                <UserCheck className="w-5 h-5 text-slate-700" />
+              </div>
+              <div>
+                <h4 className="font-display font-extrabold text-slate-900 text-base">
+                  Warehouse Staff
+                </h4>
+                <p className="text-xs font-display font-normal text-slate-500">พนักงานทั่วไป (Staff)</p>
+              </div>
+            </div>
+            <ul className="space-y-2.5 text-xs sm:text-sm font-display font-normal text-slate-700">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>รับเข้า - เบิกออกสินค้า ผ่าน QR Code</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>รับแจ้งเตือนผล อนุมัติ / ปฏิเสธ</span>
+              </li>
+              <li className="flex items-center gap-2 text-slate-400">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>ไม่สามารถอนุมัติรายการหรือเพิ่มสินค้าใหม่</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Supervisor */}
+          <div className="p-6 rounded-2xl bg-white border border-red-100 shadow-xs">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-50 text-[#BE1111] flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-5 h-5 text-[#BE1111]" />
+              </div>
+              <div>
+                <h4 className="font-display font-extrabold text-slate-900 text-base">
+                  Supervisor
+                </h4>
+                <p className="text-xs font-display font-normal text-slate-500">ผู้ควบคุมดูแลระบบ</p>
+              </div>
+            </div>
+            <ul className="space-y-2.5 text-xs sm:text-sm font-display font-normal text-slate-700">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>อนุมัติ หรือ ปฏิเสธรายการเบิกจ่าย</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>เพิ่มสินค้าใหม่ และจัดการสูตร BOM</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>เข้าถึงทุกเมนูและรายงานสรุปทั้งหมด</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}

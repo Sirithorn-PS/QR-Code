@@ -1,6 +1,10 @@
 # บันทึกการทำงาน (Memories)
 
 ## 14 ส.ค. 2026
+- **เพิ่มฟังก์ชันการปิดป๊อปอัปแจ้งเตือนเมื่อคลิก/แตะส่วนใดก็ได้บนหน้าจอ (Click/Touch Outside to Close Notification) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/components/Navigation.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/Navigation.tsx):
+    - เพิ่ม `useRef` (`notifDesktopRef`, `notifMobileRef`) และ Event Listener จับเหตุการณ์ `mousedown` / `touchstart` บนหน้าจอ
+    - เมื่อผู้ใช้แตะหรือคลิกบริเวณใดก็ได้บนหน้าจอนอกกล่องแจ้งเตือน (Outside Click/Touch) ระบบจะสั่งปิดกล่องแจ้งเตือนทันที อำนวยความสะดวกให้ผู้ใช้งานบนมือถือและคอมพิวเตอร์ไม่ต้องเอื้อมมือไปกดซ้ำที่ปุ่มไอคอนระฆัง
 - **แก้ไขการจัดวาง Popover แจ้งเตือนบนโทรศัพท์มือถือไม่ให้หลุดขอบซ้าย (Mobile Notification Popover Layout Fix) (เสร็จสมบูรณ์ 100%)**:
   - แก้ไขใน [frontend/components/Navigation.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/Navigation.tsx):
     - ปรับตำแหน่ง Popover ป๊อปอัปแจ้งเตือนบนจอมือถือ (`fixed top-16 left-3 right-3`) ให้วางกึ่งกลางกว้างพอดีขอบจอมือถือโดยเว้นระยะข้างละ 12px ป้องกันไม่ให้ฝั่งซ้ายของป๊อปอัปแจ้งเตือนหลุดขอบซ้ายของหน้าจอโทรศัพท์

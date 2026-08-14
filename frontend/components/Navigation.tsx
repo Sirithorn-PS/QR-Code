@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { ScanLine, ClipboardCheck, Package, BarChart3, LogOut, Home, LayoutDashboard, Bell, CheckCheck } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { fetchTransactions, fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead, NotificationItem } from '@/lib/auth'
 
 function getInitials(name: string): string {
@@ -26,6 +26,32 @@ export function Navigation({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0)
   const [showNotifPopover, setShowNotifPopover] = useState<boolean>(false)
+
+  // Refs for outside click detection
+  const notifDesktopRef = useRef<HTMLDivElement>(null)
+  const notifMobileRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showNotifPopover) return
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node
+      const isOutsideDesktop = notifDesktopRef.current ? !notifDesktopRef.current.contains(target) : true
+      const isOutsideMobile = notifMobileRef.current ? !notifMobileRef.current.contains(target) : true
+
+      if (isOutsideDesktop && isOutsideMobile) {
+        setShowNotifPopover(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+    }
+  }, [showNotifPopover])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -307,7 +333,7 @@ export function Navigation({ children }: { children: React.ReactNode }) {
 
         <div className="flex items-center gap-2 lg:gap-3 shrink-0 ml-2">
           {/* Notification Bell Button */}
-          <div className="relative shrink-0">
+          <div ref={notifDesktopRef} className="relative shrink-0">
             <button
               type="button"
               onClick={() => setShowNotifPopover(!showNotifPopover)}
@@ -326,8 +352,9 @@ export function Navigation({ children }: { children: React.ReactNode }) {
             {showNotifPopover && (
               <>
                 <div
-                  className="fixed inset-0 z-40"
+                  className="fixed inset-0 z-40 bg-transparent cursor-default"
                   onClick={() => setShowNotifPopover(false)}
+                  onTouchEnd={() => setShowNotifPopover(false)}
                 />
                 <div className="absolute right-0 mt-2 z-50">
                   {NotificationPopoverContent}
@@ -366,7 +393,7 @@ export function Navigation({ children }: { children: React.ReactNode }) {
 
         <div className="flex items-center gap-2.5">
           {/* Notification Bell */}
-          <div className="relative">
+          <div ref={notifMobileRef} className="relative">
             <button
               type="button"
               onClick={() => setShowNotifPopover(!showNotifPopover)}
@@ -384,8 +411,9 @@ export function Navigation({ children }: { children: React.ReactNode }) {
             {showNotifPopover && (
               <>
                 <div
-                  className="fixed inset-0 z-40"
+                  className="fixed inset-0 z-40 bg-transparent cursor-default"
                   onClick={() => setShowNotifPopover(false)}
+                  onTouchEnd={() => setShowNotifPopover(false)}
                 />
                 <div className="fixed top-16 left-3 right-3 z-50 sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-2 sm:w-auto">
                   {NotificationPopoverContent}

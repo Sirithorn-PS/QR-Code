@@ -1,6 +1,12 @@
 # บันทึกการทำงาน (Memories)
 
 ## 14 ส.ค. 2026
+- **ยกระดับและปรับปรุง Layout ดีไซน์สำหรับการใช้งานบนโทรศัพท์มือถือ (Mobile Responsive Optimization) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/app/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/page.tsx):
+    - **การ์ด Quick Action ("สแกนสินค้า" และ "จัดการสต็อก")**: ปรับเป็นแบบ Compact แนวนอนบนจอมือถือ (`md:hidden`) ไอคอน+ข้อความอยู่ฝั่งซ้าย ปุ่มแอ็กชันอยู่ฝั่งขวา ประหยัดพื้นที่แนวตั้ง และเปิดแอปมาเห็นได้ทันทีโดยไม่ต้องเลื่อนหน้าจอลงลึก
+    - **ดีไซน์บนคอมพิวเตอร์ (≥ 768px)**: คงโครงสร้างการ์ดแบบแนวตั้ง ปุ่มใหญ่สไตล์ดั้งเดิมไว้เหมือนเดิม 100% (`hidden md:flex`)
+  - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):
+    - ปรับปรุงความสูงกรอบแสดงผล Carousel บนมือถือ (`viewportHeight = 360px`) เพิ่มความสมดุลกับการทัชสไลด์ภาพตัวอย่างบนโทรศัพท์
 - **เปลี่ยนชื่อไฟล์เอกสาร PDF เป็น "คู่มือแบบย่อ (Quick Guide).pdf" (เสร็จสมบูรณ์ 100%)**:
   - เปลี่ยนชื่อไฟล์ใน [`frontend/public/docs/`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/public/docs) ให้เป็น [`คู่มือแบบย่อ (Quick Guide).pdf`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/public/docs/คู่มือแบบย่อ%20(Quick%20Guide).pdf)
   - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):

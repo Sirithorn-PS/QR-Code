@@ -150,7 +150,7 @@ export function QuickGuideCarousel() {
   const normalHeight = isMobile ? 220 : isTablet ? 260 : 300
   
   const viewportWidth = isMobile ? '100%' : isTablet ? 960 : 1280
-  const viewportHeight = isMobile ? 340 : isTablet ? 360 : 420
+  const viewportHeight = isMobile ? 360 : isTablet ? 360 : 420
 
   const getXOffset = (distance: number) => {
     if (distance === 0) return 0

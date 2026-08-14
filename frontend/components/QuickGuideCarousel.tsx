@@ -15,7 +15,8 @@ import {
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
-  Sparkles
+  BookOpen,
+  FileText
 } from 'lucide-react'
 
 interface GuideStep {
@@ -169,13 +170,9 @@ export function QuickGuideCarousel() {
   }
 
   return (
-    <section className="w-full mx-auto my-10 select-none overflow-hidden sm:overflow-visible">
+    <section id="quick-guide" className="w-full mx-auto my-10 select-none overflow-hidden sm:overflow-visible scroll-mt-6">
       {/* Section Header */}
       <div className="text-center mb-10 select-none px-4">
-        <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-red-50 text-[#BE1111] text-xs font-bold tracking-wide mb-2.5">
-          <Sparkles className="w-3.5 h-3.5 text-[#BE1111]" />
-          <span className="uppercase">QUICK GUIDE</span>
-        </div>
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-extrabold text-slate-900 tracking-tight">
           ขั้นตอนการใช้งานระบบ
         </h2>
@@ -416,6 +413,52 @@ export function QuickGuideCarousel() {
               </li>
             </ul>
           </div>
+        </div>
+
+        {/* Manual & Guide Buttons (Role-Card Style) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 lg:gap-5 mt-8 select-none">
+          {/* Button 1: Quick Guide */}
+          <a
+            href={encodeURI('/docs/คู่มือแบบย่อ (Quick Guide).pdf')}
+            target="_blank"
+            rel="noopener noreferrer"
+            download="คู่มือแบบย่อ (Quick Guide).pdf"
+            className="group p-3.5 sm:p-4 rounded-2xl bg-white border border-red-100 shadow-xs hover:shadow-md hover:border-red-200 transition-all duration-300 flex items-center gap-3 text-left cursor-pointer active:scale-[0.99]"
+          >
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-red-50 text-[#BE1111] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform border border-red-100/60">
+              <BookOpen className="w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[2.2]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-display font-extrabold text-slate-900 text-xs sm:text-[13px] md:text-xs lg:text-[13px] xl:text-sm leading-tight tracking-tight group-hover:text-[#BE1111] transition-colors whitespace-nowrap">
+                คู่มือแบบย่อ (Quick Guide)
+              </h4>
+              <p className="text-[10px] sm:text-[11px] font-display font-normal text-slate-500 mt-0.5 tracking-tight whitespace-nowrap">
+                เปิดดูเอกสารคู่มือการใช้งานแบบย่อ (PDF)
+              </p>
+            </div>
+            <ChevronRight className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-slate-400 group-hover:text-[#BE1111] group-hover:translate-x-1 transition-all shrink-0 ml-auto" />
+          </a>
+
+          {/* Button 2: Work Instruction - WI */}
+          <a
+            href="/docs/work-instruction.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/70 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-300 flex items-center gap-3 text-left cursor-pointer active:scale-[0.99]"
+          >
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform border border-slate-200/60">
+              <FileText className="w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[2.2]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-display font-extrabold text-slate-900 text-xs sm:text-[13px] md:text-xs lg:text-[13px] xl:text-sm leading-tight tracking-tight group-hover:text-slate-800 transition-colors whitespace-nowrap">
+                คู่มือแบบรายละเอียด (Work Instruction - WI)
+              </h4>
+              <p className="text-[10px] sm:text-[11px] font-display font-normal text-slate-500 mt-0.5 tracking-tight whitespace-nowrap">
+                ข้อกำหนดและขั้นตอนปฏิบัติงานอย่างเป็นทางการ (WI)
+              </p>
+            </div>
+            <ChevronRight className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-1 transition-all shrink-0 ml-auto" />
+          </a>
         </div>
       </div>
     </section>

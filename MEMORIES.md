@@ -1,6 +1,52 @@
 # บันทึกการทำงาน (Memories)
 
 ## 14 ส.ค. 2026
+- **เปลี่ยนชื่อไฟล์เอกสาร PDF เป็น "คู่มือแบบย่อ (Quick Guide).pdf" (เสร็จสมบูรณ์ 100%)**:
+  - เปลี่ยนชื่อไฟล์ใน [`frontend/public/docs/`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/public/docs) ให้เป็น [`คู่มือแบบย่อ (Quick Guide).pdf`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/public/docs/คู่มือแบบย่อ%20(Quick%20Guide).pdf)
+  - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):
+    - อัปเดต Path การดาวน์โหลด/เปิดไฟล์ และ attribute `download="คู่มือแบบย่อ (Quick Guide).pdf"` เพื่อให้เวลาเปิดหรือดาวน์โหลดจะได้ชื่อไฟล์ภาษาไทยอย่างถูกต้อง
+- **ผูกไฟล์เอกสาร Quick Guide (PDF) เข้ากับปุ่ม "คู่มือแบบย่อ (Quick Guide)" (เสร็จสมบูรณ์ 100%)**:
+  - บันทึกไฟล์เอกสาร PDF โปสเตอร์คู่มือการใช้งานแบบย่อ (`media_1786678545558.pdf`) ลงในไดเรกทอรี [`frontend/public/docs/quick-guide.pdf`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/public/docs/quick-guide.pdf)
+  - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):
+    - ปรับเปลี่ยนแอ็กชันของปุ่ม **"คู่มือแบบย่อ (Quick Guide)"** ให้เปิดไฟล์ [`/docs/quick-guide.pdf`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/public/docs/quick-guide.pdf) ในแท็บใหม่เมื่อผู้ใช้คลิก
+- **ปรับสมดุลขนาดฟอนต์และการจัดวางสำหรับการ์ด 2 คอลัมน์ ไม่ให้ตัดหรือตกบรรทัด (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):
+    - ปรับขนาดฟอนต์ลงมาในระดับที่พอดีสำหรับการวางการ์ดคู่กัน 2 คอลัมน์ (`text-xs sm:text-[13px] md:text-xs lg:text-[13px] xl:text-sm`) พร้อมใส่ `tracking-tight`
+    - ปรับขนาด Inner Padding เป็น `p-3.5 sm:p-4` เพื่อเพิ่มพื้นที่แสดงผลข้อความความยาว 43 ตัวอักษร
+    - ทำให้หัวข้อ *"คู่มือแบบรายละเอียด (Work Instruction - WI)"* และคำอธิบายย่อย *"ข้อกำหนดและขั้นตอนปฏิบัติงานอย่างเป็นทางการ (WI)"* อยู่ในบรรทัดเดียวกันอย่างสมบูรณ์แบบโดยไม่โดนซ่อนหรือตกบรรทัด
+- **ปรับสเกลขนาดฟอนต์และระยะห่างของการ์ดคู่มือให้อยู่บรรทัดเดียวพอดีทุกขนาดหน้าจอ (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):
+    - ปรับขนาดตัวอักษรเป็น `text-xs sm:text-[13px] md:text-xs lg:text-sm xl:text-base` พร้อมใส่ `tracking-tight` (กระชับระยะห่างตัวอักษร)
+    - ปรับขนาดกล่องไอคอนและระยะ Inner Padding (`p-3.5 sm:p-4 lg:p-5`) ให้กระทัดรัดพอดี 
+    - รับประกันว่าข้อความ *"คู่มือแบบรายละเอียด (Work Instruction - WI)"* และคำอธิบายย่อยจะแสดงผลในบรรทัดเดียวกันอย่างสวยงาม ไร้การตัดตกบรรทัดบนทุกขนาดหน้าจอ
+- **จัดรูปแบบตัวอักษรให้การ์ดคู่มืออยู่บรรทัดเดียวกัน ไม่ตกบรรทัด (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):
+    - กำหนด `whitespace-nowrap` และปรับขนาดฟอนต์ยืดหยุ่นตามหน้าจอ (`text-xs sm:text-sm lg:text-base`) 
+    - **บรรทัดที่ 1 (ชื่อการ์ด)**: แสดงข้อความเต็มในบรรทัดเดียว ไม่มีการตัดตกบรรทัด เช่น *"คู่มือแบบรายละเอียด (Work Instruction - WI)"*
+    - **บรรทัดที่ 2 (คำอธิบายย่อย)**: แสดงข้อความเต็มในบรรทัดเดียว ไม่มีการตัดตกบรรทัด เช่น *"ข้อกำหนดและขั้นตอนปฏิบัติงานอย่างเป็นทางการ (WI)"*
+- **ปรับแต่งดีไซน์ 2 ปุ่มคู่มือการใช้งานเป็นสไตล์การ์ดกรอบขาวแบบเดียวกับส่วนบทบาทผู้ใช้งาน (User Roles) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):
+    - ปรับเปลี่ยนดีไซน์จากปุ่มทึบเดิม เป็น **การ์ดปุ่มกดแบบมีเส้นกรอบ (Role Card Style)** สนวนสีขาว (`bg-white`, `border`, `rounded-2xl`, `shadow-xs hover:shadow-md`) วางเรียงคู่กันขนานกับส่วนบทบาทผู้ใช้งาน
+    - **การ์ดที่ 1 (คู่มือแบบย่อ - Quick Guide)**: กรอบสีแดงอ่อน (`border-red-100`) พร้อมไอคอนเล่มหนังสือ `<BookOpen />` ในกล่องสีแดง และลูกศรนุ่มนวล `<ChevronRight />`
+    - **การ์ดที่ 2 (คู่มือแบบรายละเอียด - Work Instruction - WI)**: กรอบสีเทาอ่อน (`border-slate-200/70`) พร้อมไอคอนเอกสาร `<FileText />` ในกล่องสีเทา และลูกศรนุ่มนวล `<ChevronRight />`
+- **ถอดการ์ดแอ็กชัน 2 รายการล่าสุดออกจากหน้าหลัก (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/app/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/page.tsx):
+    - ถอดการ์ด "คู่มือแบบย่อ" และ "คู่มือแบบรายละเอียด" ออก คงเหลือไว้เฉพาะ 2 การ์ดหลักเดิม ("สแกนสินค้า" และ "จัดการสต็อก") ตามคำขอของผู้ใช้เรียบร้อย
+  - แก้ไขใน [frontend/app/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/page.tsx):
+    - เพิ่มกรอบการ์ดใหม่ 2 รายการในส่วน Quick Action Grid โดยใช้สไตล์ดีไซน์เดียวกันกับการ์ด "สแกนสินค้า" และ "จัดการสต็อก"
+    - **การ์ดที่ 3: คู่มือแบบย่อ (Quick Guide)**: โทนสีแดงแบรนด์ (`#BE1111`) พร้อมไอคอน `<BookOpen />` และปุ่ม "ดูคู่มือแบบย่อ" เมื่อกดจะทำ Smooth Scroll เลื่อนลงมายังส่วน Quick Guide บนหน้าหลัก
+    - **การ์ดที่ 4: คู่มือแบบรายละเอียด (Work Instruction)**: โทนสีเข้ม (`#0F172A`) พร้อมไอคอน `<FileText />` และปุ่ม "ดูคู่มือแบบรายละเอียด" สำหรับเปิดเอกสารข้อกำหนดการปฏิบัติงาน (WI)
+- **ถอดป้าย Badge ข้อความ "QUICK GUIDE" บนหัวข้อหลักออก (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):
+    - ลบป้าย Badge ข้อความ "QUICK GUIDE" ด้านบนหัวข้อ "ขั้นตอนการใช้งานระบบ" ออกทั้งหมดตามคำขอของผู้ใช้เรียบร้อย
+- **ถอดปุ่มลอย "เปิด Quick Guide" ออกจากหน้าหลัก (เสร็จสมบูรณ์ 100%)**:
+  - ถอนการนำเข้าและถอนการแสดงผล `QuickGuideFloatingButton` ออกจาก [frontend/app/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/page.tsx)
+  - ลบไฟล์ Component `frontend/components/QuickGuideFloatingButton.tsx` ออกตามคำขอของผู้ใช้เรียบร้อย
+  - พัฒนา Component ใหม่ [frontend/components/QuickGuideFloatingButton.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideFloatingButton.tsx):
+    - ออกแบบปุ่มลอยสไตล์ Floating Action Button (FAB) โทนสีแดงแบรนด์ (`#BE1111`) พร้อมไอคอน `<BookOpen />` และดาวส่องประกาย `<Sparkles />` จัดวางไว้ที่มุมขวาล่าง (`fixed bottom-6 right-6 z-50`)
+    - เมื่อผู้ใช้กดปุ่ม ระบบจะทำ Smooth Scrolling นำทางเลื่อนลงไปยังส่วน Quick Guide (`#quick-guide`) ในหน้าหลักทันทีอย่างราบรื่น
+  - อัปเดตใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx): เพิ่ม `id="quick-guide"` ให้กับส่วน Carousel
+  - อัปเดตใน [frontend/app/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/page.tsx): นำเข้าและแสดงผล `QuickGuideFloatingButton` บนหน้าหลัก
 - **แก้ไขข้อความคำอธิบายในขั้นตอนที่ 3 (03 SCAN) ใน Quick Guide (เสร็จสมบูรณ์ 100%)**:
   - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):
     - เปลี่ยนข้อความ `shortDescription` ของขั้นตอนที่ 3 (SCAN) จากเดิม *"สแกน QR Code และระบุจำนวนสินค้าเพื่อทำรายการ"* เป็น **"เลือกประเภททำรายการ สแกน QR Code และระบุจำนวนสินค้าเพื่อทำรายการ"** ตามความต้องการเรียบร้อย

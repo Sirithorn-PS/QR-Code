@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { ScanLine, PackageOpen, ArrowRight, ShieldCheck, CheckCircle2, Package } from 'lucide-react'
+import { ScanLine, ArrowRight, ShieldCheck, CheckCircle2, Package } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { QuickGuideCarousel } from '@/components/QuickGuideCarousel'
 

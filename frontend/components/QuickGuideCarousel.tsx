@@ -355,63 +355,67 @@ export function QuickGuideCarousel() {
           </h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-6">
           {/* Warehouse Staff */}
-          <div className="p-6 rounded-2xl bg-white border border-slate-200/70 shadow-xs">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center shrink-0">
-                <UserCheck className="w-5 h-5 text-slate-700" />
+          <div className="p-3.5 sm:p-6 rounded-2xl bg-white border border-slate-200/70 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center shrink-0">
+                  <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-display font-extrabold text-slate-900 text-xs sm:text-base leading-tight truncate">
+                    Warehouse Staff
+                  </h4>
+                  <p className="text-[10px] sm:text-xs font-display font-normal text-slate-500 truncate">พนักงานทั่วไป (Staff)</p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-display font-extrabold text-slate-900 text-base">
-                  Warehouse Staff
-                </h4>
-                <p className="text-xs font-display font-normal text-slate-500">พนักงานทั่วไป (Staff)</p>
-              </div>
+              <ul className="space-y-2 text-[10px] sm:text-xs md:text-sm font-display font-normal text-slate-700">
+                <li className="flex items-start gap-1.5 sm:gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span className="leading-tight">รับเข้า - เบิกออกสินค้า ผ่าน QR Code</span>
+                </li>
+                <li className="flex items-start gap-1.5 sm:gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span className="leading-tight">รับแจ้งเตือนผล อนุมัติ / ปฏิเสธ</span>
+                </li>
+                <li className="flex items-start gap-1.5 sm:gap-2 text-slate-400">
+                  <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <span className="leading-tight">ไม่สามารถอนุมัติรายการหรือเพิ่มสินค้าใหม่</span>
+                </li>
+              </ul>
             </div>
-            <ul className="space-y-2.5 text-xs sm:text-sm font-display font-normal text-slate-700">
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>รับเข้า - เบิกออกสินค้า ผ่าน QR Code</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>รับแจ้งเตือนผล อนุมัติ / ปฏิเสธ</span>
-              </li>
-              <li className="flex items-center gap-2 text-slate-400">
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                <span>ไม่สามารถอนุมัติรายการหรือเพิ่มสินค้าใหม่</span>
-              </li>
-            </ul>
           </div>
 
           {/* Supervisor */}
-          <div className="p-6 rounded-2xl bg-white border border-red-100 shadow-xs">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-red-50 text-[#BE1111] flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-5 h-5 text-[#BE1111]" />
+          <div className="p-3.5 sm:p-6 rounded-2xl bg-white border border-red-100 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-red-50 text-[#BE1111] flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#BE1111]" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-display font-extrabold text-slate-900 text-xs sm:text-base leading-tight truncate">
+                    Supervisor
+                  </h4>
+                  <p className="text-[10px] sm:text-xs font-display font-normal text-slate-500 truncate">ผู้ควบคุมดูแลระบบ</p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-display font-extrabold text-slate-900 text-base">
-                  Supervisor
-                </h4>
-                <p className="text-xs font-display font-normal text-slate-500">ผู้ควบคุมดูแลระบบ</p>
-              </div>
+              <ul className="space-y-2 text-[10px] sm:text-xs md:text-sm font-display font-normal text-slate-700">
+                <li className="flex items-start gap-1.5 sm:gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span className="leading-tight">อนุมัติ หรือ ปฏิเสธรายการเบิกจ่าย</span>
+                </li>
+                <li className="flex items-start gap-1.5 sm:gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span className="leading-tight">เพิ่มสินค้าใหม่ และจัดการสูตร BOM</span>
+                </li>
+                <li className="flex items-start gap-1.5 sm:gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span className="leading-tight">เข้าถึงทุกเมนูและรายงานสรุปทั้งหมด</span>
+                </li>
+              </ul>
             </div>
-            <ul className="space-y-2.5 text-xs sm:text-sm font-display font-normal text-slate-700">
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>อนุมัติ หรือ ปฏิเสธรายการเบิกจ่าย</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>เพิ่มสินค้าใหม่ และจัดการสูตร BOM</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>เข้าถึงทุกเมนูและรายงานสรุปทั้งหมด</span>
-              </li>
-            </ul>
           </div>
         </div>
 

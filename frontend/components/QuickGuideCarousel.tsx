@@ -52,7 +52,7 @@ const guideSteps: GuideStep[] = [
     stepNumber: '03',
     title: 'SCAN',
     shortTitle: 'รับเข้า - เบิกออก',
-    shortDescription: 'สแกน QR Code และระบุจำนวนสินค้าเพื่อทำรายการ',
+    shortDescription: 'เลือกประเภททำรายการ สแกน QR Code และระบุจำนวนสินค้าเพื่อทำรายการ',
     icon: ScanLine,
     image: '/images/guide-scan.jpg'
   },
@@ -81,12 +81,13 @@ const guideSteps: GuideStep[] = [
     shortTitle: 'รายงานธุรกรรม',
     shortDescription: 'ตรวจสอบประวัติการทำรายการย้อนหลังและสถิติรับเข้า-เบิกออก',
     icon: FileSpreadsheet,
-    image: '/images/guide-reports.png'
+    image: '/images/guide-reports.jpg'
   }
 ]
 
 export function QuickGuideCarousel() {
-  const [activeIndex, setActiveIndex] = useState(2)
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
   const [breakpoint, setBreakpoint] = useState<'mobile' | 'tablet' | 'desktop'>('desktop')
 
   useEffect(() => {
@@ -111,6 +112,17 @@ export function QuickGuideCarousel() {
   const handleNext = useCallback(() => {
     setActiveIndex((prev) => (prev === guideSteps.length - 1 ? 0 : prev + 1))
   }, [])
+
+  // Auto-play timer: slides to next step every 4s, resets on manual navigation, pauses on hover/touch
+  useEffect(() => {
+    if (isPaused) return
+
+    const timer = setInterval(() => {
+      setActiveIndex((prev) => (prev === guideSteps.length - 1 ? 0 : prev + 1))
+    }, 4000)
+
+    return () => clearInterval(timer)
+  }, [activeIndex, isPaused])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -177,6 +189,10 @@ export function QuickGuideCarousel() {
         <div 
           className="relative"
           style={{ width: viewportWidth, maxWidth: '100%' }}
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          onTouchStart={() => setIsPaused(true)}
+          onTouchEnd={() => setIsPaused(false)}
         >
           {/* Navigation Arrow Left (48x48) - Placed outside the overflow-hidden frame */}
           <button
@@ -276,7 +292,7 @@ export function QuickGuideCarousel() {
                           src={step.image}
                           alt={step.title}
                           className={`w-full h-full object-contain ${
-                            step.id === 1 || step.id === 3 || step.id === 4 ? 'border border-slate-200/80 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)]' : ''
+                            step.id === 1 || step.id === 3 || step.id === 4 || step.id === 6 ? 'border border-slate-200/80 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)]' : ''
                           }`}
                         />
                       </div>
@@ -288,8 +304,31 @@ export function QuickGuideCarousel() {
           </div>
         </div>
 
+        {/* Active Step Description Box */}
+        <div className="mt-6 min-h-[56px] flex flex-col items-center justify-center text-center px-4 max-w-xl mx-auto z-20">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeIndex}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.25 }}
+              className="flex flex-col items-center gap-1.5"
+            >
+              <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-display font-bold text-slate-800 bg-white px-3.5 py-1 rounded-full border border-slate-200/80 shadow-xs">
+                <span className="text-[#BE1111] font-bold">{guideSteps[activeIndex].stepNumber}</span>
+                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                <span>{guideSteps[activeIndex].shortTitle}</span>
+              </div>
+              <p className="text-xs sm:text-sm font-display font-normal text-slate-600 max-w-lg leading-relaxed">
+                {guideSteps[activeIndex].shortDescription}
+              </p>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
         {/* Indicators: Dots */}
-        <div className="flex items-center justify-center gap-2.5 mt-8 z-20">
+        <div className="flex items-center justify-center gap-2.5 mt-6 z-20">
           {guideSteps.map((_, index) => (
             <button
               key={index}

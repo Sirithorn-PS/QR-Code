@@ -1,5 +1,26 @@
 # บันทึกการทำงาน (Memories)
 
+## 14 ส.ค. 2026
+- **แก้ไขข้อความคำอธิบายในขั้นตอนที่ 3 (03 SCAN) ใน Quick Guide (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):
+    - เปลี่ยนข้อความ `shortDescription` ของขั้นตอนที่ 3 (SCAN) จากเดิม *"สแกน QR Code และระบุจำนวนสินค้าเพื่อทำรายการ"* เป็น **"เลือกประเภททำรายการ สแกน QR Code และระบุจำนวนสินค้าเพื่อทำรายการ"** ตามความต้องการเรียบร้อย
+- **เพิ่มกล่องคำอธิบายบรรยายใต้ Carousel ในส่วน Quick Guide (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):
+    - เพิ่มกล่องคำอธิบาย (`Active Step Description Box`) วางตำแหน่งไว้ใต้ Carousel ด้านบนของจุด Indicator Dots
+    - ใส่แอนิเมชันเปลี่ยนข้อความนุ่มนวลด้วย `AnimatePresence` (`opacity` + `y` movement) ข้อความและเลขขั้นตอนจะเปลี่ยนตามสไลด์ที่กำลังโฟกัสอยู่โดยอัตโนมัติ
+    - ช่วยให้รูปภาพการ์ดไม่ถูกบดบัง และผู้ใช้สามารถอ่านรายละเอียดการใช้งานในแต่ละขั้นตอนได้อย่างชัดเจน
+- **ปรับแต่งส่วน Quick Guide ให้เปิดมาที่สไลด์หน้าแรก (01 LOGIN) และเพิ่มระบบเลื่อนสไลด์อัตโนมัติ (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):
+    - ปรับเปลี่ยนค่าเริ่มต้น `activeIndex` จาก `2` เป็น `0` เพื่อให้เมื่อเปิดหน้าหลัก Quick Guide จะแสดงผลเริ่มต้นที่ **ขั้นตอนที่ 1 (01 LOGIN)** ทันที
+    - เพิ่มระบบเลื่อนสไลด์อัตโนมัติทุกๆ 4 วินาที (Auto-slide interval: 4000ms)
+    - เพิ่มระบบหยุดเลื่อนสไลด์ชั่วคราวเมื่อผู้ใช้นำเมาส์ไปชี้หรือแตะสัมผัสการ์ด (Pause on Hover / Touch) และเล่นต่อเมื่อเลื่อนเมาส์ออก
+    - เพิ่มระบบรีเซ็ตนับเวลา 4 วินาทีใหม่ทันที เมื่อผู้ใช้กดปุ่มเปลี่ยนสไลด์เอง (ลูกศร ← → หรือจุด Dot ด้านล่าง) เพื่อให้ผู้ใช้ดูสไลด์ที่กดเลือกได้เต็มเวลา
+- **อัปเดตรูปภาพ Screenshot ในหน้า 06 REPORTS (รายงานธุรกรรม) ใน Quick Guide (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการคัดลอกไฟล์รูปภาพล่าสุดที่คุณแพรลูกอัปโหลดไปไว้ที่ [frontend/public/images/guide-reports.jpg](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/public/images/guide-reports.jpg)
+  - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):
+    - อัปเดต Path รูปภาพขั้นตอนที่ 6 (REPORTS) ให้เรียกใช้ `/images/guide-reports.jpg`
+    - เพิ่มเส้นกรอบสีเทาอ่อน (`border-slate-200/80`) พร้อมมุมโค้งมนและเงาบางๆ ให้กับรูปภาพในขั้นตอนที่ 6 (REPORTS) เช่นเดียวกับภาพ Screenshot จากโทรศัพท์มือถือในขั้นตอนอื่นๆ
+
 ## 13 ส.ค. 2026
 - **ปรับปรุงความคมชัดของรูปภาพ Screenshot หน้า 02 HOME (หน้าหลัก) ใน Quick Guide (เสร็จสมบูรณ์ 100%)**:
   - ดำเนินการนำไฟล์รูปภาพ Screenshot ต้นฉบับความละเอียดสูงทั้ง 2 ครึ่งของหน้า Home มาต่อกันแบบคู่ขนาน (Side-by-side) ด้วย Python PIL (LANCZOS Resampling Quality 98%) 

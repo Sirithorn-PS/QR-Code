@@ -1,6 +1,10 @@
 # บันทึกการทำงาน (Memories)
 
 ## 14 ส.ค. 2026
+- **แก้ไขการจัดวาง Popover แจ้งเตือนบนโทรศัพท์มือถือไม่ให้หลุดขอบซ้าย (Mobile Notification Popover Layout Fix) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/components/Navigation.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/Navigation.tsx):
+    - ปรับตำแหน่ง Popover ป๊อปอัปแจ้งเตือนบนจอมือถือ (`fixed top-16 left-3 right-3`) ให้วางกึ่งกลางกว้างพอดีขอบจอมือถือโดยเว้นระยะข้างละ 12px ป้องกันไม่ให้ฝั่งซ้ายของป๊อปอัปแจ้งเตือนหลุดขอบซ้ายของหน้าจอโทรศัพท์
+    - คงการจัดวางตำแหน่งป๊อปอัปบนหน้าจอคอมพิวเตอร์ (`sm:absolute sm:right-0 sm:w-96`) ไว้ตำแหน่งเดิมทางขวามือใต้อิโมจิระฆังเหมือนเดิม 100%
 - **ปรับการจัดวางการ์ดบทบาทผู้ใช้งาน (User Roles) ให้ขึ้น 2 กรอบในบรรทัดเดียวกันบนมือถือ (เสร็จสมบูรณ์ 100%)**:
   - แก้ไขใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx):
     - ปรับแต่งการจัดวางส่วน **บทบาทผู้ใช้งาน (User Role)** จากเดิมที่แสดงผล 1 คอลัมน์บนมือถือ ให้เรียงคู่กันแบบ **2 คอลัมน์ขนานในบรรทัดเดียวกัน (`grid grid-cols-2`)** ทั้งบนมือถือและคอมพิวเตอร์

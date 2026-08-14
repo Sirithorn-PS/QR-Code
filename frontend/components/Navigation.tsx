@@ -182,7 +182,7 @@ export function Navigation({ children }: { children: React.ReactNode }) {
   ]
 
   const NotificationPopoverContent = (
-    <div className="w-80 sm:w-96 rounded-2xl bg-white p-4 shadow-2xl border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
+    <div className="w-full sm:w-96 rounded-2xl bg-white p-4 shadow-2xl border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200 text-left max-w-full">
       <div className="flex items-center justify-between pb-3 border-b border-gray-100">
         <div className="flex items-center gap-2">
           <Bell className="w-4 h-4 text-[#BE1111]" />
@@ -387,7 +387,7 @@ export function Navigation({ children }: { children: React.ReactNode }) {
                   className="fixed inset-0 z-40"
                   onClick={() => setShowNotifPopover(false)}
                 />
-                <div className="absolute right-0 mt-2 z-50">
+                <div className="fixed top-16 left-3 right-3 z-50 sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-2 sm:w-auto">
                   {NotificationPopoverContent}
                 </div>
               </>

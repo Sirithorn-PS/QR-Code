@@ -1,17 +1,23 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { confirmTransaction, fetchTransactions, rejectTransaction, StockTransaction } from '@/lib/auth'
 import { Loader2, CheckCircle2, AlertCircle, XCircle, Clock, Filter } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-export default function TransactionsPage() {
+function TransactionsContent() {
+  const searchParams = useSearchParams()
+  const highlightParam = searchParams.get('id')
+  const highlightId = highlightParam ? Number(highlightParam) : null
+
   const [user, setUser] = useState<{ id: number; fullName: string; role: string } | null>(null)
   const [transactions, setTransactions] = useState<StockTransaction[]>([])
   const [statusFilter, setStatusFilter] = useState<'pending' | 'all' | 'confirmed' | 'rejected'>('pending')
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
+  const [activeHighlightId, setActiveHighlightId] = useState<number | null>(null)
 
   // เก็บ ID ของรายการที่กำลังกดอนุมัติหรือปฏิเสธ เพื่อแสดงสถานะหมุน (Spinner) บนปุ่ม
   const [processingId, setProcessingId] = useState<number | null>(null)
@@ -36,6 +42,16 @@ export default function TransactionsPage() {
       setError('')
     }, 3500)
   }
+
+  // หากมีการกดแจ้งเตือนเข้ามาโดยมี ?id=123 ให้ปรับไปแท็บ "ทั้งหมด" และเคลียร์ URL เพื่อให้รีเฟรชกลับสู่ค่าปกติ
+  useEffect(() => {
+    if (highlightId && Number.isInteger(highlightId)) {
+      setStatusFilter('all')
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({}, '', '/transactions')
+      }
+    }
+  }, [highlightId])
 
   useEffect(() => {
     let isMounted = true
@@ -77,6 +93,16 @@ export default function TransactionsPage() {
       clearInterval(intervalId)
     }
   }, [])
+
+  // เมื่อโหลดข้อมูลเสร็จและมี highlightId ให้สโครลไปยังรายการนั้นโดยตรง
+  useEffect(() => {
+    if (!loading && highlightId) {
+      const element = document.getElementById(`tx-${highlightId}`)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+  }, [loading, highlightId])
 
   // คำนวณจำนวนรายการรออนุมัติ และจำนวนของแต่ละสถานะตามข้อมูลจริง
   const pendingCount = useMemo(() => transactions.filter((t) => t.status === 'pending').length, [transactions])
@@ -209,12 +235,16 @@ export default function TransactionsPage() {
               return (
                 <div
                   key={transaction.id}
+                  id={`tx-${transaction.id}`}
                   className="rounded-2xl border border-slate-100 bg-white p-5 md:p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)]"
                 >
+
                   <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2.5 mb-2">
-                        <span className="text-xs sm:text-sm font-display font-bold text-slate-400 bg-slate-50 px-2.5 py-0.5 rounded-md border border-slate-200/80">#{transaction.id}</span>
+                        <span className="text-xs sm:text-sm font-display font-bold text-slate-400 bg-slate-50 px-2.5 py-0.5 rounded-md border border-slate-200/80">
+                          #{transaction.id}
+                        </span>
                         {transaction.type === 'receive' ? (
                           <span className="inline-flex items-center justify-center rounded-full bg-green-50 border border-green-100 px-2.5 py-0.5 text-xs font-bold text-green-700">
                             รับเข้า
@@ -225,6 +255,7 @@ export default function TransactionsPage() {
                           </span>
                         )}
                       </div>
+
                       {(() => {
                         const fullDesc = transaction.product?.description || transaction.itemSnapshot.name || ''
                         const openParenIndex = fullDesc.indexOf('(')
@@ -383,6 +414,20 @@ export default function TransactionsPage() {
         )}
       </AnimatePresence>
     </main>
+  )
+}
+
+export default function TransactionsPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-slate-50 px-6 py-8 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-[#BE1111]" />
+        </main>
+      }
+    >
+      <TransactionsContent />
+    </Suspense>
   )
 }
 

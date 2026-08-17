@@ -1,5 +1,15 @@
 # บันทึกการทำงาน (Memories)
 
+## 17 ส.ค. 2026
+- **ปรับปรุงระบบลิงก์การแจ้งเตือนและการสลับหน้าพร้อมไฮไลท์รายการในหน้ารายการ (Notification Redirection & Item Highlighting) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts):
+    - ปรับการสร้างข้อมูล Notification ให้ระบุลิงก์แบบเฉพาะเจาะจง `link: '/transactions?id=' + transaction.id` ทั้ง 3 กรณี (`pending_approval`, `confirm`, `reject`)
+  - แก้ไขใน [frontend/app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/transactions/page.tsx):
+    - รับค่า query parameter `id` ด้วย `useSearchParams()` (ห่อด้วย `<Suspense>` ตามมาตรฐาน Next.js App Router)
+    - หากมีการกดเข้ามาจากการแจ้งเตือน (`?id=123`) ระบบจะสลับแท็บการกรองไปที่ **"ทั้งหมด" (`all`)** โดยอัตโนมัติ เพื่อรับประกันว่ารายการจะแสดงผลบนหน้าจอไม่ว่าจะมีสถานะเป็นรออนุมัติ, อนุมัติแล้ว หรือถูกปฏิเสธแล้ว
+    - ทำการสโครล (`scrollIntoView`) เลื่อนหน้าจอไปยังการ์ดรายการนั้นโดยตรงอย่างเรียบง่าย
+    - ใช้ `window.history.replaceState` เคลียร์ query parameter `?id=...` ออกจาก URL บาร์ทันทีหลังประมวลผล เพื่อให้เมื่อผู้ใช้กดรีเฟรช (F5) ครั้งถัดไป หน้าเว็บจะกลับไปสู่โหมดดั้งเดิม (แสดงแท็บ "รออนุมัติ") ตามปกติ
+
 ## 14 ส.ค. 2026
 - **เพิ่มฟังก์ชันการปิดป๊อปอัปแจ้งเตือนเมื่อคลิก/แตะส่วนใดก็ได้บนหน้าจอ (Click/Touch Outside to Close Notification) (เสร็จสมบูรณ์ 100%)**:
   - แก้ไขใน [frontend/components/Navigation.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/Navigation.tsx):

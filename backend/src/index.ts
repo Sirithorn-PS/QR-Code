@@ -971,7 +971,7 @@ app.post('/transactions', authenticate, async (req: AuthenticatedRequest, res: R
           type: 'pending_approval',
           title: `มีรายการ${type === 'receive' ? 'รับเข้า' : 'เบิกออก'}ใหม่รออนุมัติ`,
           message: `${product.description}\nจำนวน ${quantity.toLocaleString()} ${product.unit}`,
-          link: '/transactions',
+          link: `/transactions?id=${transaction.id}`,
           transactionId: transaction.id,
         },
       })
@@ -1051,7 +1051,7 @@ app.post(
             type: 'approval_result',
             title: 'รายการได้รับการอนุมัติแล้ว',
             message: `รายการ${transaction.type === 'receive' ? 'รับเข้า' : 'เบิกออก'}ของคุณได้รับการอนุมัติแล้ว\n${transaction.product.description}\nจำนวน ${transaction.quantity.toLocaleString()} ${transaction.product.unit}`,
-            link: '/transactions',
+            link: `/transactions?id=${transaction.id}`,
             transactionId: transaction.id,
           },
         })
@@ -1118,7 +1118,7 @@ app.post(
             type: 'approval_result',
             title: 'รายการถูกปฏิเสธ',
             message: `รายการ${transaction.type === 'receive' ? 'รับเข้า' : 'เบิกออก'}ของคุณถูกปฏิเสธ${rejectNote ? ` (${rejectNote})` : ''}\nกรุณาตรวจสอบรายละเอียดรายการ`,
-            link: '/transactions',
+            link: `/transactions?id=${transaction.id}`,
             transactionId: transaction.id,
           },
         })

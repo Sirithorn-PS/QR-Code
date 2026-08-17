@@ -166,9 +166,12 @@ export function Navigation({ children }: { children: React.ReactNode }) {
       }
     }
     setShowNotifPopover(false)
-    if (notif.link) {
-      router.push(notif.link)
+
+    let targetLink = notif.link || '/transactions'
+    if (notif.transactionId && !targetLink.includes('?id=')) {
+      targetLink = `${targetLink}${targetLink.includes('?') ? '&' : '?'}id=${notif.transactionId}`
     }
+    router.push(targetLink)
   }
 
   const handleMarkAllRead = async () => {

@@ -12,14 +12,24 @@ interface RegisterData {
   employeeId?: string
 }
 
-interface AuthResponse {
+export interface UserItem {
+  id: number
+  username: string
+  fullName: string
+  employeeId?: string | null
+  role: string
+  status?: string
+  createdAt?: string
+}
+
+export interface LoginResponse {
   token: string
-  user: {
-    id: number
-    username: string
-    fullName: string
-    role: string
-  }
+  user: UserItem
+}
+
+export interface RegisterResponse {
+  message?: string
+  user: UserItem
 }
 
 export interface Product {
@@ -107,7 +117,7 @@ async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   return response.json()
 }
 
-export async function register(data: RegisterData): Promise<AuthResponse> {
+export async function register(data: RegisterData): Promise<RegisterResponse> {
   let response: Response
   try {
     response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -129,7 +139,7 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
   return response.json()
 }
 
-export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
+export async function login(credentials: LoginCredentials): Promise<LoginResponse> {
   let response: Response
   try {
     response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -170,7 +180,7 @@ export function getToken(): string | null {
   return localStorage.getItem('token')
 }
 
-export function getUser(): AuthResponse['user'] | null {
+export function getUser(): UserItem | null {
   if (typeof window === 'undefined') return null
   const userStr = localStorage.getItem('user')
   return userStr ? JSON.parse(userStr) : null
@@ -182,7 +192,7 @@ export function logout(): void {
   localStorage.removeItem('user')
 }
 
-export function setAuthData(token: string, user: AuthResponse['user']): void {
+export function setAuthData(token: string, user: UserItem): void {
   if (typeof window === 'undefined') return
   localStorage.setItem('token', token)
   localStorage.setItem('user', JSON.stringify(user))
@@ -322,6 +332,27 @@ export function markNotificationAsRead(id: number) {
 
 export function markAllNotificationsAsRead() {
   return apiRequest<{ success: boolean }>('/notifications/read-all', {
+    method: 'POST',
+  })
+}
+
+export function getUsers(status?: string) {
+  const query = status ? `?status=${encodeURIComponent(status)}` : ''
+  return apiRequest<UserItem[]>(`/users${query}`)
+}
+
+export function getPendingUsers() {
+  return apiRequest<UserItem[]>('/users/pending')
+}
+
+export function approveUser(id: number) {
+  return apiRequest<{ success: boolean; message: string; user: UserItem }>(`/users/${id}/approve`, {
+    method: 'POST',
+  })
+}
+
+export function rejectUser(id: number) {
+  return apiRequest<{ success: boolean; message: string; user: UserItem }>(`/users/${id}/reject`, {
     method: 'POST',
   })
 }

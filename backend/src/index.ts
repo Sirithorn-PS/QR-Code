@@ -99,12 +99,14 @@ function signToken(user: { id: number; username: string; role: string }) {
   })
 }
 
-function toPublicUser(user: { id: number; username: string; fullName: string; role: string }) {
+function toPublicUser(user: { id: number; username: string; fullName: string; role: string; employeeId?: string | null; status?: string | null }) {
   return {
     id: user.id,
     username: user.username,
     fullName: user.fullName,
     role: user.role,
+    employeeId: user.employeeId || null,
+    status: user.status || 'approved',
   }
 }
 
@@ -207,19 +209,35 @@ app.post('/auth/register', async (req: Request<{}, {}, RegisterBody>, res: Respo
           fullName,
           employeeId: employeeId || null,
           role: 'warehouse_staff',
+          status: 'pending',
         },
       })
 
+      // แจ้งเตือนไปยัง Supervisor (Role: admin)
+      try {
+        await prisma.notification.create({
+          data: {
+            targetRole: 'admin',
+            type: 'user_pending_approval',
+            title: 'มีผู้ใช้งานใหม่รอการอนุมัติ',
+            message: `พนักงาน ${fullName} (รหัส: ${employeeId || '-'}) ลงทะเบียนเข้าใช้งานระบบ`,
+            link: '/users',
+          },
+        })
+      } catch (notifErr) {
+        console.error('Failed to create registration notification:', notifErr)
+      }
+
       return res.status(201).json({
-        token: signToken(user),
+        message: 'ลงทะเบียนสำเร็จ! บัญชีของคุณอยู่ระหว่างรอการอนุมัติจาก Supervisor ก่อนเข้าใช้งาน',
         user: toPublicUser(user),
       })
     } catch (dbError) {
       console.warn('Database unreachable during registration, using memory cache mode for:', username)
-      const fallbackUser = { id: Math.floor(Math.random() * 1000) + 10, username, password, fullName, employeeId: employeeId || null, role: 'warehouse_staff', createdAt: new Date() }
+      const fallbackUser = { id: Math.floor(Math.random() * 1000) + 10, username, password, fullName, employeeId: employeeId || null, role: 'warehouse_staff', status: 'pending', createdAt: new Date() }
       fallbackUsersCache.set(username, fallbackUser)
       return res.status(201).json({
-        token: signToken(fallbackUser),
+        message: 'ลงทะเบียนสำเร็จ! บัญชีของคุณอยู่ระหว่างรอการอนุมัติจาก Supervisor ก่อนเข้าใช้งาน',
         user: toPublicUser(fallbackUser),
       })
     }
@@ -301,14 +319,14 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
 
     // Fast-path for default Master Data users
     if (username === 'supervisor' && password === 'super1234') {
-      const defaultAdmin = { id: 6, username: 'supervisor', password: '', fullName: 'ผู้ควบคุมดูแลระบบ (Supervisor)', role: 'admin', createdAt: new Date() }
+      const defaultAdmin = { id: 6, username: 'supervisor', password: '', fullName: 'ผู้ควบคุมดูแลระบบ (Supervisor)', role: 'admin', status: 'approved', createdAt: new Date() }
       return res.json({
         token: signToken(defaultAdmin),
         user: toPublicUser(defaultAdmin),
       })
     }
     if (username === 'staff' && password === 'staff123') {
-      const defaultStaff = { id: 7, username: 'staff', password: '', fullName: 'พนักงานทั่วไป (Staff)', role: 'warehouse_staff', createdAt: new Date() }
+      const defaultStaff = { id: 7, username: 'staff', password: '', fullName: 'พนักงานทั่วไป (Staff)', role: 'warehouse_staff', status: 'approved', createdAt: new Date() }
       return res.json({
         token: signToken(defaultStaff),
         user: toPublicUser(defaultStaff),
@@ -320,6 +338,12 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
       const cachedUser = fallbackUsersCache.get(username)
       if (cachedUser.password !== password) {
         return res.status(401).json({ error: 'รหัสผ่านไม่ถูกต้อง' })
+      }
+      if (cachedUser.status === 'pending') {
+        return res.status(403).json({ error: 'บัญชีของคุณอยู่ระหว่างรอการอนุมัติจาก Supervisor' })
+      }
+      if (cachedUser.status === 'rejected') {
+        return res.status(403).json({ error: 'บัญชีของคุณถูกปฏิเสธการใช้งาน กรุณาติดต่อผู้ดูแลระบบ' })
       }
       return res.json({
         token: signToken(cachedUser),
@@ -351,6 +375,14 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
     const isPasswordValid = await bcrypt.compare(password, user.password)
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'รหัสผ่านไม่ถูกต้อง' })
+    }
+
+    const userStatus = user.status || 'approved'
+    if (userStatus === 'pending') {
+      return res.status(403).json({ error: 'บัญชีของคุณอยู่ระหว่างรอการอนุมัติจาก Supervisor' })
+    }
+    if (userStatus === 'rejected') {
+      return res.status(403).json({ error: 'บัญชีของคุณถูกปฏิเสธการใช้งาน กรุณาติดต่อผู้ดูแลระบบ' })
     }
 
     return res.json({
@@ -1207,6 +1239,134 @@ app.post('/notifications/read-all', authenticate, async (req: AuthenticatedReque
   } catch (error) {
     console.error('Error marking all notifications as read:', error)
     return res.status(500).json({ error: 'ไม่สามารถอัปเดตการแจ้งเตือนได้' })
+  }
+})
+
+// ==========================================
+// USER MANAGEMENT & APPROVAL API ENDPOINTS
+// ==========================================
+
+app.get('/users', authenticate, requireRole('admin'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const statusFilter = req.query.status ? String(req.query.status) : undefined
+    const users = await prisma.user.findMany({
+      where: statusFilter ? { status: statusFilter } : undefined,
+      select: {
+        id: true,
+        username: true,
+        fullName: true,
+        employeeId: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+    return res.json(users)
+  } catch (error) {
+    console.error('Error fetching users:', error)
+    return res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลรายชื่อผู้ใช้งานได้' })
+  }
+})
+
+app.get('/users/pending', authenticate, requireRole('admin'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const pendingUsers = await prisma.user.findMany({
+      where: { status: 'pending' },
+      select: {
+        id: true,
+        username: true,
+        fullName: true,
+        employeeId: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+    return res.json(pendingUsers)
+  } catch (error) {
+    console.error('Error fetching pending users:', error)
+    return res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลรายชื่อผู้ใช้งานรออนุมัติได้' })
+  }
+})
+
+app.post('/users/:id/approve', authenticate, requireRole('admin'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = Number(req.params.id)
+    if (!Number.isInteger(userId)) {
+      return res.status(400).json({ error: 'ID ผู้ใช้งานไม่ถูกต้อง' })
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) {
+      return res.status(404).json({ error: 'ไม่พบข้อมูลผู้ใช้งานนี้' })
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { status: 'approved' },
+      select: {
+        id: true,
+        username: true,
+        fullName: true,
+        employeeId: true,
+        role: true,
+        status: true,
+      },
+    })
+
+    // แจ้งเตือนไปยังพนักงาน
+    try {
+      await prisma.notification.create({
+        data: {
+          userId: user.id,
+          type: 'approval_result',
+          title: 'บัญชีของคุณได้รับการอนุมัติแล้ว',
+          message: 'Supervisor ได้อนุมัติบัญชีของคุณเรียบร้อยแล้ว สามารถเข้าใช้งานระบบได้ทันที',
+          link: '/login',
+        },
+      })
+    } catch (notifErr) {
+      console.error('Failed to send notification to approved user:', notifErr)
+    }
+
+    return res.json({ success: true, message: `อนุมัติบัญชีของ ${user.fullName} เรียบร้อยแล้ว`, user: updatedUser })
+  } catch (error) {
+    console.error('Error approving user:', error)
+    return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการอนุมัติผู้ใช้งาน' })
+  }
+})
+
+app.post('/users/:id/reject', authenticate, requireRole('admin'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = Number(req.params.id)
+    if (!Number.isInteger(userId)) {
+      return res.status(400).json({ error: 'ID ผู้ใช้งานไม่ถูกต้อง' })
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) {
+      return res.status(404).json({ error: 'ไม่พบข้อมูลผู้ใช้งานนี้' })
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { status: 'rejected' },
+      select: {
+        id: true,
+        username: true,
+        fullName: true,
+        employeeId: true,
+        role: true,
+        status: true,
+      },
+    })
+
+    return res.json({ success: true, message: `ปฏิเสธการใช้งานบัญชีของ ${user.fullName} แล้ว`, user: updatedUser })
+  } catch (error) {
+    console.error('Error rejecting user:', error)
+    return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการปฏิเสธผู้ใช้งาน' })
   }
 })
 

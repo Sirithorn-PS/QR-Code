@@ -20,13 +20,15 @@ async function main() {
     update: {
       password: supervisorPassword,
       fullName: 'ผู้ควบคุมดูแลระบบ (Supervisor)',
-      role: 'admin'
+      role: 'admin',
+      status: 'approved'
     },
     create: {
       username: 'supervisor',
       password: supervisorPassword,
       fullName: 'ผู้ควบคุมดูแลระบบ (Supervisor)',
-      role: 'admin'
+      role: 'admin',
+      status: 'approved'
     }
   });
 
@@ -35,13 +37,15 @@ async function main() {
     update: {
       password: staffPassword,
       fullName: 'พนักงานทั่วไป (Staff)',
-      role: 'warehouse_staff'
+      role: 'warehouse_staff',
+      status: 'approved'
     },
     create: {
       username: 'staff',
       password: staffPassword,
       fullName: 'พนักงานทั่วไป (Staff)',
-      role: 'warehouse_staff'
+      role: 'warehouse_staff',
+      status: 'approved'
     }
   });
 

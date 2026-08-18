@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { ScanLine, ClipboardCheck, Package, BarChart3, LogOut, Home, LayoutDashboard, Bell, CheckCheck } from 'lucide-react'
+import { ScanLine, ClipboardCheck, Package, BarChart3, LogOut, Home, LayoutDashboard, Bell, CheckCheck, UserCheck } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { fetchTransactions, fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead, NotificationItem } from '@/lib/auth'
 
@@ -208,6 +208,7 @@ export function Navigation({ children }: { children: React.ReactNode }) {
     { href: '/inventory', icon: Package, label: 'สต็อก' },
     { href: '/reports', icon: BarChart3, label: 'รายงาน' },
     { href: '/dashboard', icon: LayoutDashboard, label: 'แดชบอร์ด' },
+    ...(user.role === 'admin' ? [{ href: '/users', icon: UserCheck, label: 'อนุมัติสมาชิก' }] : []),
   ]
 
   const NotificationPopoverContent = (

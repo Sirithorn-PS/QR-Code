@@ -41,8 +41,8 @@ export default function RegisterPage() {
 
     try {
       await register({ username, password, fullName, employeeId })
-      // หลังจากลงทะเบียนเสร็จสิ้น ให้ไปที่หน้า login พร้อมแจ้งเตือนว่าสถานะอยู่ระหว่างรออนุมัติจาก Supervisor
-      router.push(`/login?pending=true&registered=${encodeURIComponent(username)}`)
+      // หลังจากลงทะเบียนเสร็จสิ้น ให้ไปที่หน้า login พร้อมแสดงข้อความลงทะเบียนสำเร็จ
+      router.push(`/login?registered=${encodeURIComponent(username)}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาด ลองใหม่อีกครั้ง')
       console.error(err)

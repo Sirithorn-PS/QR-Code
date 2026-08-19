@@ -15,7 +15,7 @@ model User {
   fullName             String
   employeeId           String?
   role                 String         @default("warehouse_staff")
-  status               String         @default("pending")
+  status               String         @default("approved")
   createdAt            DateTime       @default(now())
   approvedTransactions Transaction[]  @relation("ApprovedTransactions")
   createdTransactions  Transaction[]  @relation("CreatedTransactions")

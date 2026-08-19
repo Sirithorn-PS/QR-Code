@@ -209,35 +209,20 @@ app.post('/auth/register', async (req: Request<{}, {}, RegisterBody>, res: Respo
           fullName,
           employeeId: employeeId || null,
           role: 'warehouse_staff',
-          status: 'pending',
+          status: 'approved',
         },
       })
 
-      // แจ้งเตือนไปยัง Supervisor (Role: admin)
-      try {
-        await prisma.notification.create({
-          data: {
-            targetRole: 'admin',
-            type: 'user_pending_approval',
-            title: 'มีผู้ใช้งานใหม่รอการอนุมัติ',
-            message: `พนักงาน ${fullName} (รหัส: ${employeeId || '-'}) ลงทะเบียนเข้าใช้งานระบบ`,
-            link: '/users',
-          },
-        })
-      } catch (notifErr) {
-        console.error('Failed to create registration notification:', notifErr)
-      }
-
       return res.status(201).json({
-        message: 'ลงทะเบียนสำเร็จ! บัญชีของคุณอยู่ระหว่างรอการอนุมัติจาก Supervisor ก่อนเข้าใช้งาน',
+        message: 'ลงทะเบียนสำเร็จ! สามารถเข้าสู่ระบบได้ทันที',
         user: toPublicUser(user),
       })
     } catch (dbError) {
       console.warn('Database unreachable during registration, using memory cache mode for:', username)
-      const fallbackUser = { id: Math.floor(Math.random() * 1000) + 10, username, password, fullName, employeeId: employeeId || null, role: 'warehouse_staff', status: 'pending', createdAt: new Date() }
+      const fallbackUser = { id: Math.floor(Math.random() * 1000) + 10, username, password, fullName, employeeId: employeeId || null, role: 'warehouse_staff', status: 'approved', createdAt: new Date() }
       fallbackUsersCache.set(username, fallbackUser)
       return res.status(201).json({
-        message: 'ลงทะเบียนสำเร็จ! บัญชีของคุณอยู่ระหว่างรอการอนุมัติจาก Supervisor ก่อนเข้าใช้งาน',
+        message: 'ลงทะเบียนสำเร็จ! สามารถเข้าสู่ระบบได้ทันที',
         user: toPublicUser(fallbackUser),
       })
     }
@@ -339,12 +324,6 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
       if (cachedUser.password !== password) {
         return res.status(401).json({ error: 'รหัสผ่านไม่ถูกต้อง' })
       }
-      if (cachedUser.status === 'pending') {
-        return res.status(403).json({ error: 'บัญชีของคุณอยู่ระหว่างรอการอนุมัติจาก Supervisor' })
-      }
-      if (cachedUser.status === 'rejected') {
-        return res.status(403).json({ error: 'บัญชีของคุณถูกปฏิเสธการใช้งาน กรุณาติดต่อผู้ดูแลระบบ' })
-      }
       return res.json({
         token: signToken(cachedUser),
         user: toPublicUser(cachedUser),
@@ -377,13 +356,7 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
       return res.status(401).json({ error: 'รหัสผ่านไม่ถูกต้อง' })
     }
 
-    const userStatus = user.status || 'approved'
-    if (userStatus === 'pending') {
-      return res.status(403).json({ error: 'บัญชีของคุณอยู่ระหว่างรอการอนุมัติจาก Supervisor' })
-    }
-    if (userStatus === 'rejected') {
-      return res.status(403).json({ error: 'บัญชีของคุณถูกปฏิเสธการใช้งาน กรุณาติดต่อผู้ดูแลระบบ' })
-    }
+
 
     return res.json({
       token: signToken(user),

@@ -1,5 +1,15 @@
 # บันทึกการทำงาน (Memories)
 
+## 19 ส.ค. 2026
+- **ยกเลิกฟังก์ชันการอนุมัติ/ปฏิเสธผู้ใช้งานใหม่ในการลงทะเบียน (Remove User Registration Approval Workflow) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [backend/prisma/schema.prisma](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/prisma/schema.prisma): ปรับสถานะเริ่มต้นของผู้ใช้ใหม่ใน Prisma Schema เป็น `status @default("approved")`
+  - แก้ไขใน [backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts): ปรับปรุง Endpoint `/auth/register` ให้สร้างบัญชีผู้ใช้ใหม่โดยมีสถานะเป็น `approved` ทันที ยกเลิกการสร้าง Notification แจ้งเตือนรออนุมัติไปยัง Admin/Supervisor และปลดล็อกเงื่อนไขการเช็กสถานะ `pending`/`rejected` ใน `/auth/login`
+  - แก้ไขใน [frontend/app/register/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/register/page.tsx) และ [frontend/app/login/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/login/page.tsx): เมื่อลงทะเบียนสำเร็จ ระบบจะนำผู้ใช้ไปยังหน้า Login พร้อมแจ้งเตือนว่าสามารถกรอกรหัสผ่านเพื่อเข้าสู่ระบบได้ทันที
+  - ลบประวัติข้อมูลการแจ้งเตือนประเภท `user_pending_approval` (แจ้งเตือนผู้ใช้งานใหม่รอการอนุมัติ) ออกจากตาราง `Notification` ใน Supabase เรียบร้อยแล้ว (คงไว้เฉพาะข้อมูลการแจ้งเตือนอนุมัติรับเข้า-เบิกออกสินค้าของสต็อก)
+- **อัปเดตสถานะผู้ใช้งานเดิมที่มีทั้งหมดในฐานข้อมูลเป็น "อนุมัติแล้ว" (Approved Existing Users) (เสร็จสมบูรณ์ 100%)**:
+  - สร้างและรันสคริปต์ [backend/src/approve_existing_users.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/approve_existing_users.ts) เพื่ออัปเดตผู้ใช้งานเดิมที่มีอยู่ในฐานข้อมูลทั้งหมด (จำนวน 11 บัญชี) จากสถานะ `pending` ให้กลายเป็น `approved`
+  - ยูสเซอร์เดิมทั้งหมด (เช่น `Pailui Sirithorn`, `yeanyeen`, `สมชาย`, `ใจเย็น` ฯลฯ) สามารถเข้าสู่ระบบใช้งานได้ทันทีโดยไม่ต้องรอให้ Supervisor กดอนุมัติซ้ำ
+
 ## 17 ส.ค. 2026
 - **ปรับปรุงระบบลิงก์การแจ้งเตือนและการสลับหน้าพร้อมไฮไลท์รายการในหน้ารายการ (Notification Redirection & Item Highlighting) (เสร็จสมบูรณ์ 100%)**:
   - แก้ไขใน [backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts):

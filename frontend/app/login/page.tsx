@@ -11,29 +11,12 @@ import AuthHeader from '@/components/AuthHeader'
 function LoginAlert({ onRegistered }: { onRegistered: (u: string) => void }) {
   const searchParams = useSearchParams()
   const registered = searchParams.get('registered')
-  const pending = searchParams.get('pending')
 
   useEffect(() => {
     if (registered) {
       onRegistered(registered)
     }
   }, [registered, onRegistered])
-
-  if (pending) {
-    return (
-      <motion.div 
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6 p-4 rounded-2xl text-xs sm:text-sm font-medium text-amber-900 bg-amber-50/90 backdrop-blur-sm border border-amber-200/80 flex items-start gap-3 shadow-xs"
-      >
-        <span className="text-base sm:text-lg select-none">⏳</span>
-        <div>
-          <p className="font-bold text-amber-900 mb-0.5">ลงทะเบียนเรียบร้อยแล้ว!</p>
-          <p className="text-xs text-amber-800 leading-relaxed">บัญชี <b className="font-semibold text-amber-950">{registered || 'ของคุณ'}</b> อยู่ระหว่างรอการอนุมัติจาก Supervisor ก่อนเข้าใช้งานระบบ</p>
-        </div>
-      </motion.div>
-    )
-  }
 
   if (!registered) return null
 
@@ -43,7 +26,7 @@ function LoginAlert({ onRegistered }: { onRegistered: (u: string) => void }) {
       animate={{ opacity: 1, y: 0 }}
       className="mb-6 p-4 rounded-2xl text-xs sm:text-sm font-medium text-emerald-800 bg-emerald-50/80 backdrop-blur-sm border border-emerald-200/50 flex items-start gap-2 shadow-xs"
     >
-      <span>✅ ลงทะเบียนบัญชี <b className="font-bold">{registered}</b> สำเร็จแล้ว กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบ</span>
+      <span>✅ ลงทะเบียนบัญชี <b className="font-bold">{registered}</b> สำเร็จแล้ว สามารถกรอกรหัสผ่านเพื่อเข้าสู่ระบบได้ทันที</span>
     </motion.div>
   )
 }

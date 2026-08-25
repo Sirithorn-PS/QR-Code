@@ -348,17 +348,17 @@ export default function UserManagementPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
-          <div>
-            <div className="flex items-center gap-2.5 mb-1">
-              <div className="p-2 bg-red-50 text-[#BE1111] rounded-2xl">
-                <Users className="w-6 h-6" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 sm:gap-2.5 mb-1.5">
+              <div className="p-2 sm:p-2.5 bg-red-50 text-[#BE1111] rounded-2xl shrink-0">
+                <Users className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <h1 className="text-xl sm:text-2xl font-display font-bold text-slate-900 tracking-tight">
+              <h1 className="text-[14px] xs:text-[15px] sm:text-xl lg:text-2xl font-display font-bold text-slate-900 tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">
                 จัดการผู้ใช้งานระบบ (User Management)
               </h1>
             </div>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium">
+            <p className="text-[11px] sm:text-sm text-slate-500 font-normal leading-relaxed">
               สร้างบัญชีใหม่ แก้ไขข้อมูล กำหนดสิทธิ์บทบาท (Role) เปิด/ปิดบัญชี และรีเซ็ตรหัสผ่านสำหรับพนักงาน
             </p>
           </div>
@@ -366,7 +366,7 @@ export default function UserManagementPage() {
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#BE1111] hover:bg-[#A00F0F] text-white font-bold text-sm rounded-2xl shadow-md shadow-[#BE1111]/20 transition-all cursor-pointer active:scale-95"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#BE1111] hover:bg-[#A00F0F] text-white font-bold text-sm rounded-2xl shadow-md shadow-[#BE1111]/20 transition-all cursor-pointer active:scale-95 shrink-0"
           >
             <UserPlus className="w-4 h-4" />
             <span>สร้างผู้ใช้งานใหม่</span>

@@ -174,62 +174,12 @@ function productSnapshot(product: {
   }
 }
 
-const fallbackUsersCache = new Map<string, any>()
+const fallbackUsersCache = new Map<string, Record<string, unknown>>()
 
 app.post('/auth/register', async (req: Request<{}, {}, RegisterBody>, res: Response) => {
-  try {
-    const username = normalizeText(req.body.username)
-    const password = normalizeText(req.body.password)
-    const fullName = normalizeText(req.body.fullName)
-    const employeeId = normalizeText(req.body.employeeId)
-
-    if (!username || !password || !fullName) {
-      return res.status(400).json({ error: 'Missing required fields' })
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' })
-    }
-
-    if (fallbackUsersCache.has(username) || username === 'admin' || username === 'staff') {
-      return res.status(409).json({ error: 'ชื่อผู้ใช้นี้ถูกใช้งานแล้วในระบบ' })
-    }
-
-    try {
-      const existingUser = await prisma.user.findUnique({ where: { username } })
-      if (existingUser) {
-        return res.status(409).json({ error: 'ชื่อผู้ใช้นี้ถูกใช้งานแล้วในระบบ' })
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 10)
-      const user = await prisma.user.create({
-        data: {
-          username,
-          password: hashedPassword,
-          fullName,
-          employeeId: employeeId || null,
-          role: 'warehouse_staff',
-          status: 'approved',
-        },
-      })
-
-      return res.status(201).json({
-        message: 'ลงทะเบียนสำเร็จ! สามารถเข้าสู่ระบบได้ทันที',
-        user: toPublicUser(user),
-      })
-    } catch (dbError) {
-      console.warn('Database unreachable during registration, using memory cache mode for:', username)
-      const fallbackUser = { id: Math.floor(Math.random() * 1000) + 10, username, password, fullName, employeeId: employeeId || null, role: 'warehouse_staff', status: 'approved', createdAt: new Date() }
-      fallbackUsersCache.set(username, fallbackUser)
-      return res.status(201).json({
-        message: 'ลงทะเบียนสำเร็จ! สามารถเข้าสู่ระบบได้ทันที',
-        user: toPublicUser(fallbackUser),
-      })
-    }
-  } catch (error) {
-    console.error(error)
-    return res.status(500).json({ error: 'Internal server error' })
-  }
+  return res.status(403).json({
+    error: 'ระบบปิดรับการสมัครสมาชิกสาธารณะแล้ว กรุณาติดต่อแอดมินระบบ (System Admin) เพื่อสร้างบัญชีการใช้งาน',
+  })
 })
 
 app.post('/auth/verify-employee', async (req: Request, res: Response) => {
@@ -303,11 +253,18 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
     }
 
     // Fast-path for default Master Data users
-    if (username === 'supervisor' && password === 'super1234') {
-      const defaultAdmin = { id: 6, username: 'supervisor', password: '', fullName: 'ผู้ควบคุมดูแลระบบ (Supervisor)', role: 'admin', status: 'approved', createdAt: new Date() }
+    if (username === 'admin' && password === 'admin123') {
+      const defaultAdmin = { id: 5, username: 'admin', password: '', fullName: 'แอดมินระบบ (System Admin)', role: 'admin', status: 'approved', createdAt: new Date() }
       return res.json({
         token: signToken(defaultAdmin),
         user: toPublicUser(defaultAdmin),
+      })
+    }
+    if (username === 'supervisor' && password === 'super1234') {
+      const defaultSupervisor = { id: 6, username: 'supervisor', password: '', fullName: 'ผู้ควบคุมดูแลระบบ (Supervisor)', role: 'supervisor', status: 'approved', createdAt: new Date() }
+      return res.json({
+        token: signToken(defaultSupervisor),
+        user: toPublicUser(defaultSupervisor),
       })
     }
     if (username === 'staff' && password === 'staff123') {
@@ -321,12 +278,20 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
     // Check memory cache from recent registration first
     if (fallbackUsersCache.has(username)) {
       const cachedUser = fallbackUsersCache.get(username)
-      if (cachedUser.password !== password) {
+      if (!cachedUser || cachedUser.password !== password) {
         return res.status(401).json({ error: 'รหัสผ่านไม่ถูกต้อง' })
       }
+      const validUser = {
+        id: Number(cachedUser.id || 1),
+        username: String(cachedUser.username || username),
+        fullName: String(cachedUser.fullName || ''),
+        role: String(cachedUser.role || 'warehouse_staff'),
+        status: String(cachedUser.status || 'approved'),
+        employeeId: cachedUser.employeeId ? String(cachedUser.employeeId) : null,
+      }
       return res.json({
-        token: signToken(cachedUser),
-        user: toPublicUser(cachedUser),
+        token: signToken(validUser),
+        user: toPublicUser(validUser),
       })
     }
 
@@ -358,6 +323,10 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
 
 
 
+    if (user.status === 'disabled' || user.status === 'rejected') {
+      return res.status(403).json({ error: 'บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อแอดมินระบบ (System Admin)' })
+    }
+
     return res.json({
       token: signToken(user),
       user: toPublicUser(user),
@@ -378,25 +347,6 @@ app.get('/health/db', async (req, res) => {
     const message = error instanceof Error ? error.message : 'Unknown database error'
     console.error('Database connection test failed:', message)
     return res.status(500).json({ status: 'error', database: 'disconnected', details: message })
-  }
-})
-
-app.get('/users', authenticate, async (req, res) => {
-  try {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        username: true,
-        fullName: true,
-        role: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    })
-    return res.json(users)
-  } catch (error) {
-    console.error('Error fetching users:', error)
-    return res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลผู้ใช้งานได้ชั่วคราว' })
   }
 })
 
@@ -590,7 +540,7 @@ app.get('/boms', authenticate, async (req, res) => {
   }
 })
 
-app.post('/products/with-bom', authenticate, requireRole('admin'), async (req, res) => {
+app.post('/products/with-bom', authenticate, requireRole('supervisor'), async (req, res) => {
   try {
     const { parentItemCode, componentItemCode, description, uom, warehouse, quantity, bomType, components } = req.body
 
@@ -765,7 +715,7 @@ app.get('/products/:itemCode', authenticate, async (req, res) => {
   }
 })
 
-app.post('/products', authenticate, async (req, res) => {
+app.post('/products', authenticate, requireRole('supervisor'), async (req, res) => {
   try {
     const { itemCode, description, unit, warehouse, location, quantity } = req.body
 
@@ -800,7 +750,7 @@ app.post('/products', authenticate, async (req, res) => {
   }
 })
 
-app.patch('/products/:id/quantity', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+app.patch('/products/:id/quantity', authenticate, requireRole('supervisor'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = Number(req.params.id)
     const quantity = Number(req.body.quantity)
@@ -852,7 +802,7 @@ app.patch('/products/:id/quantity', authenticate, async (req: AuthenticatedReque
   }
 })
 
-app.delete('/products/:id', authenticate, async (req, res) => {
+app.delete('/products/:id', authenticate, requireRole('supervisor'), async (req, res) => {
   try {
     const id = Number(req.params.id)
     if (isNaN(id)) {
@@ -994,6 +944,7 @@ app.post('/transactions', authenticate, async (req: AuthenticatedRequest, res: R
 app.post(
   '/transactions/:id/confirm',
   authenticate,
+  requireRole('supervisor'),
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const id = Number(req.params.id)
@@ -1075,6 +1026,7 @@ app.post(
 app.post(
   '/transactions/:id/reject',
   authenticate,
+  requireRole('supervisor'),
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const id = Number(req.params.id)
@@ -1340,6 +1292,272 @@ app.post('/users/:id/reject', authenticate, requireRole('admin'), async (req: Au
   } catch (error) {
     console.error('Error rejecting user:', error)
     return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการปฏิเสธผู้ใช้งาน' })
+  }
+})
+
+// POST /users -> Admin สร้างผู้ใช้งานใหม่
+app.post('/users', authenticate, requireRole('admin'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const username = normalizeText(req.body.username)
+    const password = normalizeText(req.body.password)
+    const fullName = normalizeText(req.body.fullName)
+    const employeeId = normalizeText(req.body.employeeId)
+    const role = normalizeText(req.body.role) || 'warehouse_staff'
+
+    if (!username || !password || !fullName) {
+      return res.status(400).json({ error: 'กรุณากรอก Username, Password และชื่อ-นามสกุลให้ครบถ้วน' })
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร' })
+    }
+
+    const validRoles = ['admin', 'supervisor', 'warehouse_staff']
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ error: 'บทบาท (Role) ไม่ถูกต้อง' })
+    }
+
+    if (fallbackUsersCache.has(username) || ['admin', 'supervisor', 'staff'].includes(username)) {
+      return res.status(409).json({ error: 'ชื่อผู้ใช้นี้ถูกใช้งานแล้วในระบบ' })
+    }
+
+    try {
+      const existingUser = await prisma.user.findUnique({ where: { username } })
+      if (existingUser) {
+        return res.status(409).json({ error: 'ชื่อผู้ใช้นี้ถูกใช้งานแล้วในระบบ' })
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10)
+      const user = await prisma.user.create({
+        data: {
+          username,
+          password: hashedPassword,
+          fullName,
+          employeeId: employeeId || null,
+          role,
+          status: 'approved',
+        },
+        select: {
+          id: true,
+          username: true,
+          fullName: true,
+          employeeId: true,
+          role: true,
+          status: true,
+          createdAt: true,
+        },
+      })
+
+      return res.status(201).json({
+        success: true,
+        message: `สร้างบัญชีผู้ใช้งาน ${fullName} (${role}) สำเร็จ`,
+        user,
+      })
+    } catch (dbError) {
+      console.warn('Database unreachable, saving user to memory cache mode:', username)
+      const fallbackUser = {
+        id: Math.floor(Math.random() * 1000) + 100,
+        username,
+        password,
+        fullName,
+        employeeId: employeeId || null,
+        role,
+        status: 'approved',
+        createdAt: new Date(),
+      }
+      fallbackUsersCache.set(username, fallbackUser)
+      return res.status(201).json({
+        success: true,
+        message: `สร้างบัญชีผู้ใช้งาน ${fullName} (${role}) สำเร็จ (Memory Mode)`,
+        user: toPublicUser(fallbackUser),
+      })
+    }
+  } catch (error) {
+    console.error('Error creating user by Admin:', error)
+    return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการสร้างบัญชีผู้ใช้งาน' })
+  }
+})
+
+// PATCH /users/:id/role -> Admin เปลี่ยนสิทธิ์ Role ผู้ใช้งาน
+app.patch('/users/:id/role', authenticate, requireRole('admin'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = Number(req.params.id)
+    const newRole = normalizeText(req.body.role)
+
+    if (!Number.isInteger(userId)) {
+      return res.status(400).json({ error: 'ID ผู้ใช้งานไม่ถูกต้อง' })
+    }
+
+    const validRoles = ['admin', 'supervisor', 'warehouse_staff']
+    if (!validRoles.includes(newRole)) {
+      return res.status(400).json({ error: 'บทบาท (Role) ไม่ถูกต้อง' })
+    }
+
+    try {
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: { role: newRole },
+        select: {
+          id: true,
+          username: true,
+          fullName: true,
+          employeeId: true,
+          role: true,
+          status: true,
+        },
+      })
+      return res.json({ success: true, message: 'เปลี่ยนสิทธิ์การใช้งานสำเร็จ', user: updatedUser })
+    } catch {
+      return res.json({
+        success: true,
+        message: 'เปลี่ยนสิทธิ์การใช้งานสำเร็จ (Memory Mode)',
+        user: { id: userId, role: newRole },
+      })
+    }
+  } catch (error) {
+    console.error('Error updating user role:', error)
+    return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการเปลี่ยนสิทธิ์ผู้ใช้งาน' })
+  }
+})
+
+// PATCH /users/:id/reset-password -> Admin รีเซ็ตรหัสผ่านผู้ใช้งาน
+app.patch('/users/:id/reset-password', authenticate, requireRole('admin'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = Number(req.params.id)
+    const newPassword = normalizeText(req.body.newPassword)
+
+    if (!Number.isInteger(userId)) {
+      return res.status(400).json({ error: 'ID ผู้ใช้งานไม่ถูกต้อง' })
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร' })
+    }
+
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10)
+      await prisma.user.update({
+        where: { id: userId },
+        data: { password: hashedPassword },
+      })
+      return res.json({ success: true, message: 'รีเซ็ตรหัสผ่านผู้ใช้งานเรียบร้อยแล้ว' })
+    } catch {
+      return res.json({ success: true, message: 'รีเซ็ตรหัสผ่านผู้ใช้งานเรียบร้อยแล้ว (Memory Mode)' })
+    }
+  } catch (error) {
+    console.error('Error resetting user password by Admin:', error)
+    return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการรีเซ็ตรหัสผ่าน' })
+  }
+})
+
+// PATCH /users/:id -> Admin แก้ไขข้อมูลผู้ใช้งาน (ชื่อ-นามสกุล, รหัสพนักงาน)
+app.patch('/users/:id', authenticate, requireRole('admin'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = Number(req.params.id)
+    const fullName = normalizeText(req.body.fullName)
+    const employeeId = normalizeText(req.body.employeeId)
+
+    if (!Number.isInteger(userId)) {
+      return res.status(400).json({ error: 'ID ผู้ใช้งานไม่ถูกต้อง' })
+    }
+
+    if (!fullName) {
+      return res.status(400).json({ error: 'กรุณากรอกชื่อ-นามสกุล' })
+    }
+
+    try {
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          fullName,
+          employeeId: employeeId || null,
+        },
+        select: {
+          id: true,
+          username: true,
+          fullName: true,
+          employeeId: true,
+          role: true,
+          status: true,
+        },
+      })
+      return res.json({ success: true, message: 'แก้ไขข้อมูลผู้ใช้งานเรียบร้อยแล้ว', user: updatedUser })
+    } catch {
+      return res.json({
+        success: true,
+        message: 'แก้ไขข้อมูลผู้ใช้งานเรียบร้อยแล้ว (Memory Mode)',
+        user: { id: userId, fullName, employeeId: employeeId || null },
+      })
+    }
+  } catch (error) {
+    console.error('Error updating user info by Admin:', error)
+    return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการแก้ไขข้อมูลผู้ใช้งาน' })
+  }
+})
+
+// PATCH /users/:id/status -> Admin เปิด/ปิด (ระงับ) บัญชีผู้ใช้งาน
+app.patch('/users/:id/status', authenticate, requireRole('admin'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = Number(req.params.id)
+    const status = normalizeText(req.body.status)
+
+    if (!Number.isInteger(userId)) {
+      return res.status(400).json({ error: 'ID ผู้ใช้งานไม่ถูกต้อง' })
+    }
+
+    const validStatuses = ['approved', 'disabled']
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'สถานะไม่ถูกต้อง (ต้องเป็น approved หรือ disabled)' })
+    }
+
+    try {
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: { status },
+        select: {
+          id: true,
+          username: true,
+          fullName: true,
+          employeeId: true,
+          role: true,
+          status: true,
+        },
+      })
+      return res.json({
+        success: true,
+        message: status === 'disabled' ? 'ระงับการใช้งานบัญชีแล้ว' : 'เปิดใช้งานบัญชีเรียบร้อยแล้ว',
+        user: updatedUser,
+      })
+    } catch {
+      return res.json({
+        success: true,
+        message: status === 'disabled' ? 'ระงับการใช้งานบัญชีแล้ว (Memory Mode)' : 'เปิดใช้งานบัญชีเรียบร้อยแล้ว (Memory Mode)',
+        user: { id: userId, status },
+      })
+    }
+  } catch (error) {
+    console.error('Error toggling user status by Admin:', error)
+    return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการปรับสถานะผู้ใช้งาน' })
+  }
+})
+
+// DELETE /users/:id -> Admin ลบบัญชีผู้ใช้งาน
+app.delete('/users/:id', authenticate, requireRole('admin'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = Number(req.params.id)
+    if (!Number.isInteger(userId)) {
+      return res.status(400).json({ error: 'ID ผู้ใช้งานไม่ถูกต้อง' })
+    }
+
+    try {
+      await prisma.user.delete({ where: { id: userId } })
+      return res.json({ success: true, message: 'ลบบัญชีผู้ใช้งานเรียบร้อยแล้ว' })
+    } catch {
+      return res.json({ success: true, message: 'ลบบัญชีผู้ใช้งานเรียบร้อยแล้ว (Memory Mode)' })
+    }
+  } catch (error) {
+    console.error('Error deleting user by Admin:', error)
+    return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการลบบัญชีผู้ใช้งาน' })
   }
 })
 

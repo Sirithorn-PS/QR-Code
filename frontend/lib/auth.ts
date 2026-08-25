@@ -356,3 +356,46 @@ export function rejectUser(id: number) {
     method: 'POST',
   })
 }
+
+export function createUser(data: { username: string; password: string; fullName: string; employeeId?: string; role: string }) {
+  return apiRequest<{ success: boolean; message: string; user: UserItem }>('/users', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function updateUserRole(id: number, role: string) {
+  return apiRequest<{ success: boolean; message: string; user: UserItem }>(`/users/${id}/role`, {
+    method: 'PATCH',
+    body: JSON.stringify({ role }),
+  })
+}
+
+export function resetUserPassword(id: number, newPassword: string) {
+  return apiRequest<{ success: boolean; message: string }>(`/users/${id}/reset-password`, {
+    method: 'PATCH',
+    body: JSON.stringify({ newPassword }),
+  })
+}
+
+export function updateUserInfo(id: number, data: { fullName: string; employeeId?: string }) {
+  return apiRequest<{ success: boolean; message: string; user: UserItem }>(`/users/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
+export function updateUserStatus(id: number, status: 'approved' | 'disabled') {
+  return apiRequest<{ success: boolean; message: string; user: UserItem }>(`/users/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  })
+}
+
+export function deleteUser(id: number) {
+  return apiRequest<{ success: boolean; message: string }>(`/users/${id}`, {
+    method: 'DELETE',
+  })
+}
+
+

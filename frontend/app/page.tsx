@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { ScanLine, ArrowRight, ShieldCheck, CheckCircle2, Package } from 'lucide-react'
+import { ScanLine, ArrowRight, ShieldCheck, CheckCircle2, Package, Users, Shield } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { QuickGuideCarousel } from '@/components/QuickGuideCarousel'
 
@@ -83,67 +83,181 @@ export default function Home() {
               หน้าหลัก
             </h2>
             <p className="text-slate-500 mt-1 sm:mt-2 text-xs sm:text-base font-display font-normal">
-              ยินดีต้อนรับกลับมา, <span className="text-[#0F172A] font-bold">{user?.username || 'ผู้ใช้งาน'}</span>
+              ยินดีต้อนรับกลับมา, <span className="text-[#0F172A] font-bold">{user?.fullName || user?.username || 'ผู้ใช้งาน'}</span>
             </p>
           </motion.div>
 
           {/* Quick Action Grid - 2 columns side-by-side on mobile & desktop */}
           <motion.div variants={itemVariants} className="grid grid-cols-2 gap-3 sm:gap-6 md:gap-8 mb-8 md:mb-12">
-            {/* Scan Action Card */}
-            <Link href="/scan" className="group block focus:outline-none">
-              <div className="h-full flex flex-col items-center text-center bg-white/80 backdrop-blur-md border border-red-100/60 p-3.5 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl shadow-xs hover:shadow-xl hover:bg-white transition-all duration-500 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-red-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
-                <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-red-50 text-[#BE1111] rounded-full flex items-center justify-center mb-3 sm:mb-5 md:mb-6 group-hover:scale-110 group-active:scale-95 transition-transform duration-500 relative z-10 shadow-xs border border-red-100/60 shrink-0">
-                  <ScanLine className="w-6 h-6 sm:w-8 sm:h-8 md:w-9 md:h-9 stroke-[2.2]" />
-                </div>
-                <h3 className="text-base sm:text-xl md:text-2xl font-display font-extrabold text-slate-900 mb-1 sm:mb-2 md:mb-2.5 relative z-10 whitespace-nowrap">สแกนสินค้า</h3>
-                <p className="text-slate-500 mb-4 sm:mb-6 md:mb-8 text-[11px] sm:text-xs md:text-sm leading-tight sm:leading-relaxed relative z-10 font-display font-normal">
-                  <span className="block whitespace-nowrap">สแกน QR Code</span>
-                  <span className="block whitespace-nowrap">เพื่อรับเข้า-เบิกออกสินค้า</span>
-                </p>
-                
-                <div className="mt-auto inline-flex items-center justify-center w-full px-2.5 py-2.5 sm:px-6 sm:py-3 bg-[#BE1111] text-white text-xs sm:text-sm md:text-base font-semibold rounded-xl sm:rounded-2xl group-hover:bg-[#A00F0F] group-active:scale-95 transition-all duration-300 relative z-10 shadow-md shadow-red-500/20 whitespace-nowrap">
-                  <span>เริ่มสแกน</span>
-                  <ArrowRight className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 ml-1 sm:ml-2 group-hover:translate-x-1 sm:group-hover:translate-x-1.5 transition-transform duration-300" />
-                </div>
+            {user?.role === 'admin' ? (
+              <>
+                {/* Admin Card 1: User Management (Create & Manage) */}
+                <Link href="/users" className="group block focus:outline-none">
+                  <div className="h-full flex flex-col items-center text-center bg-white/80 backdrop-blur-md border border-red-100/60 p-3.5 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl shadow-xs hover:shadow-xl hover:bg-white transition-all duration-500 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-red-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-red-50 text-[#BE1111] rounded-full flex items-center justify-center mb-3 sm:mb-5 md:mb-6 group-hover:scale-110 group-active:scale-95 transition-transform duration-500 relative z-10 shadow-xs border border-red-100/60 shrink-0">
+                      <ShieldCheck className="w-6 h-6 sm:w-8 sm:h-8 md:w-9 md:h-9 stroke-[2.2]" />
+                    </div>
+                    <h3 className="text-base sm:text-xl md:text-2xl font-display font-extrabold text-slate-900 mb-1 sm:mb-2 md:mb-2.5 relative z-10 whitespace-nowrap">จัดการผู้ใช้งาน</h3>
+                    <p className="text-slate-500 mb-4 sm:mb-6 md:mb-8 text-[11px] sm:text-xs md:text-sm leading-tight sm:leading-relaxed relative z-10 font-display font-normal">
+                      <span className="block whitespace-nowrap">สร้างบัญชีผู้ใช้ใหม่</span>
+                      <span className="block whitespace-nowrap">และกำหนดสิทธิ์การใช้งาน</span>
+                    </p>
+                    
+                    <div className="mt-auto inline-flex items-center justify-center w-full px-2.5 py-2.5 sm:px-6 sm:py-3 bg-[#BE1111] text-white text-xs sm:text-sm md:text-base font-semibold rounded-xl sm:rounded-2xl group-hover:bg-[#A00F0F] group-active:scale-95 transition-all duration-300 relative z-10 shadow-md shadow-red-500/20 whitespace-nowrap">
+                      <span>สร้างผู้ใช้ใหม่</span>
+                      <ArrowRight className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 ml-1 sm:ml-2 group-hover:translate-x-1 sm:group-hover:translate-x-1.5 transition-transform duration-300" />
+                    </div>
 
-                {/* Decorative Dot Grid */}
-                <div className="absolute bottom-3 right-3 grid-cols-4 gap-1 opacity-30 pointer-events-none hidden sm:grid">
-                  {[...Array(12)].map((_, i) => (
-                    <div key={i} className="w-1 h-1 rounded-full bg-red-400" />
-                  ))}
-                </div>
-              </div>
-            </Link>
+                    <div className="absolute bottom-3 right-3 grid-cols-4 gap-1 opacity-30 pointer-events-none hidden sm:grid">
+                      {[...Array(12)].map((_, i) => (
+                        <div key={i} className="w-1 h-1 rounded-full bg-red-400" />
+                      ))}
+                    </div>
+                  </div>
+                </Link>
 
-            {/* Inventory Action Card */}
-            <Link href="/inventory" className="group block focus:outline-none">
-              <div className="h-full flex flex-col items-center text-center bg-white/80 backdrop-blur-md border border-gray-200/60 p-3.5 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl shadow-xs hover:shadow-xl hover:bg-white transition-all duration-500 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-50/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                
-                <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-red-50 text-[#BE1111] rounded-full flex items-center justify-center mb-3 sm:mb-5 md:mb-6 group-hover:scale-110 group-active:scale-95 transition-transform duration-500 relative z-10 shadow-xs border border-red-100/60 shrink-0">
-                  <Package className="w-6 h-6 sm:w-8 sm:h-8 md:w-9 md:h-9 stroke-[2.2]" />
-                </div>
-                <h3 className="text-base sm:text-xl md:text-2xl font-display font-extrabold text-slate-900 mb-1 sm:mb-2 md:mb-2.5 relative z-10 whitespace-nowrap">จัดการสต็อก</h3>
-                <p className="text-slate-500 mb-4 sm:mb-6 md:mb-8 text-[11px] sm:text-xs md:text-sm leading-tight sm:leading-relaxed relative z-10 font-display font-normal">
-                  <span className="block whitespace-nowrap">ตรวจสอบสถานะสต็อก</span>
-                  <span className="block whitespace-nowrap">และอัปเดตข้อมูลสินค้า</span>
-                </p>
-                
-                <div className="mt-auto inline-flex items-center justify-center w-full px-2.5 py-2.5 sm:px-6 sm:py-3 bg-[#0F172A] text-white text-xs sm:text-sm md:text-base font-semibold rounded-xl sm:rounded-2xl group-hover:bg-slate-800 group-active:scale-95 transition-all duration-300 relative z-10 shadow-md shadow-slate-900/10 whitespace-nowrap">
-                  <span>ดูสต็อกสินค้า</span>
-                  <ArrowRight className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 ml-1 sm:ml-2 group-hover:translate-x-1 sm:group-hover:translate-x-1.5 transition-transform duration-300" />
-                </div>
+                {/* Admin Card 2: View All Users */}
+                <Link href="/users" className="group block focus:outline-none">
+                  <div className="h-full flex flex-col items-center text-center bg-white/80 backdrop-blur-md border border-gray-200/60 p-3.5 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl shadow-xs hover:shadow-xl hover:bg-white transition-all duration-500 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-50/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-red-50 text-[#BE1111] rounded-full flex items-center justify-center mb-3 sm:mb-5 md:mb-6 group-hover:scale-110 group-active:scale-95 transition-transform duration-500 relative z-10 shadow-xs border border-red-100/60 shrink-0">
+                      <Users className="w-6 h-6 sm:w-8 sm:h-8 md:w-9 md:h-9 stroke-[2.2]" />
+                    </div>
+                    <h3 className="text-base sm:text-xl md:text-2xl font-display font-extrabold text-slate-900 mb-1 sm:mb-2 md:mb-2.5 relative z-10 whitespace-nowrap">รายชื่อผู้ใช้งาน</h3>
+                    <p className="text-slate-500 mb-4 sm:mb-6 md:mb-8 text-[11px] sm:text-xs md:text-sm leading-tight sm:leading-relaxed relative z-10 font-display font-normal">
+                      <span className="block whitespace-nowrap">ตรวจสอบและแก้ไขข้อมูล</span>
+                      <span className="block whitespace-nowrap">บัญชีพนักงานทั้งหมด</span>
+                    </p>
+                    
+                    <div className="mt-auto inline-flex items-center justify-center w-full px-2.5 py-2.5 sm:px-6 sm:py-3 bg-[#0F172A] text-white text-xs sm:text-sm md:text-base font-semibold rounded-xl sm:rounded-2xl group-hover:bg-slate-800 group-active:scale-95 transition-all duration-300 relative z-10 shadow-md shadow-slate-900/10 whitespace-nowrap">
+                      <span>ดูรายชื่อทั้งหมด</span>
+                      <ArrowRight className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 ml-1 sm:ml-2 group-hover:translate-x-1 sm:group-hover:translate-x-1.5 transition-transform duration-300" />
+                    </div>
 
-                {/* Decorative Dot Grid */}
-                <div className="absolute bottom-3 right-3 grid-cols-4 gap-1 opacity-30 pointer-events-none hidden sm:grid">
-                  {[...Array(12)].map((_, i) => (
-                    <div key={i} className="w-1 h-1 rounded-full bg-red-400" />
-                  ))}
-                </div>
-              </div>
-            </Link>
+                    <div className="absolute bottom-3 right-3 grid-cols-4 gap-1 opacity-30 pointer-events-none hidden sm:grid">
+                      {[...Array(12)].map((_, i) => (
+                        <div key={i} className="w-1 h-1 rounded-full bg-red-400" />
+                      ))}
+                    </div>
+                  </div>
+                </Link>
+              </>
+            ) : user?.role === 'supervisor' ? (
+              <>
+                {/* Supervisor Card 1: Transactions Approval */}
+                <Link href="/transactions" className="group block focus:outline-none">
+                  <div className="h-full flex flex-col items-center text-center bg-white/80 backdrop-blur-md border border-red-100/60 p-3.5 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl shadow-xs hover:shadow-xl hover:bg-white transition-all duration-500 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-red-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-red-50 text-[#BE1111] rounded-full flex items-center justify-center mb-3 sm:mb-5 md:mb-6 group-hover:scale-110 group-active:scale-95 transition-transform duration-500 relative z-10 shadow-xs border border-red-100/60 shrink-0">
+                      <CheckCircle2 className="w-6 h-6 sm:w-8 sm:h-8 md:w-9 md:h-9 stroke-[2.2]" />
+                    </div>
+                    <h3 className="text-base sm:text-xl md:text-2xl font-display font-extrabold text-slate-900 mb-1 sm:mb-2 md:mb-2.5 relative z-10 whitespace-nowrap">อนุมัติรายการ</h3>
+                    <p className="text-slate-500 mb-4 sm:mb-6 md:mb-8 text-[11px] sm:text-xs md:text-sm leading-tight sm:leading-relaxed relative z-10 font-display font-normal">
+                      <span className="block whitespace-nowrap">ตรวจสอบและอนุมัติ</span>
+                      <span className="block whitespace-nowrap">รายการรับ-จ่ายสินค้า</span>
+                    </p>
+                    
+                    <div className="mt-auto inline-flex items-center justify-center w-full px-2.5 py-2.5 sm:px-6 sm:py-3 bg-[#BE1111] text-white text-xs sm:text-sm md:text-base font-semibold rounded-xl sm:rounded-2xl group-hover:bg-[#A00F0F] group-active:scale-95 transition-all duration-300 relative z-10 shadow-md shadow-red-500/20 whitespace-nowrap">
+                      <span>ดูรายการรออนุมัติ</span>
+                      <ArrowRight className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 ml-1 sm:ml-2 group-hover:translate-x-1 sm:group-hover:translate-x-1.5 transition-transform duration-300" />
+                    </div>
+
+                    <div className="absolute bottom-3 right-3 grid-cols-4 gap-1 opacity-30 pointer-events-none hidden sm:grid">
+                      {[...Array(12)].map((_, i) => (
+                        <div key={i} className="w-1 h-1 rounded-full bg-red-400" />
+                      ))}
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Supervisor Card 2: Inventory Management */}
+                <Link href="/inventory" className="group block focus:outline-none">
+                  <div className="h-full flex flex-col items-center text-center bg-white/80 backdrop-blur-md border border-gray-200/60 p-3.5 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl shadow-xs hover:shadow-xl hover:bg-white transition-all duration-500 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-50/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-red-50 text-[#BE1111] rounded-full flex items-center justify-center mb-3 sm:mb-5 md:mb-6 group-hover:scale-110 group-active:scale-95 transition-transform duration-500 relative z-10 shadow-xs border border-red-100/60 shrink-0">
+                      <Package className="w-6 h-6 sm:w-8 sm:h-8 md:w-9 md:h-9 stroke-[2.2]" />
+                    </div>
+                    <h3 className="text-base sm:text-xl md:text-2xl font-display font-extrabold text-slate-900 mb-1 sm:mb-2 md:mb-2.5 relative z-10 whitespace-nowrap">จัดการสต็อก</h3>
+                    <p className="text-slate-500 mb-4 sm:mb-6 md:mb-8 text-[11px] sm:text-xs md:text-sm leading-tight sm:leading-relaxed relative z-10 font-display font-normal">
+                      <span className="block whitespace-nowrap">ตรวจสอบสถานะสต็อก</span>
+                      <span className="block whitespace-nowrap">และอัปเดตข้อมูลสินค้า</span>
+                    </p>
+                    
+                    <div className="mt-auto inline-flex items-center justify-center w-full px-2.5 py-2.5 sm:px-6 sm:py-3 bg-[#0F172A] text-white text-xs sm:text-sm md:text-base font-semibold rounded-xl sm:rounded-2xl group-hover:bg-slate-800 group-active:scale-95 transition-all duration-300 relative z-10 shadow-md shadow-slate-900/10 whitespace-nowrap">
+                      <span>ดูสต็อกสินค้า</span>
+                      <ArrowRight className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 ml-1 sm:ml-2 group-hover:translate-x-1 sm:group-hover:translate-x-1.5 transition-transform duration-300" />
+                    </div>
+
+                    <div className="absolute bottom-3 right-3 grid-cols-4 gap-1 opacity-30 pointer-events-none hidden sm:grid">
+                      {[...Array(12)].map((_, i) => (
+                        <div key={i} className="w-1 h-1 rounded-full bg-red-400" />
+                      ))}
+                    </div>
+                  </div>
+                </Link>
+              </>
+            ) : (
+              <>
+                {/* Staff Card 1: Scan Action Card */}
+                <Link href="/scan" className="group block focus:outline-none">
+                  <div className="h-full flex flex-col items-center text-center bg-white/80 backdrop-blur-md border border-red-100/60 p-3.5 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl shadow-xs hover:shadow-xl hover:bg-white transition-all duration-500 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-red-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-red-50 text-[#BE1111] rounded-full flex items-center justify-center mb-3 sm:mb-5 md:mb-6 group-hover:scale-110 group-active:scale-95 transition-transform duration-500 relative z-10 shadow-xs border border-red-100/60 shrink-0">
+                      <ScanLine className="w-6 h-6 sm:w-8 sm:h-8 md:w-9 md:h-9 stroke-[2.2]" />
+                    </div>
+                    <h3 className="text-base sm:text-xl md:text-2xl font-display font-extrabold text-slate-900 mb-1 sm:mb-2 md:mb-2.5 relative z-10 whitespace-nowrap">สแกนสินค้า</h3>
+                    <p className="text-slate-500 mb-4 sm:mb-6 md:mb-8 text-[11px] sm:text-xs md:text-sm leading-tight sm:leading-relaxed relative z-10 font-display font-normal">
+                      <span className="block whitespace-nowrap">สแกน QR Code</span>
+                      <span className="block whitespace-nowrap">เพื่อรับเข้า-เบิกออกสินค้า</span>
+                    </p>
+                    
+                    <div className="mt-auto inline-flex items-center justify-center w-full px-2.5 py-2.5 sm:px-6 sm:py-3 bg-[#BE1111] text-white text-xs sm:text-sm md:text-base font-semibold rounded-xl sm:rounded-2xl group-hover:bg-[#A00F0F] group-active:scale-95 transition-all duration-300 relative z-10 shadow-md shadow-red-500/20 whitespace-nowrap">
+                      <span>เริ่มสแกน</span>
+                      <ArrowRight className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 ml-1 sm:ml-2 group-hover:translate-x-1 sm:group-hover:translate-x-1.5 transition-transform duration-300" />
+                    </div>
+
+                    <div className="absolute bottom-3 right-3 grid-cols-4 gap-1 opacity-30 pointer-events-none hidden sm:grid">
+                      {[...Array(12)].map((_, i) => (
+                        <div key={i} className="w-1 h-1 rounded-full bg-red-400" />
+                      ))}
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Staff Card 2: Transactions History */}
+                <Link href="/transactions" className="group block focus:outline-none">
+                  <div className="h-full flex flex-col items-center text-center bg-white/80 backdrop-blur-md border border-gray-200/60 p-3.5 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl shadow-xs hover:shadow-xl hover:bg-white transition-all duration-500 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-50/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-red-50 text-[#BE1111] rounded-full flex items-center justify-center mb-3 sm:mb-5 md:mb-6 group-hover:scale-110 group-active:scale-95 transition-transform duration-500 relative z-10 shadow-xs border border-red-100/60 shrink-0">
+                      <Package className="w-6 h-6 sm:w-8 sm:h-8 md:w-9 md:h-9 stroke-[2.2]" />
+                    </div>
+                    <h3 className="text-base sm:text-xl md:text-2xl font-display font-extrabold text-slate-900 mb-1 sm:mb-2 md:mb-2.5 relative z-10 whitespace-nowrap">ประวัติรายการ</h3>
+                    <p className="text-slate-500 mb-4 sm:mb-6 md:mb-8 text-[11px] sm:text-xs md:text-sm leading-tight sm:leading-relaxed relative z-10 font-display font-normal">
+                      <span className="block whitespace-nowrap">ดูรายการสแกน</span>
+                      <span className="block whitespace-nowrap">รับเข้าและเบิกออกของคุณ</span>
+                    </p>
+                    
+                    <div className="mt-auto inline-flex items-center justify-center w-full px-2.5 py-2.5 sm:px-6 sm:py-3 bg-[#0F172A] text-white text-xs sm:text-sm md:text-base font-semibold rounded-xl sm:rounded-2xl group-hover:bg-slate-800 group-active:scale-95 transition-all duration-300 relative z-10 shadow-md shadow-slate-900/10 whitespace-nowrap">
+                      <span>ดูประวัติ</span>
+                      <ArrowRight className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 ml-1 sm:ml-2 group-hover:translate-x-1 sm:group-hover:translate-x-1.5 transition-transform duration-300" />
+                    </div>
+
+                    <div className="absolute bottom-3 right-3 grid-cols-4 gap-1 opacity-30 pointer-events-none hidden sm:grid">
+                      {[...Array(12)].map((_, i) => (
+                        <div key={i} className="w-1 h-1 rounded-full bg-red-400" />
+                      ))}
+                    </div>
+                  </div>
+                </Link>
+              </>
+            )}
           </motion.div>
 
           {/* System Status / Overview */}
@@ -156,12 +270,22 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-5">
               <div className="flex items-center p-3.5 sm:p-5 bg-white/70 backdrop-blur-md rounded-2xl border border-gray-200/60 shadow-xs transition-all hover:bg-white hover:shadow-md">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-50 border border-gray-100 text-gray-700 flex items-center justify-center shrink-0 mr-3.5 sm:mr-4 shadow-xs">
-                  <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-[#BE1111]" />
+                  {user?.role === 'admin' ? (
+                    <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-[#BE1111]" />
+                  ) : user?.role === 'supervisor' ? (
+                    <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
+                  ) : (
+                    <Package className="w-5 h-5 sm:w-6 sm:h-6 text-[#BE1111]" />
+                  )}
                 </div>
                 <div>
                   <p className="text-[10px] sm:text-[11px] text-gray-500 font-display font-normal mb-0.5 uppercase tracking-wider">บทบาทของคุณ</p>
                   <p className="font-bold text-gray-900 text-xs sm:text-base tracking-tight">
-                    {user?.role === 'admin' ? 'ผู้ควบคุมดูแลระบบ (Supervisor)' : user?.role === 'warehouse_staff' ? 'พนักงานทั่วไป (Staff)' : user?.role || 'Guest'}
+                    {user?.role === 'admin' 
+                      ? 'แอดมินระบบ (System Admin)' 
+                      : user?.role === 'supervisor' 
+                      ? 'ผู้ควบคุมดูแลระบบ (Supervisor)' 
+                      : 'พนักงานทั่วไป (Staff)'}
                   </p>
                 </div>
               </div>

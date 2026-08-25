@@ -201,15 +201,30 @@ export function Navigation({ children }: { children: React.ReactNode }) {
     return <div className="min-h-screen bg-gray-50">{children}</div>
   }
 
-  const navItems = [
-    { href: '/', icon: Home, label: 'หน้าหลัก' },
-    { href: '/scan', icon: ScanLine, label: 'สแกน' },
-    { href: '/transactions', icon: ClipboardCheck, label: 'รายการ' },
-    { href: '/inventory', icon: Package, label: 'สต็อก' },
-    { href: '/reports', icon: BarChart3, label: 'รายงาน' },
-    { href: '/dashboard', icon: LayoutDashboard, label: 'แดชบอร์ด' },
-    ...(user.role === 'admin' ? [{ href: '/users', icon: UserCheck, label: 'อนุมัติสมาชิก' }] : []),
-  ]
+  const getNavItems = () => {
+    if (user.role === 'admin') {
+      return [
+        { href: '/', icon: Home, label: 'หน้าหลัก' },
+        { href: '/users', icon: UserCheck, label: 'จัดการผู้ใช้งาน' },
+      ]
+    }
+    if (user.role === 'supervisor') {
+      return [
+        { href: '/', icon: Home, label: 'หน้าหลัก' },
+        { href: '/transactions', icon: ClipboardCheck, label: 'รายการอนุมัติ' },
+        { href: '/inventory', icon: Package, label: 'สต็อก' },
+        { href: '/reports', icon: BarChart3, label: 'รายงาน' },
+        { href: '/dashboard', icon: LayoutDashboard, label: 'แดชบอร์ด' },
+      ]
+    }
+    return [
+      { href: '/', icon: Home, label: 'หน้าหลัก' },
+      { href: '/scan', icon: ScanLine, label: 'สแกน' },
+      { href: '/transactions', icon: ClipboardCheck, label: 'ประวัติรายการ' },
+    ]
+  }
+
+  const navItems = getNavItems()
 
   const NotificationPopoverContent = (
     <div className="w-full sm:w-96 rounded-2xl bg-white p-4 shadow-2xl border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200 text-left max-w-full">

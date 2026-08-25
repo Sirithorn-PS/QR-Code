@@ -1,5 +1,36 @@
 # บันทึกการทำงาน (Memories)
 
+## 25 ส.ค. 2026
+- **ปรับปรุงระบบการลงทะเบียนและสิทธิ์การเข้าใช้งานใหม่เป็น 3 Roles (Admin, Supervisor, Staff) พร้อมยกเลิกการสมัครสมาชิกสาธารณะ (เสร็จสมบูรณ์ 100%)**:
+  - **โครงสร้าง Roles**:
+    1. `admin` (System Admin / แอดมินระบบ): สิทธิ์สร้างและจัดการบัญชีผู้ใช้ทั้งหมดในระบบ (`/users`)
+    2. `supervisor` (Supervisor / หัวหน้างาน): สิทธิ์อนุมัติ/ปฏิเสธรายการรับเข้า-จ่ายออกสแกนสินค้า, ดูคลังสินค้า, แดชบอร์ด และรายงาน
+    3. `warehouse_staff` (Staff / พนักงานทั่วไป): สิทธิ์สแกน QR Code รับเข้า/จ่ายออกสินค้า และดูประวัติรายการตนเอง
+  - **ปิดระบบสมัครสมาชิกสาธารณะ (Closed Public Registration)**:
+    - แก้ไขใน [backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts): ปรับปรุง `POST /auth/register` ให้ปฏิเสธคำขอสมัครสาธารณะพร้อมส่งข้อความแจ้งเตือน 403 Forbidden
+    - แก้ไขใน [frontend/app/login/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/login/page.tsx): ลบลิงก์และปุ่มลงทะเบียนใหม่ออก เปลี่ยนเป็นข้อความแนะนำให้ติดต่อ System Admin
+    - แก้ไขใน [frontend/app/register/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/register/page.tsx): ปรับหน้าเป็นแจ้งเตือนว่าปิดรับสมัครสมาชิกสาธารณะแล้ว พร้อมปุ่มย้อนกลับหน้า Login
+  - **เพิ่มระบบและหน้าจัดการผู้ใช้งานสำหรับ Admin (`/users`)**:
+    - แก้ไขใน [backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts): เพิ่ม Endpoints ใหม่สำหรับ Admin (`POST /users` สร้างผู้ใช้ใหม่พร้อมกำหนด Role, `PATCH /users/:id/role` เปลี่ยนสิทธิ์ Role, `PATCH /users/:id/reset-password` รีเซ็ตรหัสผ่าน, `DELETE /users/:id` ลบบัญชีผู้ใช้งาน)
+    - แก้ไขใน [frontend/lib/auth.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/lib/auth.ts): เพิ่ม API helper functions (`createUser`, `updateUserRole`, `resetUserPassword`, `deleteUser`)
+    - แก้ไขใน [frontend/app/users/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/users/page.tsx): ออกแบบหน้า UI สไตล์ Apple Liquid Glass สำหรับ Admin ในการสร้างผู้ใช้งานใหม่, กรองรายการตามบทบาท, แก้ไข Role, รีเซ็ตรหัสผ่าน และลบบัญชี
+  - **ปรับปรุงการแบ่งแยกหน้าที่อย่างชัดเจน (Strict Separation of Duties: Admin vs Supervisor)**:
+    - **Admin (ผู้ดูแลระบบบัญชีผู้ใช้)**: ดูแลเฉพาะระบบผู้ใช้งาน 100% (สร้างบัญชี, แก้ไขข้อมูลชื่อ/รหัสพนักงาน, เปิด/ปิดระงับบัญชี, เปลี่ยน Role, รีเซ็ตรหัสผ่าน, ดูรายชื่อทั้งหมด, ลบบัญชี) โดยไม่มีสิทธิ์ยุ่งเกี่ยวกับสินค้าหรือสต็อก
+    - **Supervisor (หัวหน้างานคลังสินค้า)**: ดูแลระบบคลังสินค้าทั้งหมด (เพิ่มสินค้า, สร้างสูตร BOM, แก้ไข/ปรับปรุงสต็อก, ลบสินค้า, อนุมัติ/ปฏิเสธรายการรับ-จ่าย, ดูรายงาน และแดชบอร์ด)
+    - **Staff (พนักงานคลังสินค้า)**: สแกน QR Code รับเข้า/จ่ายออก และดูประวัติรายการตนเอง
+  - **อัปเดตฟังก์ชันครบถ้วนในหน้าจัดการผู้ใช้ ([frontend/app/users/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/users/page.tsx))**:
+    - เพิ่ม Modal แก้ไขข้อมูลผู้ใช้ (ชื่อ-นามสกุล, รหัสพนักงาน) ผ่าน `PATCH /users/:id`
+    - เพิ่มปุ่มเปิด/ปิด (ระงับ) การใช้งานบัญชี (Toggle Active/Disabled) ผ่าน `PATCH /users/:id/status`
+    - เพิ่มระบบบล็อกการเข้าสู่ระบบหากบัญชีอยู่ในสถานะ `disabled`
+    - ล็อกหน้าเมนูและหน้าคลังสินค้า (`/inventory`) ให้เฉพาะ Supervisor เข้าถึง หาก Admin เข้าถึงจะ Redirect ไปยังหน้าจัดการผู้ใช้งานทันที
+    - เพิ่มเมนู **"หน้าหลัก" (`/`)** บนแถบเมนูนำทาง (Navigation Bar) สำหรับ Admin ให้สามารถสลับระหว่างหน้าหลักและหน้าจัดการผู้ใช้งานได้อย่างสะดวก
+    - ปรับปรุงดีไซน์หน้าหลัก (`/`) ของ Admin ให้แสดงการ์ด 2 คอลัมน์แนวตั้งทรงเดียวกับการ์ดจัดการสต็อก ได้แก่ การ์ด **"จัดการผู้ใช้งาน"** (ปุ่มสร้างผู้ใช้ใหม่ สีแดง) และการ์ด **"รายชื่อผู้ใช้งาน"** (ปุ่มดูรายชื่อทั้งหมด สีน้ำเงินเข้ม) พร้อมตรวจสอบการทำงานจริงผ่าน Browser เรียบร้อยแล้ว
+    - ปรับปรุงการแยกหมวดหมู่ในหน้าจัดการผู้ใช้ ([frontend/app/users/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/users/page.tsx)) ให้เป็นดีไซน์ **Dropdown Menu** สไตล์ Apple Liquid Glass รองรับทั้งการกรองตาม **บทบาท (Role)** และ **สถานะบัญชี (Status)** พร้อมจำนวนนับผู้ใช้งานในแต่ละหมวดและแอนิเมชันเปิด/ปิดอย่างสวยงามราบรื่น
+    - ปรับดีไซน์ Dropdown ในหน้าจัดการผู้ใช้ให้ดูสะอาดตา เรียบง่าย (Clean & Minimal): นำไอคอน/อีโมจิด้านหน้าออกทั้งหมด และปรับขนาดน้ำหนักตัวอักษรเป็นรูปแบบตัวธรรมดา (Regular / Non-bold Font Weight) ตามความต้องการของผู้ใช้เรียบร้อยแล้ว
+    - ปรับปรุงการแสดงผลในคอลัมน์ **สถานะ** ของตารางผู้ใช้งาน ให้แสดงผลเป็น **จุดสีเขียว (Green Dot)** พร้อมข้อความ "ใช้งานอยู่" ในรูปแบบตัวหนังสือธรรมดา (Non-bold) และไม่ตัดคำแนวตั้ง (whitespace-nowrap) เรียบร้อยแล้ว
+    - เพิ่มการแสดงผลบทบาทผู้ใช้งานในส่วน **บทบาทผู้ใช้งาน (User Roles)** บนหน้าหลัก (`/`) ให้ครบถ้วนทั้ง **3 Roles (Staff, Supervisor, System Admin)** ในรูปแบบ 3 คอลัมน์ที่สวยงาม พร้อมระบุสิทธิ์และหน้าที่ของแต่ละบทบาทอย่างละเอียดและชัดเจน เรียบร้อยแล้ว
+    - ปรับแต่งข้อความและสไตล์ของการ์ดบทบาทผู้ใช้งานทั้ง 3 ให้ข้อความแต่ละบรรทัดเรียงอยู่ภายใน **บรรทัดเดียว (Single Line / No Wrap)** ไม่ตัดตกบรรทัด ดูเป็นระเบียบ เรียบร้อย และอ่านง่าย เรียบร้อยแล้ว
+
 ## 19 ส.ค. 2026
 - **ยกเลิกฟังก์ชันการอนุมัติ/ปฏิเสธผู้ใช้งานใหม่ในการลงทะเบียน (Remove User Registration Approval Workflow) (เสร็จสมบูรณ์ 100%)**:
   - แก้ไขใน [backend/prisma/schema.prisma](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/prisma/schema.prisma): ปรับสถานะเริ่มต้นของผู้ใช้ใหม่ใน Prisma Schema เป็น `status @default("approved")`

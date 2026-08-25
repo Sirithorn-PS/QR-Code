@@ -70,7 +70,7 @@ export default function LoginPage() {
         localStorage.removeItem('wpk_remembered_user')
       }
       setAuthData(data.token, data.user)
-      router.push('/')
+      window.location.href = '/'
     } catch (err) {
       setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาด ลองใหม่อีกครั้ง')
       console.error(err)
@@ -253,21 +253,11 @@ export default function LoginPage() {
               </button>
             </div>
 
-            {/* Divider "หรือ" */}
-            <div className="relative my-4 sm:my-5 flex items-center justify-center">
-              <div className="w-full border-t border-slate-200" />
-              <span className="bg-white px-3 text-xs sm:text-sm text-slate-400 font-medium absolute">หรือ</span>
-            </div>
-
-            {/* Register Button */}
-            <div>
-              <Link
-                href="/register"
-                className="w-full bg-white border border-[#BE1111] text-[#BE1111] font-bold py-3 sm:py-3.5 px-4 rounded-xl sm:rounded-2xl text-sm sm:text-base transition-all hover:bg-red-50/80 focus:outline-none focus:ring-4 focus:ring-[#BE1111]/10 flex justify-center items-center gap-2 cursor-pointer active:scale-[0.99] min-h-[48px]"
-              >
-                <UserPlus className="w-5 h-5 text-[#BE1111]" />
-                ลงทะเบียนใหม่
-              </Link>
+            {/* Admin Notice */}
+            <div className="pt-2 text-center">
+              <p className="text-xs text-slate-500 font-medium">
+                หากยังไม่มีบัญชีเข้าใช้งาน กรุณาติดต่อ <span className="font-bold text-slate-700">แอดมินระบบ (System Admin)</span> เพื่อขอสร้างบัญชี
+              </p>
             </div>
           </form>
         </div>

@@ -13,6 +13,8 @@ import {
   FileSpreadsheet,
   UserCheck,
   ShieldCheck,
+  Shield,
+  Users,
   CheckCircle2,
   AlertCircle,
   BookOpen,
@@ -355,64 +357,95 @@ export function QuickGuideCarousel() {
           </h3>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:gap-6">
-          {/* Warehouse Staff */}
-          <div className="p-3.5 sm:p-6 rounded-2xl bg-white border border-slate-200/70 shadow-xs flex flex-col justify-between">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4 lg:gap-5">
+          {/* 1. Warehouse Staff */}
+          <div className="p-3.5 sm:p-4 lg:p-5 rounded-2xl bg-white border border-slate-200/70 shadow-xs flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <div className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center shrink-0">
                   <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h4 className="font-display font-extrabold text-slate-900 text-xs sm:text-base leading-tight truncate">
-                    Warehouse Staff
+                    Staff
                   </h4>
-                  <p className="text-[10px] sm:text-xs font-display font-normal text-slate-500 truncate">พนักงานทั่วไป (Staff)</p>
+                  <p className="text-[10px] sm:text-xs font-display font-normal text-slate-500 truncate">พนักงานทั่วไป</p>
                 </div>
               </div>
-              <ul className="space-y-2 text-[10px] sm:text-xs md:text-sm font-display font-normal text-slate-700">
-                <li className="flex items-start gap-1.5 sm:gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0 mt-0.5" />
-                  <span className="leading-tight">รับเข้า - เบิกออกสินค้า ผ่าน QR Code</span>
+              <ul className="space-y-2 text-[11px] sm:text-[11.5px] lg:text-xs xl:text-[13px] font-display font-normal text-slate-700">
+                <li className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
+                  <span className="truncate">สแกนรับเข้า - เบิกออกสินค้า</span>
                 </li>
-                <li className="flex items-start gap-1.5 sm:gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0 mt-0.5" />
-                  <span className="leading-tight">รับแจ้งเตือนผล อนุมัติ / ปฏิเสธ</span>
+                <li className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
+                  <span className="truncate">ตรวจสอบประวัติรายการของตนเอง</span>
                 </li>
-                <li className="flex items-start gap-1.5 sm:gap-2 text-slate-400">
-                  <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400 shrink-0 mt-0.5" />
-                  <span className="leading-tight">ไม่สามารถอนุมัติรายการหรือเพิ่มสินค้าใหม่</span>
+                <li className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap text-slate-400">
+                  <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400 shrink-0" />
+                  <span className="truncate">ไม่มีสิทธิ์อนุมัติหรือสร้างบัญชี</span>
                 </li>
               </ul>
             </div>
           </div>
 
-          {/* Supervisor */}
-          <div className="p-3.5 sm:p-6 rounded-2xl bg-white border border-red-100 shadow-xs flex flex-col justify-between">
+          {/* 2. Supervisor */}
+          <div className="p-3.5 sm:p-4 lg:p-5 rounded-2xl bg-white border border-amber-100 shadow-xs flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-red-50 text-[#BE1111] flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#BE1111]" />
+              <div className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+                  <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h4 className="font-display font-extrabold text-slate-900 text-xs sm:text-base leading-tight truncate">
                     Supervisor
                   </h4>
-                  <p className="text-[10px] sm:text-xs font-display font-normal text-slate-500 truncate">ผู้ควบคุมดูแลระบบ</p>
+                  <p className="text-[10px] sm:text-xs font-display font-normal text-slate-500 truncate">ผู้ควบคุมดูแลระบบคลัง</p>
                 </div>
               </div>
-              <ul className="space-y-2 text-[10px] sm:text-xs md:text-sm font-display font-normal text-slate-700">
-                <li className="flex items-start gap-1.5 sm:gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0 mt-0.5" />
-                  <span className="leading-tight">อนุมัติ หรือ ปฏิเสธรายการเบิกจ่าย</span>
+              <ul className="space-y-2 text-[11px] sm:text-[11.5px] lg:text-xs xl:text-[13px] font-display font-normal text-slate-700">
+                <li className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
+                  <span className="truncate">อนุมัติ / ปฏิเสธการรับ-จ่ายสินค้า</span>
                 </li>
-                <li className="flex items-start gap-1.5 sm:gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0 mt-0.5" />
-                  <span className="leading-tight">เพิ่มสินค้าใหม่ และจัดการสูตร BOM</span>
+                <li className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
+                  <span className="truncate">จัดการสต็อก และสร้างสูตร BOM</span>
                 </li>
-                <li className="flex items-start gap-1.5 sm:gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0 mt-0.5" />
-                  <span className="leading-tight">เข้าถึงทุกเมนูและรายงานสรุปทั้งหมด</span>
+                <li className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
+                  <span className="truncate">เข้าถึงรายงานและแดชบอร์ดทั้งหมด</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* 3. System Admin */}
+          <div className="p-3.5 sm:p-4 lg:p-5 rounded-2xl bg-white border border-red-100 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-red-50 text-[#BE1111] flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#BE1111]" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-display font-extrabold text-slate-900 text-xs sm:text-base leading-tight truncate">
+                    System Admin
+                  </h4>
+                  <p className="text-[10px] sm:text-xs font-display font-normal text-slate-500 truncate">แอดมินผู้ดูแลระบบ</p>
+                </div>
+              </div>
+              <ul className="space-y-2 text-[11px] sm:text-[11.5px] lg:text-xs xl:text-[13px] font-display font-normal text-slate-700">
+                <li className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
+                  <span className="truncate">สร้างบัญชีผู้ใช้ใหม่ และกำหนด Role</span>
+                </li>
+                <li className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
+                  <span className="truncate">เปิด/ปิด ระงับบัญชี และรีเซ็ตรหัสผ่าน</span>
+                </li>
+                <li className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
+                  <span className="truncate">จัดการข้อมูลและรายชื่อผู้ใช้งาน</span>
                 </li>
               </ul>
             </div>

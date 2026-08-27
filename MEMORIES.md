@@ -1,5 +1,17 @@
 # บันทึกการทำงาน (Memories)
 
+## 27 ส.ค. 2026
+- **ปรับเมนูนำทางตามบทบาท: พนักงาน/หัวหน้างานเข้าถึงเมนูคลังสินค้าครบถ้วน ส่วน Admin มีเฉพาะหน้าหลักและจัดการผู้ใช้ (เสร็จสมบูรณ์ 100%)**:
+  - **แถบเมนูนำทาง (Navigation Bar)**:
+    - แก้ไขใน [frontend/components/Navigation.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/Navigation.tsx):
+      - **Admin (`admin`)**: กำหนดให้มองเห็นเฉพาะ 2 เมนูหลัก ได้แก่ **"หน้าหลัก" (`/`)** และ **"จัดการผู้ใช้งาน" (`/users`)**
+      - **พนักงาน (`warehouse_staff`) & หัวหน้างาน (`supervisor`)**: มองเห็นเมนูใช้งานคลังสินค้าครบทั้ง 6 เมนู ได้แก่ **หน้าหลัก**, **สแกน**, **รายการ**, **สต็อก**, **รายงาน**, และ **แดชบอร์ด**
+  - **หน้าหลัก (Home Page Quick Actions)**:
+    - แก้ไขใน [frontend/app/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/page.tsx): ปรับการ์ด Quick Action สำหรับ Admin ให้แสดงการ์ดจัดการผู้ใช้ และสำหรับพนักงาน/Supervisor ให้แสดง 2 การ์ดหลัก คือ **"สแกนสินค้า"** (`/scan`) และ **"จัดการสต็อก"** (`/inventory`)
+  - **การควบคุมสิทธิ์ตามบทบาท (Role-based Permission Controls)**:
+    - แก้ไขใน [frontend/app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/transactions/page.tsx): ปุ่ม "อนุมัติ" และ "ปฏิเสธ" แสดงให้เฉพาะ Supervisor และ Admin เท่านั้น พนักงานทั่วไป (`warehouse_staff`) จะแสดงสถานะ "รอการอนุมัติจาก Supervisor"
+    - แก้ไขใน [frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/inventory/page.tsx): พนักงานทั่วไปสามารถเข้าดูสต็อกสินค้า ค้นหา และดูโครงสร้างสูตร BOM ได้ แต่ไม่มีปุ่มเพิ่ม/แก้ไข/ลบหรือปรับยอดสต็อก (ปุ่มเปิดให้เฉพาะ Supervisor) และหาก Admin เข้าหน้าสต็อกจะ Redirect ไปที่ `/users` ทันที
+
 ## 25 ส.ค. 2026
 - **ปรับปรุงระบบการลงทะเบียนและสิทธิ์การเข้าใช้งานใหม่เป็น 3 Roles (Admin, Supervisor, Staff) พร้อมยกเลิกการสมัครสมาชิกสาธารณะ (เสร็จสมบูรณ์ 100%)**:
   - **โครงสร้าง Roles**:

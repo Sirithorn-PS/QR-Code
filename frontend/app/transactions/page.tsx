@@ -287,7 +287,7 @@ function TransactionsContent() {
                     </div>
 
                     {transaction.status === 'pending' ? (
-                      user?.role === 'admin' ? (
+                      (user?.role === 'admin' || user?.role === 'supervisor') ? (
                         <div className="flex gap-2 self-start md:self-center">
                           <button
                             onClick={() => handleConfirm(transaction.id)}

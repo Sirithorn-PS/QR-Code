@@ -208,19 +208,13 @@ export function Navigation({ children }: { children: React.ReactNode }) {
         { href: '/users', icon: UserCheck, label: 'จัดการผู้ใช้งาน' },
       ]
     }
-    if (user.role === 'supervisor') {
-      return [
-        { href: '/', icon: Home, label: 'หน้าหลัก' },
-        { href: '/transactions', icon: ClipboardCheck, label: 'รายการอนุมัติ' },
-        { href: '/inventory', icon: Package, label: 'สต็อก' },
-        { href: '/reports', icon: BarChart3, label: 'รายงาน' },
-        { href: '/dashboard', icon: LayoutDashboard, label: 'แดชบอร์ด' },
-      ]
-    }
     return [
       { href: '/', icon: Home, label: 'หน้าหลัก' },
       { href: '/scan', icon: ScanLine, label: 'สแกน' },
-      { href: '/transactions', icon: ClipboardCheck, label: 'ประวัติรายการ' },
+      { href: '/transactions', icon: ClipboardCheck, label: 'รายการ' },
+      { href: '/inventory', icon: Package, label: 'สต็อก' },
+      { href: '/reports', icon: BarChart3, label: 'รายงาน' },
+      { href: '/dashboard', icon: LayoutDashboard, label: 'แดชบอร์ด' },
     ]
   }
 

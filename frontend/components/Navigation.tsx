@@ -303,32 +303,32 @@ export function Navigation({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
       {/* Top Navbar (Desktop & Tablet) */}
       <header className="hidden md:flex items-center justify-between h-16 lg:h-18 px-3 sm:px-4 lg:px-6 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs z-10 shrink-0 w-full">
-        <div className="flex items-center gap-2.5 lg:gap-4 xl:gap-6 shrink min-w-0">
+        <div className="flex items-center gap-3 lg:gap-4 shrink min-w-0">
           <div className="flex items-center gap-2.5 select-none shrink-0">
             <div className="flex items-center gap-2">
-              <Package className="w-6 h-6 lg:w-6.5 lg:h-6.5 text-[#BE1111] stroke-[2.2] shrink-0" />
-              <h1 className="text-lg lg:text-xl font-display font-extrabold tracking-tight flex items-center gap-1 whitespace-nowrap">
+              <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center shrink-0">
+                <Package className="w-4.5 h-4.5 lg:w-5 lg:h-5 text-[#BE1111] stroke-[2.2]" />
+              </div>
+              <h1 className="text-lg lg:text-xl font-display font-black tracking-tight flex items-center gap-1 whitespace-nowrap">
                 <span className="text-[#0F172A]">WPK</span>
                 <span className="text-[#BE1111]">MMS</span>
               </h1>
             </div>
-            <p className="hidden xl:block text-[10px] lg:text-[10.5px] text-slate-400 font-normal leading-tight border-l border-slate-200 pl-2.5 select-none shrink-0">
-              <span className="block whitespace-nowrap">Packaging Material</span>
-              <span className="block whitespace-nowrap">Warehouse Management System</span>
-            </p>
           </div>
+
+          <div className="h-6 w-px bg-slate-200/80 shrink-0"></div>
           
-          <nav className="flex items-center space-x-0.5 lg:space-x-1 shrink min-w-0">
+          <nav className="flex items-center space-x-1 lg:space-x-1.5 shrink min-w-0">
             {navItems.map((item) => {
               const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
               const showBadge = item.href === '/transactions' && pendingCount > 0
 
               return (
                 <Link key={item.href} href={item.href}
-                  className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-xl text-xs lg:text-sm whitespace-nowrap shrink-0 transition-all duration-200 ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs lg:text-sm whitespace-nowrap shrink-0 transition-all duration-200 ${
                     isActive 
-                      ? 'bg-red-50/90 text-[#BE1111] font-medium shadow-2xs border border-red-100/80' 
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-normal'
+                      ? 'bg-red-50/90 text-[#BE1111] font-semibold shadow-2xs border border-red-100/90' 
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-normal border border-transparent'
                   }`}
                 >
                   <item.icon className={`w-4 h-4 lg:w-4.5 lg:h-4.5 stroke-[2.2] shrink-0 transition-colors ${isActive ? 'text-[#BE1111]' : 'text-slate-400 group-hover:text-slate-600'}`} />
@@ -387,7 +387,7 @@ export function Navigation({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className="h-6 w-px bg-slate-200/80 shrink-0"></div>
-          <button onClick={handleLogout} className="group flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 text-xs lg:text-sm font-normal text-slate-600 rounded-xl hover:bg-red-50 hover:text-[#BE1111] transition-all border border-transparent hover:border-red-100 whitespace-nowrap shrink-0" title="ออกจากระบบ">
+          <button onClick={handleLogout} className="group flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 text-xs lg:text-sm font-normal text-slate-600 rounded-xl hover:bg-red-50 hover:text-[#BE1111] transition-all border border-transparent hover:border-red-100 whitespace-nowrap shrink-0 cursor-pointer" title="ออกจากระบบ">
             <LogOut className="w-4 h-4 lg:w-4.5 lg:h-4.5 text-slate-400 group-hover:text-[#BE1111] transition-colors shrink-0" />
             <span className="whitespace-nowrap">ออกจากระบบ</span>
           </button>
@@ -443,7 +443,7 @@ export function Navigation({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Logout Icon */}
-          <button onClick={handleLogout} className="p-1.5 text-slate-500 hover:text-[#BE1111] hover:bg-red-50 rounded-lg transition-all" title="ออกจากระบบ">
+          <button onClick={handleLogout} className="p-1.5 text-slate-500 hover:text-[#BE1111] hover:bg-red-50 rounded-lg transition-all cursor-pointer" title="ออกจากระบบ">
             <LogOut className="w-4.5 h-4.5" />
           </button>
         </div>
@@ -482,4 +482,3 @@ export function Navigation({ children }: { children: React.ReactNode }) {
     </div>
   )
 }
-

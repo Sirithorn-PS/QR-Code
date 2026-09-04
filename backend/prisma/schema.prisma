@@ -36,6 +36,7 @@ model Product {
   itemType     String        @default("FG")
   minStock     Float?
   transactions Transaction[]
+  lots         ProductLot[]
 
   @@index([itemCode])
   @@index([itemType])
@@ -76,6 +77,43 @@ model Transaction {
   createdBy    User           @relation("CreatedTransactions", fields: [createdById], references: [id])
   product      Product        @relation(fields: [productId], references: [id])
   notifications Notification[]
+  lot          ProductLot?
+  allocations  TransactionLotAllocation[]
+}
+
+model ProductLot {
+  id                Int          @id @default(autoincrement())
+  productId         Int
+  lotNumber         String       @unique
+  supplierLot       String?
+  receivedDate      DateTime
+  receivedQuantity  Float
+  remainingQuantity Float
+  transactionId     Int?         @unique
+  status            String       @default("active")
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  product           Product      @relation(fields: [productId], references: [id])
+  transaction       Transaction? @relation(fields: [transactionId], references: [id])
+  allocations       TransactionLotAllocation[]
+
+  @@index([productId, status])
+  @@index([receivedDate])
+}
+
+model TransactionLotAllocation {
+  id           Int        @id @default(autoincrement())
+  transactionId Int
+  productLotId Int
+  quantity     Float
+  createdAt    DateTime   @default(now())
+
+  transaction  Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  productLot   ProductLot  @relation(fields: [productLotId], references: [id], onDelete: Restrict)
+
+  @@index([transactionId])
+  @@index([productLotId])
 }
 
 model Notification {

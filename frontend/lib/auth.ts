@@ -57,6 +57,28 @@ export interface BillOfMaterial {
   bomType: string
 }
 
+export interface ProductLot {
+  id: number
+  productId: number
+  lotNumber: string
+  supplierLot?: string | null
+  receivedDate: string
+  receivedQuantity: number
+  remainingQuantity: number
+  status: string
+  transactionId?: number | null
+  createdAt?: string
+}
+
+export interface TransactionLotAllocation {
+  id: number
+  transactionId: number
+  productLotId: number
+  quantity: number
+  createdAt?: string
+  productLot?: ProductLot
+}
+
 export interface StockTransaction {
   id: number
   productId: number
@@ -68,11 +90,18 @@ export interface StockTransaction {
   createdAt: string
   confirmedAt: string | null
   rejectedAt: string | null
+  lot?: ProductLot | null
+  allocations?: TransactionLotAllocation[]
   product?: {
+    id?: number
     itemCode: string
-    description: string
+    description?: string
+    name?: string
     unit: string
     quantity: number
+    itemType?: string
+    warehouse?: string
+    location?: string
   }
   createdBy?: {
     fullName: string
@@ -238,6 +267,10 @@ export function createProductWithBom(data: CreateProductWithBomData) {
 
 export function fetchProduct(itemCode: string) {
   return apiRequest<Product>(`/products/${encodeURIComponent(itemCode)}`)
+}
+
+export function fetchProductLots(productId: number) {
+  return apiRequest<ProductLot[]>(`/products/${productId}/lots`)
 }
 
 export function fetchProductBom(itemCode: string) {

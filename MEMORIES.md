@@ -1,5 +1,155 @@
 # บันทึกการทำงาน (Memories)
 
+## 4 ก.ย. 2026
+- **ตรวจสอบและปรับปรุงเอกสาร Database Schema ให้ตรงกับ Prisma Schema จริง (STEP 4.8.5 — Documentation & Database Schema Correction) (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการตรวจสอบเชิงวิเคราะห์และปรับปรุงเอกสาร (Documentation Verification & Correction Only โดยไม่มีการแก้ไข Source Code, Database หรือ Prisma Schema ใดๆ):
+  - **ProductLot Schema Alignment**:
+    - แก้ไขชื่อฟิลด์ในเอกสารจาก `initialQuantity` -> `receivedQuantity`
+    - แก้ไขสถานะจาก boolean (`isDepleted`, `isActive`) -> `status: String` (`'active'` | `'depleted'`)
+    - ยืนยันฟิลด์จริงใน Prisma: `id` (Int), `productId` (Int), `lotNumber` (String UK), `supplierLot` (String?), `receivedDate` (DateTime), `receivedQuantity` (Float), `remainingQuantity` (Float), `transactionId` (Int? UK), `status` (String @default("active")), `createdAt` (DateTime), `updatedAt` (DateTime)
+  - **TransactionLotAllocation Schema Alignment**:
+    - แก้ไขชื่อ Foreign Key ในเอกสารจาก `lotId` -> `productLotId`
+    - แก้ไข Timestamp จาก `allocatedAt` -> `createdAt`
+    - ยืนยันฟิลด์จริงใน Prisma: `id` (Int), `transactionId` (Int), `productLotId` (Int), `quantity` (Float), `createdAt` (DateTime @default(now()))
+  - **FIFO Scope & Workflows Confirmation**:
+    - ยืนยัน FIFO ใช้งานเฉพาะสินค้า Packaging (`itemType === 'Packaging'`) เท่านั้น
+    - Non-Packaging (FG, Raw Material, Bulk) ไม่ใช้ ProductLot และไม่มี Allocation
+    - สต็อก Packaging: $Product.quantity = \sum(ProductLot.remainingQuantity)$ สอดคล้อง 100%
+  - เอกสารและบันทึกได้รับการสอบทานและตรงกับ Source of Truth ใน Prisma Schema และระบบจริง 100%
+- **พัฒนา UI แสดงรายละเอียดการตัดสต็อกตาม FIFO ในหน้ารายการ (STEP 4.3.2 — Transaction FIFO Allocation UI Implementation) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/transactions/page.tsx):
+    - เพิ่มส่วนแสดงรายละเอียด **"ตัดสต็อกตามลำดับ FIFO" (FIFO Allocation)** ในการ์ดรายการเบิกสินค้า (Issue) ที่ได้รับการอนุมัติแล้ว (`status === 'confirmed'`) เฉพาะสินค้ากลุ่ม **Packaging**
+    - ออกแบบเป็นส่วนที่สามารถย่อ/ขยายได้ (Collapsible Accordion) พร้อมแสดงจำนวน Lot ที่ถูกตัด และยอดรวมตัดจ่ายตาม FIFO
+    - แสดงรายละเอียดของแต่ละ Allocation: ลำดับที่ (#1, #2, ...), หมายเลข Lot, วันที่รับเข้าของ Lot, ปริมาณตัดออก, สถานะของ Lot, และ Supplier Lot (`-` หากไม่มีข้อมูล)
+    - แสดงผลตามลำดับ Allocation ที่ Backend ส่งมาโดยตรง ห้าม Sort ใหม่บน Frontend
+    - กำหนด Role-based visibility: แสดงเฉพาะบทบาท `Supervisor` และ `Admin` เท่านั้น โดยผู้ใช้ `Staff` จะไม่เห็นส่วนนี้และคง Workflow เดิม 100%
+  - แก้ไขใน [frontend/lib/auth.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/lib/auth.ts):
+    - ขยาย Interface `StockTransaction.product` ให้รองรับ `itemType?: string` สำหรับการตรวจสอบประเภทสินค้าได้อย่างแม่นยำ
+  - ตรวจสอบ Type Check (`npx tsc --noEmit`) ผ่านฉลุย 100% ปราศจากข้อผิดพลาด
+- **ปรับปรุงการจำกัดสิทธิ์การมองเห็น FIFO Lot UI ตามบทบาทผู้ใช้ (STEP 4.3.1.5 — Fix & Verify Role Visibility) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/inventory/page.tsx):
+    - ปรับเงื่อนไขการแสดงปุ่ม **"ดูสต็อกแยกตาม Lot"** บน Packaging Card ให้แสดงเฉพาะบทบาท `Supervisor` และ `Admin` เท่านั้น (`user?.role === 'supervisor' || user?.role === 'admin'`)
+    - ปรับเงื่อนไขการแสดงปุ่ม **"ดู Lot"** ในตาราง Flat View ให้แสดงเฉพาะบทบาท `Supervisor` และ `Admin` เช่นเดียวกัน
+    - เพิ่ม Role Guard ในฟังก์ชัน `openLotModal` เพื่อป้องกันไม่ให้ผู้ใช้บทบาท `Staff` สามารถเปิดดู Modal ได้
+    - ยืนยันว่าผู้ใช้บทบาท `Staff` จะไม่เห็นปุ่มดู Lot, ไม่เห็น Lot Modal, และคง Workflow เดิม (`Scan -> Quantity -> Submit`) 100%
+  - ตรวจสอบ Type Check (`npx tsc --noEmit`) ผ่านฉลุย 100% ปราศจากข้อผิดพลาด
+- **พัฒนา UI แสดงรายละเอียดสต็อกแยกตาม Lot (STEP 4.3.1 — Inventory Lot Details UI Implementation) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/inventory/page.tsx):
+    - เพิ่มปุ่ม **"ดูสต็อกแยกตาม Lot"** (ไอคอน `Layers`) บนการ์ดสินค้าเฉพาะกลุ่ม **Packaging** ในหน้าจัดการสต็อก (Inventory)
+    - เพิ่มปุ่มดู Lot ขนาดกะทัดรัดในมุมมองตาราง (Flat View) สำหรับสินค้า Packaging
+    - เพิ่ม Modal แสดงรายละเอียด Lot ย่อย (`selectedLotProduct`):
+      - แสดงข้อมูลสินค้า: ชื่อสินค้า, Item Code, คลัง/ตำแหน่ง, และสต็อกรวมจาก `Product.quantity`
+      - เรียกข้อมูล Lot แบบ On-demand ผ่าน `fetchProductLots(product.id)`
+      - แสดงรายการ Lot เรียงลำดับตาม 3-Tier FIFO ที่ส่งมาจาก API (`#1`, `#2`, ...) ห้ามจัดเรียงใหม่บน Frontend
+      - ข้อมูลแต่ละ Lot ครบถ้วน: หมายเลข Lot (`INIT-...` หรือ `LOT-...`), วันที่รับเข้า, ปริมาณรับเข้า, ปริมาณคงเหลือ, สถานะ (🟢 Active / ⚪ Depleted), และ Supplier Lot (`-` หากไม่มีข้อมูล)
+      - มี Loading State, Error Handling พร้อมปุ่มลองใหม่อีกครั้ง และ Empty State หากไม่มีข้อมูล Lot
+      - รองรับ Responsive และการเลื่อนดูข้อมูล (Scrollable) ปิดได้ทั้งปุ่มกากบาท, ปุ่มปิดหน้าต่าง และการแตะพื้นหลัง
+    - รักษา Design Language เดิม 100% ไม่กระทบสินค้า Non-Packaging (FG, Raw Material, Bulk) และไม่เปลี่ยนแปลง Staff Workflow
+  - ตรวจสอบ Type Check (`npx tsc --noEmit`) ผ่านฉลุย 100% ปราศจากข้อผิดพลาด
+- **พัฒนา Backend API และ Frontend Data Mapping สำหรับ FIFO UI (STEP 4.2.6) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts):
+    - เพิ่ม Endpoint `GET /products/:productId/lots` สำหรับดึงรายการ Lot ย่อยของสินค้า Packaging แบบ On-demand
+    - ตรวจสอบ `itemType === 'Packaging'` (ปฏิเสธสินค้า Non-Packaging อย่างถูกต้อง)
+    - จัดเรียงลำดับ Lot ตามหลัก 3-Tier FIFO Priority (`receivedDate ASC` -> `Transaction.createdAt ASC` -> `ProductLot.id ASC`) รองรับกรณี Initial Lot (`transactionId = null`) ได้อย่างปลอดภัย
+  - แก้ไขใน [frontend/lib/auth.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/lib/auth.ts):
+    - เพิ่ม Interface `ProductLot` และ `TransactionLotAllocation`
+    - เพิ่มฟิลด์ `lot?: ProductLot | null` และ `allocations?: TransactionLotAllocation[]` ใน Interface `StockTransaction`
+    - เพิ่มฟังก์ชัน `fetchProductLots(productId: number)` สำหรับดึงรายการ Lots
+  - ตรวจสอบ Type Check และ Build ผ่านฉลุย 100% ทั้ง Backend และ Frontend โดยไม่มีการแตะต้อง UI, Workflow หรือ Database Schema
+- **ตรวจสอบความปลอดภัยและความถูกต้องของข้อมูล FIFO หลังการตัดจ่ายจริง (STEP 4.1.5 — FIFO Safety & Data Integrity Verification) (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการตรวจสอบเชิงวิเคราะห์ (Analysis & Verification Only โดยไม่มีการแก้ไข Database หรือ Source Code ใดๆ):
+    - **Scope**: ยืนยันระบบ FIFO ทำงานเฉพาะสินค้า Packaging (24 รายการ) ส่วน FG (12 รายการ), Raw Material (7 รายการ), Bulk (1 รายการ) ไม่มี Lot ปะปน (0 Lots) และไม่ได้รับผลกระทบ
+    - **Stock Consistency**: ตรวจสอบครบทั้ง 24 สินค้า Packaging: ยอดรวม `Product.quantity` เท่ากับ `SUM(ProductLot.remainingQuantity)` ตรงกัน 100% ทุกรายการ (0 Mismatches), ไม่มียอดติดลบ (0 Negative Stocks), และไม่มีปัญหา Precision ทศนิยม (0 Floating Point Errors)
+    - **Initial Lots**: Initial Lots ทั้ง 24 รายการ มีสถานะ `active` สต็อกครบถ้วน และพร้อมสำหรับการตัดเบิกตามลำดับ FIFO
+    - **Safety & Concurrency**: ยืนยันการป้องกัน Concurrency ผ่าน Database Row Lock (`SELECT ... FOR UPDATE`), การป้องกัน Confirm ซ้ำ (HTTP 409), และการ Rollback เมื่อเกิดข้อผิดพลาด
+    - **Final Verdict**: สรุปผลการประเมินสถานะระบบเป็น **✅ READY** พร้อมสำหรับการใช้งานจริง
+- **พัฒนาระบบ FIFO Issue / Allocation จริงสำหรับสินค้า Packaging (STEP 4.1) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [backend/prisma/schema.prisma](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/prisma/schema.prisma):
+    - เพิ่ม Model `TransactionLotAllocation` สำหรับบันทึกประวัติการตัด Lot (`transactionId`, `productLotId`, `quantity`, `createdAt`) พร้อมเชื่อม Relations ไปยัง Model `Transaction` และ `ProductLot`
+    - ซิงค์โครงสร้างสู่ Supabase สำเร็จด้วย `npx prisma db push` ปลอดภัย 100%
+  - แก้ไขใน [backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts):
+    - เพิ่มฟังก์ชัน `roundQty(value)` แก้ปัญหา Floating Point Precision
+    - ปรับปรุง `POST /transactions/:id/confirm`:
+      - ใช้ Database Row Lock (`SELECT ... FOR UPDATE`) บนตาราง `Product` เพื่อรับประกัน Concurrency ป้องกัน Race Condition เมื่อมีการ Confirm พร้อมกัน
+      - คัดเลือก Active Lots ของ Packaging ตามลำดับ 3-Tier FIFO Priority (`receivedDate ASC` -> `Transaction.createdAt ASC` -> `ProductLot.id ASC`)
+      - ตรวจสอบยอดสต็อกรวมของ Lot ก่อนตัด หากไม่พอจะปฏิเสธทันทีด้วย HTTP 409 (ห้าม Partial Deduction)
+      - ตัดยอด `remainingQuantity` ของแต่ละ Lot ตามลำดับ พร้อมเปลี่ยนสถานะเป็น `depleted` เมื่อสต็อกหมด และสร้างบันทึกใน `TransactionLotAllocation`
+      - ลด `Product.quantity` และเปลี่ยนสถานะ Transaction เป็น `confirmed` ภายใต้ `prisma.$transaction` เดียวกัน (Atomic Rollback 100%)
+      - สินค้า Non-Packaging (FG/Raw Material/Bulk) ยังคงลดเฉพาะ `Product.quantity` ตามเดิม
+    - ทดสอบผ่านฉลุยครบทั้ง 11 Test Cases (Cases A - K) และคงความถูกต้องของ Stock $\text{Product.quantity} = \text{SUM(ProductLot.remainingQuantity)}$ ครบ 24 รายการ Packaging (0 Mismatches)
+- **ตรวจสอบความพร้อมการจัดลำดับ FIFO Lot Ordering (STEP 3.11 — FIFO Lot Ordering Verification) (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการตรวจสอบเชิงวิเคราะห์ (Analysis & Verification Only):
+    - ยืนยัน 3-Tier FIFO Priority Rule: 1) `receivedDate ASC`, 2) `Transaction.createdAt ASC`, 3) `ProductLot.id ASC` (Deterministic Tie-break)
+    - ตรวจสอบ Initial Lots 24 รายการของ Packaging ทั้งหมด: มี `receivedDate` ครบถ้วน, ข้อมูลถูกต้อง พร้อมเข้าร่วมการตัดจ่ายแบบ FIFO
+    - ตรวจสอบความถูกต้องของเงื่อนไขการคัดกรอง: Lot ที่มี `status = 'active'` และ `remainingQuantity > 0` จะถูกดึงมาใช้ ส่วน Lot ที่ `remainingQuantity = 0` จะถูกกันออก
+    - ตรวจสอบ Stock Consistency: $\text{Product.quantity} = \text{SUM(ProductLot.remainingQuantity)}$ ครบทั้ง 24 รายการ (0 Mismatches)
+    - ทดสอบ Simulation การจัดลำดับทั้ง 4 Cases (A, B, C, D) ผ่านฉลุย 100%
+- **พัฒนาระบบ Receive Confirm & Automatic Lot Creation สำหรับสินค้า Packaging (STEP 3.10) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts):
+    - เพิ่มฟังก์ชัน `formatLotNumber(date, id)` สำหรับสร้าง `lotNumber` ในรูปแบบ `LOT-YYYYMMDD-XXXX` โดยใช้ `id` ของ Lot โดยตรง ป้องกันปัญหาเลขซ้ำเมื่อมีการ Confirm พร้อมกัน
+    - ปรับปรุง `POST /transactions/:id/confirm`:
+      - ตรวจสอบ `itemType === 'Packaging'` ของสินค้า หากเป็น Packaging ระบบจะสร้าง `ProductLot` ให้อัตโนมัติ (`receivedDate`, `receivedQuantity`, `remainingQuantity`, `supplierLot`, `transactionId`, `status: 'active'`)
+      - อัปเดต `Product.quantity` เพิ่มขึ้นตามยอดที่รับเข้า และบันทึกสถานะ Transaction เป็น `confirmed`
+      - ทุกคำสั่งทำงานอยู่ภายใต้ `prisma.$transaction` เดียวกัน รับประกันความเป็น Atomic (หากล้มเหลวจะ Rollback ทั้งหมด)
+      - สำหรับสินค้าประเภท Non-Packaging (FG, Raw Material, Bulk) จะอัปเดตเฉพาะ `Product.quantity` โดยไม่สร้าง `ProductLot`
+    - รองรับการรับค่า `receivedDate` และ `supplierLot` (Optional) ผ่าน `POST /transactions` โดย Staff ไม่จำเป็นต้องสร้างหรือกรอกเลข Lot เอง (ระบบสร้างให้อัตโนมัติ)
+    - ทดสอบผ่านฉลุยครบทั้ง 4 Test Cases: Case A (รับเข้า Packaging สำเร็จและ Lot ตรง), Case B (ป้องกันการ Confirm ซ้ำ/Duplicate), Case C (Non-Packaging ไม่สร้าง Lot), Case D (Rollback เมื่อเกิด Error)
+- **ตรวจสอบ Scope ของระบบ FIFO เฉพาะสินค้า Packaging (STEP 3.9.5 — Packaging Scope Verification) (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการตรวจสอบและวิเคราะห์โครงสร้างข้อมูลจริงของระบบ (Analysis & Verification Only โดยไม่มีการแก้ไข Database หรือ Source Code ใดๆ):
+    - **Frontend & API**: หน้าเว็บจัดการสต็อก [frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/inventory/page.tsx) ดึงข้อมูลผ่าน `GET /products` จากตาราง `Product` โดยใช้เงื่อนไข `itemType === 'Packaging'` ซึ่งแสดงรายการสินค้าบรรจุภัณฑ์ทั้งหมด **24 รายการ** ตรงกับหน้าเว็บและ Requirement
+    - **Source of Truth**: ตาราง `Product` เป็น Master Data และ Stock ของ Packaging ส่วนตาราง `BillOfMaterial` มีหน้าที่เก็บโครงสร้างสูตรสินค้า (BOM Recipe) ไม่ได้ใช้เก็บสต็อกหรือทำ FIFO
+    - **Initial Lot Verification**: ตาราง `ProductLot` ปัจจุบันมี Initial Lots ทั้งหมด **24 รายการ** ซึ่งตรงกับสินค้าประเภท Packaging 100% (ไม่มี Non-Packaging ปะปน) และยอดคงเหลือใน `ProductLot.remainingQuantity` เท่ากับ `Product.quantity` ครบทุกรายการ (0 Mismatches)
+    - **Receive / Issue Flow**: ระบบตัดและเพิ่มสต็อกผ่านตาราง `Product` และ `Transaction` โดยเตรียมพร้อมเชื่อมต่อการสร้าง Lot ในขั้นตอน STEP 3.10
+
+## 31 ส.ค. 2026
+- **ดำเนินการ Initial Lot Migration สำหรับสต็อกเดิมเข้าสู่ระบบ FIFO (เฉพาะ Packaging 24 รายการ) (STEP 3.9) (เสร็จสมบูรณ์ 100%)**:
+  - สร้างและปรับปรุงสคริปต์ [backend/src/migrateInitialLots.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/migrateInitialLots.ts) ให้โฟกัสเฉพาะสินค้าประเภทบรรจุภัณฑ์ (`itemType: 'Packaging'`):
+    - กรองสินค้าที่เป็น Packaging ครบทั้ง 24 รายการ (มีสต็อก `quantity > 0` ทั้ง 24 รายการ)
+    - เคลียร์ Initial Lots ของหมวดอื่นที่ไม่ใช่ Packaging ออกจากตาราง `ProductLot`
+    - สร้าง `ProductLot` ประเภท Initial Lot (`INIT-[itemCode]`) ครบ **24 รายการพอดีเป๊ะ** กำหนด `receivedDate = 2026-08-31T00:00:00.000Z`, `supplierLot = 'INITIAL_STOCK'`, `transactionId = null`, `status = 'active'`
+    - ตรวจสอบ Stock Consistency: $\text{Product.quantity} = \text{ProductLot.remainingQuantity}$ ตรงกัน 100% ทุกรายการ (0 Mismatches)
+    - ทดสอบความ Idempotent รันซ้ำไม่สร้าง Lot เบิ้ล ข้อมูลสินค้าและธุรกรรมเดิมปลอดภัยครบถ้วน 100%
+- **สร้างโครงสร้าง Database Schema: ProductLot สำหรับระบบ FIFO (STEP 3.8) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [backend/prisma/schema.prisma](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/prisma/schema.prisma):
+    - เพิ่ม Model `ProductLot` ครบทุกฟิลด์: `id`, `productId`, `lotNumber (@unique)`, `supplierLot`, `receivedDate`, `receivedQuantity`, `remainingQuantity`, `transactionId (@unique nullable)`, `status`, `createdAt`, `updatedAt`
+    - เพิ่ม Index: `@@index([productId, status])` และ `@@index([receivedDate])`
+    - เพิ่ม Relation `lots ProductLot[]` ใน Model `Product` และ `lot ProductLot?` ใน Model `Transaction`
+    - รัน `prisma db push` และ `prisma generate` อย่างปลอดภัย ข้อมูลเดิมใน `Product` (44 รายการ) และ `Transaction` (16 รายการ) ปลอดภัย 100% ไม่มีการสูญหายหรือถูกรีเซ็ต
+    - ตรวจสอบ Type Check และ Build ผ่านฉลุย 100%
+- **ปรับปุ่มเปิด-ปิดแถบเมนูให้เหลือปุ่มเดียวใน Top Bar และใช้ดีไซน์ไอคอนสามขีด (Single 3-Line Hamburger Menu Toggle) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/components/Navigation.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/Navigation.tsx):
+    - ปรับเหลือปุ่มควบคุมเปิด-ปิดแถบเมนูเพียงจุดเดียวที่แถบ Top Bar ด้านบนซ้าย
+    - เปลี่ยนไอคอนปุ่มเป็น **รูปสามขีด (Hamburger Menu `<Menu />`)** สะอาดตา สบายตา ใช้งานง่าย
+    - นำปุ่มพับเก็บในส่วนหัวของแถบ Sidebar ออก เพื่อความเรียบง่ายและเป็นระเบียบตามคำขอ
+- **เพิ่มปุ่มเปิด-ปิดแถบเมนูด้านข้าง (Collapsible Sidebar with Toggle Button) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/components/Navigation.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/Navigation.tsx):
+    - กำหนดค่าเริ่มต้นเมื่อเข้าสู่ระบบ (`sidebarOpen = true`) ให้แถบเมนูด้านข้างกางออกพร้อมใช้งานทันที
+    - **ปุ่มปิดใน Sidebar Header**: เพิ่มปุ่มไอคอน `<PanelLeftClose />` ที่มุมบนขวาของกล่องโลโก้ ให้ผู้ใช้กดพับปิดแถบเมนูด้านข้างได้ทันที
+    - **ปุ่มเปิด-ปิดใน Top Bar**: เพิ่มปุ่มสลับเปิด-ปิดแถบเมนู (`<PanelLeftClose />` / `<PanelLeftOpen />`) ไว้ที่มุมบนซ้ายของแถบ Top Bar เมื่อกดปิด แถบ Sidebar จะหุบเก็บอย่างนุ่มนวล (`transition-all duration-300`) และพื้นที่เนื้อหาหน้าเว็บจะขยายเต็มความกว้างหน้าจอทันที
+- **ปรับแต่งไอคอนในแถบ Top Bar ให้แสดงแบบเรียบง่าย ไม่ใส่กรอบไฮไลท์สีแดง (Clean Neutral Icon in Top Bar) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/components/Navigation.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/Navigation.tsx):
+    - นำกรอบพื้นหลังสีแดงอ่อน (`bg-red-50`) และเส้นขอบสีแดงออกทั้งหมด โดยเปลี่ยนมาแสดงเป็นไอคอนสีธรรมชาติ (`text-slate-500`) วางคู่กับชื่อหน้าโดยตรง ทำให้แถบด้านบนดูมินิมอล สะอาดตา และไม่แย่งความสนใจจากเนื้อหาหลัก
+- **แก้ไขปัญหา Build Error (Syntax Error: Expected ',', got '{') ใน Navigation.tsx (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/components/Navigation.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/Navigation.tsx):
+    - สาเหตุเกิดจากการแก้ไขโค้ดรอบก่อนหน้าที่แท็กเปิด `<div className="flex-1 flex flex-col h-screen overflow-hidden min-w-0">` (กล่องครอบฝั่งขวา) หายไป ทำให้แท็ก `</div>` ด้านล่างไปปิดแท็กนอกสุดก่อนกำหนด
+    - ได้ทำการใส่แท็กเปิดของกล่องคอนเทนต์ฝั่งขวากลับคืนมาอย่างถูกต้อง ทำให้โครงสร้าง JSX เปิด-ปิดครบคู่ 100% และ Next.js Compile ผ่านฉลุยทันที
+- **เพิ่มไอคอนประจำเมนูไว้ด้านหน้าชื่อหน้าในแถบ Top Bar เมื่อกดเลือกเมนู (Active Menu Icon in Top Bar) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/components/Navigation.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/Navigation.tsx):
+    - เพิ่มไอคอนของเมนูนั้นๆ ในกรอบสี่เหลี่ยมโค้งมนสีแดงอ่อน (`bg-red-50 border border-red-100 text-[#BE1111]`) วางไว้ด้านหน้าชื่อหน้าในแถบ Slim Top Bar ด้านบน เช่น เมื่อเลือกหน้าหลักจะแสดงไอคอน Home, เมื่อเลือกสแกนจะแสดงไอคอน ScanLine, เมื่อเลือกสต็อกจะแสดงไอคอน Package เป็นต้น
+- **ปรับแต่งน้ำหนักตัวอักษรแถบเมนูนำทางเป็นรูปแบบตัวธรรมดา (Non-bold / Regular Menu Text) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/components/Navigation.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/Navigation.tsx):
+    - ปรับเปลี่ยนคลาสข้อความและชื่อเมนูทั้งหมดใน Navigation ให้ใช้ `font-normal` (Regular weight) แทน `font-semibold` / `font-bold` ตามคำขอของผู้ใช้ เพื่อให้ข้อความแถบเมนูดูเบาสบายตา เรียบหรู และไม่หนาเกินไป
+- **ปรับแต่งฟอนต์ตัวหนังสือของทั้งเว็บแอปพลิเคชันเป็นฟอนต์ "Prompt" (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/app/globals.css](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/globals.css) และ [frontend/app/layout.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/layout.tsx):
+    - กำหนดฟอนต์ **Prompt** (`var(--font-prompt-sans)`) เป็นฟอนต์หลักอันดับหนึ่งของทั้งระบบ (`--font-display`, `--font-sans`, `--font-body` และ `body`)
+    - รองรับทั้งภาษาไทยและภาษาอังกฤษ พร้อมน้ำหนักตัวอักษรครบถ้วน (`weight: 300, 400, 500, 600, 700, 800`) และ `display: swap` เพื่อให้ตัวหนังสือคมชัด โค้งมน ทันสมัย อ่านง่ายแบบ Loopless สไตล์เดียวกับเวอร์ชัน Deployment
+- **ปรับปรุงโครงสร้างแถบเมนูนำทางเป็นแถบด้านซ้าย (Fixed Left Sidebar Navigation Layout) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขใน [frontend/components/Navigation.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/Navigation.tsx):
+    - **แถบด้านซ้ายบน Desktop (`md:flex`)**: ปรับเปลี่ยนโครงสร้างระบบนำทางเป็น **Fixed Left Sidebar** แสดงโลโก้ `WPK MMS` (ไอคอนกล่องสินค้าสีแดง `#BE1111`), รายการเมนูแนวตั้งพร้อมไอคอน, Badge แสดงจำนวนรายการรออนุมัติ, และกล่องโปรไฟล์ผู้ใช้งานพร้อมปุ่มออกจากระบบที่ด้านล่างของ Sidebar
+    - **ส่วนหัวด้านบนบน Desktop (Slim Top Bar)**: แสดงชื่อหน้าปัจจุบันที่กำลังเปิดอยู่ และคงปุ่มกระดิ่งแจ้งเตือน (Notifications Popover) ไว้ที่มุมบนขวาพร้อมสถานะระบบพร้อมใช้งาน
+    - **หน้าจอมือถือ (Mobile View)**: คงแถบ Top Header ด้านบน และ Bottom Navigation Bar ด้านล่างไว้ตามเดิม เพื่อความสะดวกในการใช้งานด้วยนิ้วเดียวบนสมาร์ทโฟน
+    - **โทนสีและดีไซน์**: ใช้สไตล์ Clean Light & Red Accent (`#BE1111`) เส้นขอบบางเฉียบ เงาเบานุ่มนวล สวยงามเข้ากับทั้งระบบ
+
 ## 28 ส.ค. 2026
 - **จัดวางแถบเมนูนำทางให้เรียงชิดซ้ายต่อเนื่องต่อจากโลโก้ WPK MMS (Left-Aligned Top Navigation Layout) (เสร็จสมบูรณ์ 100%)**:
   - แก้ไขใน [frontend/components/Navigation.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/Navigation.tsx):

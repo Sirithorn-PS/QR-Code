@@ -87,10 +87,23 @@ interface TransactionBody {
   type: 'receive' | 'issue'
   quantity: number
   note?: string
+  receivedDate?: string
+  supplierLot?: string
 }
 
 function normalizeText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
+}
+
+function roundQty(value: number): number {
+  return Number(Math.round(Number(value + 'e+4')) + 'e-4')
+}
+
+function formatLotNumber(date: Date, id: number): string {
+  const yyyy = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
+  return `LOT-${yyyy}${mm}${dd}-${String(id).padStart(4, '0')}`
 }
 
 function signToken(user: { id: number; username: string; role: string }) {
@@ -472,6 +485,75 @@ app.get('/products', authenticate, async (req, res) => {
   } catch (error) {
     console.error('Error fetching products:', error)
     return res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลสต็อกสินค้าได้ชั่วคราว กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่อีกครั้ง' })
+  }
+})
+
+app.get('/products/:productId/lots', authenticate, async (req, res) => {
+  try {
+    const productId = Number(req.params.productId)
+    if (!Number.isInteger(productId) || productId <= 0) {
+      return res.status(400).json({ error: 'รหัสสินค้าไม่ถูกต้อง' })
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+    })
+
+    if (!product) {
+      return res.status(404).json({ error: 'ไม่พบสินค้าในระบบ' })
+    }
+
+    if (product.itemType !== 'Packaging') {
+      return res.status(400).json({ error: 'ระบบ FIFO รองรับเฉพาะสินค้าประเภท Packaging เท่านั้น' })
+    }
+
+    const lots = await prisma.productLot.findMany({
+      where: { productId },
+      include: {
+        transaction: {
+          select: { createdAt: true },
+        },
+      },
+      orderBy: [
+        { receivedDate: 'asc' },
+        { id: 'asc' },
+      ],
+    })
+
+    // เรียงลำดับตาม 3-Tier FIFO Priority
+    lots.sort((a, b) => {
+      const timeA = new Date(a.receivedDate).getTime()
+      const timeB = new Date(b.receivedDate).getTime()
+      if (timeA !== timeB) return timeA - timeB
+
+      const txTimeA = a.transaction?.createdAt
+        ? new Date(a.transaction.createdAt).getTime()
+        : new Date(a.createdAt).getTime()
+      const txTimeB = b.transaction?.createdAt
+        ? new Date(b.transaction.createdAt).getTime()
+        : new Date(b.createdAt).getTime()
+      if (txTimeA !== txTimeB) return txTimeA - txTimeB
+
+      return a.id - b.id
+    })
+
+    return res.json(
+      lots.map((l) => ({
+        id: l.id,
+        productId: l.productId,
+        lotNumber: l.lotNumber,
+        supplierLot: l.supplierLot,
+        receivedDate: l.receivedDate.toISOString(),
+        receivedQuantity: l.receivedQuantity,
+        remainingQuantity: l.remainingQuantity,
+        status: l.status,
+        transactionId: l.transactionId,
+        createdAt: l.createdAt.toISOString(),
+      })),
+    )
+  } catch (error) {
+    console.error('Error fetching product lots:', error)
+    return res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลสต็อก Lot ได้' })
   }
 })
 
@@ -867,6 +949,10 @@ app.get('/transactions', authenticate, async (req, res) => {
       where: Object.keys(whereClause).length > 0 ? whereClause : undefined,
       include: {
         product: true,
+        lot: true,
+        allocations: {
+          include: { productLot: true },
+        },
         createdBy: {
           select: { id: true, username: true, fullName: true, role: true },
         },
@@ -900,6 +986,22 @@ app.post('/transactions', authenticate, async (req: AuthenticatedRequest, res: R
       return res.status(404).json({ error: 'Product not found' })
     }
 
+    const supplierLot = normalizeText(body.supplierLot) || null
+    let receivedDateIso: string | null = null
+    if (body.receivedDate && typeof body.receivedDate === 'string' && !isNaN(Date.parse(body.receivedDate))) {
+      const parsedDate = new Date(body.receivedDate)
+      if (parsedDate.getTime() > Date.now()) {
+        return res.status(400).json({ error: 'วันที่รับเข้าต้องไม่เป็นวันที่ในอนาคต' })
+      }
+      receivedDateIso = parsedDate.toISOString()
+    }
+
+    const snapshot = {
+      ...productSnapshot(product),
+      ...(supplierLot ? { supplierLot } : {}),
+      ...(receivedDateIso ? { receivedDate: receivedDateIso } : {}),
+    }
+
     const transaction = await prisma.transaction.create({
       data: {
         productId: product.id,
@@ -907,7 +1009,7 @@ app.post('/transactions', authenticate, async (req: AuthenticatedRequest, res: R
         quantity,
         status: 'pending',
         note: normalizeText(body.note) || null,
-        itemSnapshot: productSnapshot(product),
+        itemSnapshot: snapshot,
         createdById: req.user!.id,
       },
       include: {
@@ -965,21 +1067,177 @@ app.post(
         return res.status(409).json({ error: 'Transaction is not pending' })
       }
 
-      const nextQuantity =
-        transaction.type === 'receive'
-          ? transaction.product.quantity + transaction.quantity
-          : transaction.product.quantity - transaction.quantity
+      if (transaction.quantity <= 0) {
+        return res.status(400).json({ error: 'Invalid transaction quantity' })
+      }
 
-      if (nextQuantity < 0) {
-        return res.status(409).json({ error: 'Insufficient stock' })
+      // ตรวจสอบข้อมูลวันที่รับเข้า (receivedDate) และ supplierLot สำหรับ Receive Transaction
+      let lotReceivedDate = transaction.createdAt
+      let supplierLot: string | null = null
+
+      if (transaction.type === 'receive') {
+        const snap =
+          typeof transaction.itemSnapshot === 'object' && transaction.itemSnapshot !== null
+            ? (transaction.itemSnapshot as Record<string, unknown>)
+            : {}
+
+        if (typeof snap.receivedDate === 'string' && !isNaN(Date.parse(snap.receivedDate))) {
+          const parsed = new Date(snap.receivedDate)
+          if (parsed.getTime() > Date.now()) {
+            return res.status(400).json({ error: 'วันที่รับเข้าต้องไม่เป็นวันที่ในอนาคต' })
+          }
+          lotReceivedDate = parsed
+        }
+        if (typeof snap.supplierLot === 'string' && snap.supplierLot.trim()) {
+          supplierLot = snap.supplierLot.trim()
+        }
       }
 
       const result = await prisma.$transaction(async (tx) => {
-        await tx.product.update({
-          where: { id: transaction.productId },
-          data: { quantity: nextQuantity },
-        })
+        // Concurrency Control: ใช้ Row Lock บน Product เพื่อป้องกัน Race Condition จากการยืนยันพร้อมกัน
+        await tx.$executeRaw`SELECT id FROM "Product" WHERE id = ${transaction.productId} FOR UPDATE`
 
+        const freshProduct = await tx.product.findUnique({
+          where: { id: transaction.productId },
+        })
+        if (!freshProduct) {
+          throw new Error('Product not found')
+        }
+
+        // ----------------------------------------------------
+        // CASE 1: RECEIVE TRANSACTION
+        // ----------------------------------------------------
+        if (transaction.type === 'receive') {
+          const nextQuantity = roundQty(freshProduct.quantity + transaction.quantity)
+
+          // 1. อัปเดต Total Stock ในตาราง Product
+          await tx.product.update({
+            where: { id: transaction.productId },
+            data: { quantity: nextQuantity },
+          })
+
+          // 2. ถ้าเป็นสินค้า Packaging ให้สร้าง ProductLot อัตโนมัติ
+          if (transaction.product.itemType === 'Packaging') {
+            const tempLotNumber = `TEMP-${transaction.id}-${Date.now()}`
+            const createdLot = await tx.productLot.create({
+              data: {
+                productId: transaction.productId,
+                lotNumber: tempLotNumber,
+                supplierLot: supplierLot,
+                receivedDate: lotReceivedDate,
+                receivedQuantity: transaction.quantity,
+                remainingQuantity: transaction.quantity,
+                transactionId: transaction.id,
+                status: 'active',
+              },
+            })
+
+            const finalLotNumber = formatLotNumber(lotReceivedDate, createdLot.id)
+            await tx.productLot.update({
+              where: { id: createdLot.id },
+              data: { lotNumber: finalLotNumber },
+            })
+          }
+        }
+
+        // ----------------------------------------------------
+        // CASE 2: ISSUE TRANSACTION (เบิกสินค้า)
+        // ----------------------------------------------------
+        else if (transaction.type === 'issue') {
+          // 2.1 หากเป็นสินค้า Packaging: ใช้ FIFO Allocation ตัดยอดจาก ProductLot
+          if (transaction.product.itemType === 'Packaging') {
+            // ดึง Active Lots ที่มีสต็อกคงเหลือ > 0
+            const availableLots = await tx.productLot.findMany({
+              where: {
+                productId: transaction.productId,
+                status: 'active',
+                remainingQuantity: { gt: 0 },
+              },
+              include: { transaction: true },
+              orderBy: [
+                { receivedDate: 'asc' },
+                { id: 'asc' },
+              ],
+            })
+
+            // จัดเรียงตามกฎ FIFO 3 ลำดับ: 1. receivedDate ASC -> 2. Transaction.createdAt ASC -> 3. ProductLot.id ASC
+            availableLots.sort((a, b) => {
+              const timeA = new Date(a.receivedDate).getTime()
+              const timeB = new Date(b.receivedDate).getTime()
+              if (timeA !== timeB) return timeA - timeB
+
+              const txTimeA = a.transaction?.createdAt ? new Date(a.transaction.createdAt).getTime() : 0
+              const txTimeB = b.transaction?.createdAt ? new Date(b.transaction.createdAt).getTime() : 0
+              if (txTimeA !== txTimeB) return txTimeA - txTimeB
+
+              return a.id - b.id
+            })
+
+            const totalAvailableLotQty = roundQty(
+              availableLots.reduce((acc, l) => acc + l.remainingQuantity, 0),
+            )
+
+            // ตรวจสอบสต็อกรวมก่อนตัด: หากไม่พอ ให้ปฏิเสธทันที (ห้าม Partial Deduction)
+            if (transaction.quantity > totalAvailableLotQty || transaction.quantity > freshProduct.quantity) {
+              const error = new Error('สต็อกใน Lot ไม่เพียงพอสำหรับการเบิก')
+              ;(error as unknown as { statusCode: number }).statusCode = 409
+              throw error
+            }
+
+            // ทำการตัดยอดสต็อกตามลำดับ FIFO
+            let qtyNeeded = roundQty(transaction.quantity)
+            for (const lot of availableLots) {
+              if (qtyNeeded <= 0) break
+
+              const deductQty = roundQty(Math.min(lot.remainingQuantity, qtyNeeded))
+              const nextRemaining = roundQty(lot.remainingQuantity - deductQty)
+              const nextStatus = nextRemaining <= 0 ? 'depleted' : 'active'
+
+              // อัปเดต ProductLot
+              await tx.productLot.update({
+                where: { id: lot.id },
+                data: {
+                  remainingQuantity: nextRemaining,
+                  status: nextStatus,
+                },
+              })
+
+              // บันทึกประวัติการจัดสรร Lot
+              await tx.transactionLotAllocation.create({
+                data: {
+                  transactionId: transaction.id,
+                  productLotId: lot.id,
+                  quantity: deductQty,
+                },
+              })
+
+              qtyNeeded = roundQty(qtyNeeded - deductQty)
+            }
+
+            // อัปเดต Product.quantity
+            const nextQuantity = roundQty(freshProduct.quantity - transaction.quantity)
+            await tx.product.update({
+              where: { id: transaction.productId },
+              data: { quantity: nextQuantity },
+            })
+          }
+          // 2.2 หากเป็นสินค้า Non-Packaging (FG / Raw Material / Bulk): ลดเฉพาะ Product.quantity
+          else {
+            const nextQuantity = roundQty(freshProduct.quantity - transaction.quantity)
+            if (nextQuantity < 0) {
+              const error = new Error('Insufficient stock')
+              ;(error as unknown as { statusCode: number }).statusCode = 409
+              throw error
+            }
+
+            await tx.product.update({
+              where: { id: transaction.productId },
+              data: { quantity: nextQuantity },
+            })
+          }
+        }
+
+        // 3. อัปเดตสถานะ Transaction เป็น confirmed
         return tx.transaction.update({
           where: { id },
           data: {
@@ -989,6 +1247,10 @@ app.post(
           },
           include: {
             product: true,
+            lot: true,
+            allocations: {
+              include: { productLot: true },
+            },
             createdBy: {
               select: { id: true, username: true, fullName: true, role: true },
             },

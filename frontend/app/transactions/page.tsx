@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { confirmTransaction, fetchTransactions, rejectTransaction, StockTransaction } from '@/lib/auth'
-import { Loader2, CheckCircle2, AlertCircle, XCircle, Clock, Filter } from 'lucide-react'
+import { Loader2, CheckCircle2, AlertCircle, XCircle, Clock, Filter, Layers, ChevronDown, ChevronUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 function TransactionsContent() {
@@ -18,6 +18,12 @@ function TransactionsContent() {
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [activeHighlightId, setActiveHighlightId] = useState<number | null>(null)
+
+  // เก็บ ID ของรายการที่เปิดดูรายละเอียด FIFO Lot Allocation
+  const [expandedTxIds, setExpandedTxIds] = useState<Record<number, boolean>>({})
+  const toggleExpand = (id: number) => {
+    setExpandedTxIds((prev) => ({ ...prev, [id]: !prev[id] }))
+  }
 
   // เก็บ ID ของรายการที่กำลังกดอนุมัติหรือปฏิเสธ เพื่อแสดงสถานะหมุน (Spinner) บนปุ่ม
   const [processingId, setProcessingId] = useState<number | null>(null)
@@ -340,6 +346,135 @@ function TransactionsContent() {
                       </div>
                     )}
                   </div>
+
+                  {/* FIFO Lot Allocation Section (Visible to Supervisor/Admin for Confirmed Packaging Issue) */}
+                  {(() => {
+                    const isSupervisorOrAdmin = user?.role === 'supervisor' || user?.role === 'admin'
+                    const isPackagingIssueConfirmed =
+                      transaction.type === 'issue' &&
+                      transaction.status === 'confirmed' &&
+                      (transaction.product?.itemType === 'Packaging' || transaction.itemSnapshot?.itemType === 'Packaging')
+
+                    if (!isSupervisorOrAdmin || !isPackagingIssueConfirmed || !transaction.allocations || transaction.allocations.length === 0) {
+                      return null
+                    }
+
+                    const isExpanded = expandedTxIds[transaction.id] ?? false
+                    const totalAllocated = transaction.allocations.reduce((acc, a) => acc + (Number(a.quantity) || 0), 0)
+                    const unit = transaction.product?.unit || transaction.itemSnapshot?.unit || ''
+
+                    return (
+                      <div className="mt-4 pt-4 border-t border-slate-100 font-display">
+                        <div className="rounded-2xl border border-blue-100 bg-blue-50/40 overflow-hidden transition-all">
+                          {/* Header / Toggle Button */}
+                          <button
+                            type="button"
+                            onClick={() => toggleExpand(transaction.id)}
+                            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-blue-50/80 transition-colors cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <div className="flex items-center gap-1.5 font-bold text-xs text-blue-900">
+                                <Layers className="w-4 h-4 text-blue-600 shrink-0" />
+                                <span>ตัดสต็อกตามลำดับ FIFO</span>
+                              </div>
+                              <span className="text-[11px] font-semibold text-blue-700 bg-blue-100/90 px-2.5 py-0.5 rounded-full border border-blue-200/70">
+                                {transaction.allocations.length} Lot{transaction.allocations.length > 1 ? 's' : ''}
+                              </span>
+                              <span className="text-xs font-semibold text-slate-500">
+                                (รวม {totalAllocated.toLocaleString()} {unit})
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1 text-xs font-bold text-blue-700">
+                              <span>{isExpanded ? 'ซ่อนรายละเอียด' : 'ดูรายละเอียด'}</span>
+                              {isExpanded ? (
+                                <ChevronUp className="w-4 h-4" />
+                              ) : (
+                                <ChevronDown className="w-4 h-4" />
+                              )}
+                            </div>
+                          </button>
+
+                          {/* Collapsible Content */}
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="border-t border-blue-100/80 bg-white/90 px-4 py-3.5 overflow-hidden"
+                              >
+                                <div className="space-y-2">
+                                  {transaction.allocations.map((alloc, idx) => {
+                                    const lot = alloc.productLot
+                                    const receivedDateStr = lot?.receivedDate
+                                      ? new Date(lot.receivedDate).toLocaleDateString('th-TH', {
+                                          year: 'numeric',
+                                          month: 'short',
+                                          day: 'numeric',
+                                        })
+                                      : '-'
+
+                                    return (
+                                      <div
+                                        key={alloc.id || idx}
+                                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 rounded-xl border border-slate-200/80 bg-white shadow-2xs text-xs"
+                                      >
+                                        <div className="flex items-start gap-2.5 min-w-0">
+                                          <span className="shrink-0 font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 text-[11px]">
+                                            #{idx + 1}
+                                          </span>
+                                          <div className="space-y-0.5 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                              <span className="font-extrabold text-slate-900 tracking-tight text-xs sm:text-sm">
+                                                {lot?.lotNumber || `Lot ID: ${alloc.productLotId}`}
+                                              </span>
+                                              {lot?.status && (
+                                                <span
+                                                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                                    lot.status === 'Active'
+                                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                      : 'bg-slate-100 text-slate-500 border-slate-200'
+                                                  }`}
+                                                >
+                                                  {lot.status}
+                                                </span>
+                                              )}
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-x-3 text-[11px] text-slate-500">
+                                              <span>วันที่รับเข้า: <strong className="text-slate-700 font-semibold">{receivedDateStr}</strong></span>
+                                              <span>•</span>
+                                              <span>Supplier Lot: <strong className="text-slate-700 font-semibold">{lot?.supplierLot || '-'}</strong></span>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                                          <span className="text-[11px] text-slate-500 font-medium">ตัดออก:</span>
+                                          <span className="font-black text-blue-700 text-xs sm:text-sm bg-blue-50 px-3 py-1 rounded-lg border border-blue-100">
+                                            {alloc.quantity.toLocaleString()} {unit}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+
+                                {/* Total allocation summary footer */}
+                                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+                                  <span className="font-semibold">รวมยอดตัดสต็อกตาม FIFO ทั้งหมด:</span>
+                                  <span className="font-black text-slate-900 text-sm">
+                                    {totalAllocated.toLocaleString()} {unit}
+                                  </span>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
               )
             })

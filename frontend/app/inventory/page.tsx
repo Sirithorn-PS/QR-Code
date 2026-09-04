@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { fetchProducts, updateProductQuantity, createProduct, deleteProduct, fetchProductBom, createProductWithBom, Product, BillOfMaterial } from '@/lib/auth'
+import { fetchProducts, updateProductQuantity, createProduct, deleteProduct, fetchProductBom, createProductWithBom, fetchProductLots, Product, BillOfMaterial, ProductLot } from '@/lib/auth'
 import QRCode from 'react-qr-code'
 import { Search, Package, ArrowLeft, Layers, Download, Check, History, X, Trash2, FileText, LayoutGrid, Crown, Droplets, Box, FlaskConical, QrCode, Star, Copy, Zap, Disc, Plus, CheckCircle2, AlertCircle, Printer } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -97,6 +97,31 @@ export default function InventoryPage() {
   const [selectedQrProduct, setSelectedQrProduct] = useState<Product | null>(null)
   const [bomList, setBomList] = useState<BillOfMaterial[]>([])
   const [bomLoading, setBomLoading] = useState(false)
+
+  // Packaging Lot Details state
+  const [selectedLotProduct, setSelectedLotProduct] = useState<Product | null>(null)
+  const [lotList, setLotList] = useState<ProductLot[]>([])
+  const [lotLoading, setLotLoading] = useState(false)
+  const [lotError, setLotError] = useState('')
+
+  const openLotModal = async (product: Product) => {
+    if (user?.role !== 'supervisor' && user?.role !== 'admin') {
+      return
+    }
+    setSelectedLotProduct(product)
+    setLotLoading(true)
+    setLotError('')
+    setLotList([])
+    try {
+      const lots = await fetchProductLots(product.id)
+      setLotList(lots)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'ไม่สามารถโหลดข้อมูล Lot ได้ กรุณาลองใหม่อีกครั้ง'
+      setLotError(msg)
+    } finally {
+      setLotLoading(false)
+    }
+  }
 
   const openBomModal = async (product: Product) => {
     setSelectedBomProduct(product)
@@ -1104,6 +1129,16 @@ export default function InventoryPage() {
                                 <span>ดู QR Code</span>
                               </button>
                             )}
+                            {(user?.role === 'supervisor' || user?.role === 'admin') && (
+                              <button
+                                type="button"
+                                onClick={() => openLotModal(item)}
+                                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 font-extrabold text-xs border border-blue-200/90 shadow-2xs cursor-pointer active:scale-95 transition-all"
+                              >
+                                <Layers className="w-4 h-4 text-blue-600 shrink-0" />
+                                <span>ดูสต็อกแยกตาม Lot</span>
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => openBomModal(item)}
@@ -1305,6 +1340,17 @@ export default function InventoryPage() {
                                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-50 text-[#BE1111] font-extrabold text-[10px] border border-red-200/80 hover:bg-[#BE1111] hover:text-white transition-all shadow-2xs cursor-pointer"
                                 >
                                   <span>สูตร BOM</span>
+                                </button>
+                              )}
+                              {item.itemType === 'Packaging' && (user?.role === 'supervisor' || user?.role === 'admin') && (
+                                <button
+                                  type="button"
+                                  onClick={() => openLotModal(item)}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-extrabold text-[10px] border border-blue-200/80 hover:bg-blue-600 hover:text-white transition-all shadow-2xs cursor-pointer"
+                                  title="ดูสต็อกแยกตาม Lot"
+                                >
+                                  <Layers className="w-3 h-3 shrink-0" />
+                                  <span>ดู Lot</span>
                                 </button>
                               )}
                             </div>
@@ -1617,6 +1663,170 @@ export default function InventoryPage() {
             </motion.div>
           )
         })()}
+      </AnimatePresence>
+
+      {/* Packaging Lot Details Modal (FIFO Tracking) */}
+      <AnimatePresence>
+        {selectedLotProduct && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md"
+            onClick={() => setSelectedLotProduct(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              transition={{ type: "tween", ease: "easeOut", duration: 0.2 }}
+              className="w-full max-w-3xl rounded-3xl bg-white p-6 shadow-2xl border border-gray-100 max-h-[85vh] flex flex-col overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-start justify-between pb-4 border-b border-gray-100 mb-4">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 border border-blue-100 mb-1.5">
+                    <Layers className="w-3.5 h-3.5" />
+                    <span>สต็อกแยกตาม Lot (FIFO Tracking)</span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-display font-bold text-gray-900 tracking-tight">
+                    {selectedLotProduct.name}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-gray-600 font-medium mt-1">
+                    <span>Item Code: <strong className="text-gray-800 font-bold">{selectedLotProduct.itemCode}</strong></span>
+                    <span className="text-gray-300">•</span>
+                    <span>คลัง: <strong className="text-gray-800 font-bold">{selectedLotProduct.warehouse || '-'} {selectedLotProduct.location ? `(${selectedLotProduct.location})` : ''}</strong></span>
+                    <span className="text-gray-300">•</span>
+                    <span>สต็อกรวม: <strong className="text-blue-700 font-black">{selectedLotProduct.quantity.toLocaleString()} {selectedLotProduct.unit}</strong></span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedLotProduct(null)}
+                  className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+                  title="ปิดหน้าต่าง"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Body / Lots List */}
+              <div className="overflow-y-auto flex-1 pr-1">
+                {lotLoading ? (
+                  <div className="py-12 flex flex-col items-center justify-center gap-2 text-gray-500">
+                    <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-sm font-medium">กำลังโหลดข้อมูล Lot...</span>
+                  </div>
+                ) : lotError ? (
+                  <div className="py-10 flex flex-col items-center justify-center gap-3 text-center px-4">
+                    <AlertCircle className="w-10 h-10 text-amber-500" />
+                    <p className="text-sm font-semibold text-gray-700">{lotError}</p>
+                    <button
+                      type="button"
+                      onClick={() => openLotModal(selectedLotProduct)}
+                      className="px-4 py-2 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-bold border border-blue-200 transition-colors cursor-pointer"
+                    >
+                      ลองใหม่อีกครั้ง
+                    </button>
+                  </div>
+                ) : lotList.length === 0 ? (
+                  <div className="py-12 text-center text-gray-500 flex flex-col items-center justify-center gap-2">
+                    <Package className="w-10 h-10 text-gray-300" />
+                    <p className="text-sm font-medium">ยังไม่มีข้อมูล Lot สำหรับสินค้านี้</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 py-1">
+                    {lotList.map((lot, index) => {
+                      const isActive = lot.status === 'Active'
+                      const receivedDateStr = lot.receivedDate
+                        ? new Date(lot.receivedDate).toLocaleDateString('th-TH', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })
+                        : '-'
+
+                      return (
+                        <div
+                          key={lot.id}
+                          className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border transition-all shadow-2xs font-display text-xs sm:text-sm ${
+                            isActive
+                              ? 'border-gray-200/90 bg-white hover:bg-slate-50/80'
+                              : 'border-gray-200/60 bg-gray-50/70 opacity-75'
+                          }`}
+                        >
+                          {/* Left info: FIFO Rank, Lot Number, Dates, Supplier Lot */}
+                          <div className="flex items-start gap-3 min-w-0">
+                            <span className="shrink-0 font-bold px-2 py-1 rounded-lg bg-slate-100 text-slate-600 border border-slate-200 text-xs tracking-tight">
+                              #{index + 1}
+                            </span>
+                            <div className="space-y-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-extrabold text-gray-900 tracking-tight text-sm">
+                                  {lot.lotNumber}
+                                </span>
+                                <span
+                                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                                    isActive
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                      : 'bg-gray-100 text-gray-500 border-gray-200'
+                                  }`}
+                                >
+                                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+                                  {lot.status}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                                <span>วันที่รับเข้า: <strong className="text-gray-700 font-semibold">{receivedDateStr}</strong></span>
+                                <span>•</span>
+                                <span>Supplier Lot: <strong className="text-gray-700 font-semibold">{lot.supplierLot || '-'}</strong></span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right info: Quantities */}
+                          <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+                            <div className="text-left sm:text-right">
+                              <span className="text-[10px] text-gray-400 font-bold uppercase block">รับเข้า</span>
+                              <span className="text-xs font-bold text-gray-600">
+                                {lot.receivedQuantity.toLocaleString()} {selectedLotProduct.unit}
+                              </span>
+                            </div>
+                            <div className="text-right bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/80 min-w-[110px]">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase block">คงเหลือ</span>
+                              <span className={`text-sm font-black ${isActive ? 'text-blue-700' : 'text-gray-500'}`}>
+                                {lot.remainingQuantity.toLocaleString()} <span className="text-xs font-semibold text-gray-500">{selectedLotProduct.unit}</span>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="pt-4 border-t border-gray-100 mt-4 flex items-center justify-between">
+                <div className="text-xs text-gray-500">
+                  {lotList.length > 0 && (
+                    <span>
+                      แสดงทั้งหมด <strong>{lotList.length}</strong> Lot (เรียงตามลำดับ FIFO)
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedLotProduct(null)}
+                  className="rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 transition-colors shadow-sm cursor-pointer"
+                >
+                  ปิดหน้าต่าง
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* QR Code Quick View & Download Modal for Individual Item Code */}

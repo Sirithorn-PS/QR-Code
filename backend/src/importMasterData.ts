@@ -15,19 +15,19 @@ async function main() {
   const supervisorPassword = await bcrypt.hash('super1234', 10);
   const staffPassword = await bcrypt.hash('staff123', 10);
 
-  const adminUser = await prisma.user.upsert({
+  const supervisorUser = await prisma.user.upsert({
     where: { username: 'supervisor' },
     update: {
       password: supervisorPassword,
       fullName: 'ผู้ควบคุมดูแลระบบ (Supervisor)',
-      role: 'admin',
+      role: 'supervisor',
       status: 'approved'
     },
     create: {
       username: 'supervisor',
       password: supervisorPassword,
       fullName: 'ผู้ควบคุมดูแลระบบ (Supervisor)',
-      role: 'admin',
+      role: 'supervisor',
       status: 'approved'
     }
   });
@@ -49,7 +49,7 @@ async function main() {
     }
   });
 
-  console.log(`✅ สร้างผู้ใช้งานสำเร็จ: ${adminUser.username} (Role: ${adminUser.role}) และ ${staffUser.username} (Role: ${staffUser.role})\n`);
+  console.log(`✅ สร้างผู้ใช้งานสำเร็จ: ${supervisorUser.username} (Role: ${supervisorUser.role}) และ ${staffUser.username} (Role: ${staffUser.role})\n`);
 
   // ---------------------------------------------------------
   // 2. อ่านไฟล์ Excel และรวบรวมรายการสินค้า (Products) และสูตร BOM

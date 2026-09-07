@@ -105,7 +105,7 @@ export default function InventoryPage() {
   const [lotError, setLotError] = useState('')
 
   const openLotModal = async (product: Product) => {
-    if (user?.role !== 'supervisor' && user?.role !== 'admin') {
+    if (user?.role !== 'supervisor') {
       return
     }
     setSelectedLotProduct(product)
@@ -1129,7 +1129,7 @@ export default function InventoryPage() {
                                 <span>ดู QR Code</span>
                               </button>
                             )}
-                            {(user?.role === 'supervisor' || user?.role === 'admin') && (
+                            {user?.role === 'supervisor' && (
                               <button
                                 type="button"
                                 onClick={() => openLotModal(item)}
@@ -1342,7 +1342,7 @@ export default function InventoryPage() {
                                   <span>สูตร BOM</span>
                                 </button>
                               )}
-                              {item.itemType === 'Packaging' && (user?.role === 'supervisor' || user?.role === 'admin') && (
+                              {item.itemType === 'Packaging' && user?.role === 'supervisor' && (
                                 <button
                                   type="button"
                                   onClick={() => openLotModal(item)}

@@ -293,7 +293,7 @@ function TransactionsContent() {
                     </div>
 
                     {transaction.status === 'pending' ? (
-                      (user?.role === 'admin' || user?.role === 'supervisor') ? (
+                      user?.role === 'supervisor' ? (
                         <div className="flex gap-2 self-start md:self-center">
                           <button
                             onClick={() => handleConfirm(transaction.id)}
@@ -347,15 +347,15 @@ function TransactionsContent() {
                     )}
                   </div>
 
-                  {/* FIFO Lot Allocation Section (Visible to Supervisor/Admin for Confirmed Packaging Issue) */}
+                  {/* FIFO Lot Allocation Section (Visible to Supervisor for Confirmed Packaging Issue) */}
                   {(() => {
-                    const isSupervisorOrAdmin = user?.role === 'supervisor' || user?.role === 'admin'
+                    const isSupervisor = user?.role === 'supervisor'
                     const isPackagingIssueConfirmed =
                       transaction.type === 'issue' &&
                       transaction.status === 'confirmed' &&
                       (transaction.product?.itemType === 'Packaging' || transaction.itemSnapshot?.itemType === 'Packaging')
 
-                    if (!isSupervisorOrAdmin || !isPackagingIssueConfirmed || !transaction.allocations || transaction.allocations.length === 0) {
+                    if (!isSupervisor || !isPackagingIssueConfirmed || !transaction.allocations || transaction.allocations.length === 0) {
                       return null
                     }
 

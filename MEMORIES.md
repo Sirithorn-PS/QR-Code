@@ -1,5 +1,107 @@
 # บันทึกการทำงาน (Memories)
 
+## 7 ก.ย. 2026
+- **แก้ไขปัญหาความไม่สอดคล้องของบัญชี Supervisor (Supervisor Account Role Inconsistency Resolution) (เสร็จสมบูรณ์ 100%)**:
+  - **การวิเคราะห์ผลกระทบและสาเหตุ (Root Cause & Impact Analysis)**:
+    - บัญชีผู้ใช้งาน ID 10 (`username: 'supervisor'`, `fullName: 'ผู้ควบคุมดูแลระบบ (Supervisor)'`) มีตัวตนอยู่จริงในฐานข้อมูล Supabase PostgreSQL แต่คอลัมน์ `role` มีค่าเป็น `'admin'` ตกค้างมาตั้งแต่การรันสคริปต์ `importMasterData.ts` ในยุคแรกที่ระบบยังไม่มีการแยก 3 Roles
+    - โค้ด Login Fast-Path ใน `backend/src/index.ts` มีการ hardcode คืนค่า `{ id: 6, username: 'supervisor', role: 'supervisor' }` ซึ่งทำให้ User ID ขัดแย้งกับบัญชี User ID 6 (`admin`) ใน Database
+  - **การแก้ไขที่ดำเนินการ (Minimal Safe Fix)**:
+    1. **Database**: ปรับปรุงข้อมูลบัญชี User ID 10 เดิมในฐานข้อมูล Supabase ให้มี `role = 'supervisor'` อย่างถูกต้อง โดยไม่สร้างบัญชีใหม่ ไม่ลบข้อมูลเดิม และไม่แตะต้องบัญชีอื่น
+    2. **Backend API (`backend/src/index.ts`)**: ปรับปรุงส่วน Login สำหรับ `supervisor` ให้ดึงข้อมูลจากตาราง `User` ใน Database เพื่อสร้าง JWT ด้วย `userId = 10` และ `role = 'supervisor'` ที่สอดคล้องกันทุกจุด
+    3. **Seed Script (`backend/src/importMasterData.ts`)**: อัปเดตการ Seed ของ `username: 'supervisor'` ให้เป็น `role: 'supervisor'` ป้องกันการเขียนทับเป็น `admin` ในอนาคต
+  - **การตรวจสอบความถูกต้องและผลการทดสอบ (Verification)**:
+    - สัดส่วนผู้ใช้ในฐานข้อมูล: `admin: 1` (ID 6), `supervisor: 1` (ID 10), `warehouse_staff: 9` (รวม 11 บัญชี)
+    - ยืนยันการเข้าสู่ระบบ: บัญชี `supervisor` / `super1234` ได้รับ JWT `userId: 10`, `role: 'supervisor'`
+    - ยืนยันการทำงานของระบบคลังและสิทธิ์ RBAC ทั้ง 3 Roles สมบูรณ์ ไม่กระทบ Stock, Lot, FIFO, หรือ Transaction
+    - ผลการทดสอบอัตโนมัติ: TypeScript 0 errors, Vitest Backend 4/4 PASS, Vitest Frontend 16/16 PASS, Playwright E2E 18/18 PASS รวม 38/38 PASS 100%
+- **แก้ไข Assertion ใน Automated Test ให้สอดคล้องกับ Production UI (STEP 4.10.8.1 — Fix Automated Test Assertion Mismatch) (เสร็จสมบูรณ์ 100%)**:
+  - แก้ไขเฉพาะไฟล์ [frontend/__tests__/e2e/flows.spec.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี%204/ปี%204%20เทอม%201/ฝึกงาน/QR%20Code%20Webapp/frontend/__tests__/e2e/flows.spec.ts) (บรรทัดที่ 150):
+    - ปรับแก้ Assertion ใน Flow 8 (BOM View Modal) จาก `text=สูตรโครงสร้าง BOM` เป็น `text=Bill of Materials (BOM)` ให้ตรงกับหัวข้อหน้าต่าง Modal จริงของ Production UI ใน [frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี%204/ปี%204%20เทอม%201/ฝึกงาน/QR%20Code%20Webapp/frontend/app/inventory/page.tsx)
+    - ยึดหลักการ "แก้ Test ให้ตรงกับ Production UI ไม่ใช่แก้ Production UI ให้ตรงกับ Test"
+  - **ผลการรันชุดการทดสอบ Regression ครบถ้วน 100%**:
+    - **TypeScript**: Backend (`0 errors`) และ Frontend (`0 errors`) ผ่านสมบูรณ์
+    - **Backend Vitest**: 4/4 Tests ผ่าน (100% PASS)
+    - **Frontend Vitest**: 16/16 Tests ผ่าน (100% PASS)
+    - **Playwright E2E**: 18/18 Tests ผ่านครบถ้วน (100% PASS)
+    - **รวมทั้งหมด**: 38/38 Tests ผ่าน (0 Failed, 0 Skipped)
+  - **ความปลอดภัยของระบบ**: ไม่มีการแก้ไข Production Code, UI/UX, Database, หรือ Prisma Schema ใด ๆ ทั้งสิ้น (`PRODUCTION FILES CHANGED: NONE`)
+- **ปรับปรุง Test และ Documentation ให้สอดคล้องกับการแยกบทบาท 3 Roles (STEP 4.10.3 — Test & Documentation Consistency Fix) (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการปรับปรุงชุดการทดสอบอัตโนมัติ (Automated Tests) และเอกสาร (Documentation) เพื่อสะท้อนการแยกสิทธิ์ 3 บทบาทเด็ดขาด (`ADMIN ≠ SUPERVISOR ≠ STAFF`):
+    1. **E2E Role Tests** ใน [frontend/__tests__/e2e/roles.spec.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/__tests__/e2e/roles.spec.ts):
+       - ตรวจสอบยืนยันสิทธิ์ Supervisor: ล็อกอินสำเร็จ เข้าถึงธุรกรรม เห็นปุ่มอนุมัติ/ปฏิเสธ และเข้าถึงสต็อก Lot ได้ครบถ้วน
+       - ตรวจสอบยืนยันสิทธิ์ Staff: ล็อกอินสำเร็จ เข้าถึงการสแกน รับ/จ่าย ซ่อนปุ่มอนุมัติ/ปฏิเสธและสต็อก Lot อย่างเข้มงวด
+       - ตรวจสอบยืนยันสิทธิ์ Admin: ล็อกอินสำเร็จ เข้าถึงหน้าจัดการผู้ใช้งาน (`/users`) ได้อย่างถูกต้อง และซ่อนปุ่มอนุมัติธุรกรรม
+       - ระบุ Pattern Mock API ที่เจาะจงพอร์ต Backend (`*/**:4000/...`) และตัดการใช้ `any` ออก 100%
+    2. **E2E Flow Tests** ใน [frontend/__tests__/e2e/flows.spec.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/__tests__/e2e/flows.spec.ts):
+       - ปรับปรุง Mock User ใน `mockSupervisorLogin` ให้ใช้ `role: 'supervisor'` (`username: 'supervisor'`) สำหรับทดสอบ Warehouse & Approval Flows
+       - ปรับปรุง Route Assertions ให้ตรงกับ Route จริง (`/` แทน `/dashboard`) และปรับ Heading Locators ให้สอดคล้องกับหน้าเว็บจริง
+    3. **Documentation Alignment**:
+       - [CONTEXT.md](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/CONTEXT.md): ปรับคำอธิบายบทบาทและ Flow แยกหน้าที่ 3 บทบาทชัดเจน (Admin = User Management, Supervisor = คลัง/อนุมัติ, Staff = ปฏิบัติการ)
+       - [PRODUCT.md](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/PRODUCT.md): อัปเดตนิยามบทบาทผู้ใช้งานในระบบ WPK MMS ตามมาตรฐาน 3 Roles
+       - [AUTH_SETUP.md](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/AUTH_SETUP.md): บันทึกตาราง Permission Matrix และขอบเขตความรับผิดชอบอย่างชัดเจน
+  - **ผลการทดสอบครบทุกระบบ**:
+    - **Vitest (Backend)**: ผ่าน 4/4 Tests (100% PASS)
+    - **Vitest (Frontend)**: ผ่าน 16/16 Tests (100% PASS)
+    - **Playwright (E2E)**: ผ่านครบ 18/18 Tests (100% PASS)
+    - **TypeScript Type Check**: `tsc --noEmit` ทั้ง Frontend และ Backend ผ่าน 100% (0 errors)
+  - **ความปลอดภัยของระบบ Production Code**: ไม่มีการแก้ไข Production Logic, Database, Prisma Schema, FIFO Logic หรือ Notification Logic ใดๆ ทั้งสิ้น (`NO PRODUCTION FUNCTIONAL CODE CHANGED`)
+- **แก้ไขการแยกสิทธิ์ 3 บทบาทให้สอดคล้องตามข้อกำหนดทางธุรกิจ (STEP 4.10.2 — Functional Role Separation Fix) (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการแก้ไขเฉพาะจุดตามขอบเขต Scope Control อย่างเคร่งครัด (3 ไฟล์เท่านั้น):
+    1. **Backend Notification** ใน [backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts): ปรับปรุง `POST /transactions` ให้สร้าง Notification ประเภท `pending_approval` ส่งตรงไปยัง `targetRole: 'supervisor'` แทน `'admin'`
+    2. **Frontend Transactions UI** ใน [frontend/app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/transactions/page.tsx): ปรับเงื่อนไขการแสดงปุ่ม **"อนุมัติ" / "ปฏิเสธ"** และส่วนขยาย **FIFO Lot Allocation** ให้แสดงเฉพาะ `user?.role === 'supervisor'` เท่านั้น (ซ่อนไม่ให้ Admin และ Staff เข้าถึง)
+    3. **Frontend Inventory UI** ใน [frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/inventory/page.tsx): ปรับเงื่อนไขการแสดงปุ่ม **"ดูสต็อกแยกตาม Lot"** (ทั้ง Card View และ Flat View) รวมถึง Guard ในฟังก์ชัน `openLotModal` ให้เข้าถึงได้เฉพาะ `user?.role === 'supervisor'` เท่านั้น (ซ่อนไม่ให้ Admin และ Staff เข้าถึง)
+  - **การรักษากฎความปลอดภัยและข้อกำหนดหลัก**:
+    - **Backend Permission**: คง `requireRole('supervisor')` บน Endpoints คลังและธุรกรรมตามเดิม (Staff -> 403, Supervisor -> 200, Admin -> 403)
+    - **FIFO Engine & Stock Logic**: ไม่มีการแตะต้อง `ProductLot`, `TransactionLotAllocation`, FIFO Ordering หรือการคำนวณสต็อกใดๆ
+    - **Data Safety**: ไม่มีการแก้ไขหรือแทรกแซง Production Master Data ใดๆ ทั้งสิ้น (`NO PRODUCTION DATA CHANGES`)
+  - **ผลการทดสอบ Regression**: Vitest Backend (4/4 PASS) และ Vitest Frontend (16/16 PASS) รวมถึง TypeScript Type Check (`tsc --noEmit`) ผ่านฉลุย 100% ปราศจากข้อผิดพลาด
+- **ตรวจสอบความสอดคล้องและการแยกบทบาท 3 Roles ทั้งระบบ (STEP 4.10.1.6 — Three-Role Separation & Role Consistency Audit) (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการตรวจสอบเชิงวิเคราะห์ทั้ง Repository (Verification / Audit Only โดยไม่มีการแก้ไข Source Code, Backend, Frontend, API, Database, Prisma Schema, Permission, Notification, Workflow, FIFO, UI, Test หรือ Documentation):
+  - **ผลการตรวจสอบ Admin ≠ Supervisor ทั่วทั้งโปรเจกต์**:
+    - **Backend API (CORRECT)**: ทุก Endpoint ใน Backend แยกสิทธิ์ถูกต้องแล้ว (`requireRole('supervisor')` สำหรับคลัง/อนุมัติ/สต็อก และ `requireRole('admin')` สำหรับ User Management)
+    - **Backend Notification (ROLE CONFUSION)**: จุดเดียวที่ยังสับสนคือ `POST /transactions` กำหนด `targetRole: 'admin'` สำหรับ `pending_approval` แทนที่จะเป็น `'supervisor'`
+    - **Frontend UI (UI MISMATCH)**: พบ 2 จุดที่ Frontend เผลอให้สิทธิ์ Admin ทำหน้าที่ Supervisor:
+      1. [frontend/app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/transactions/page.tsx) (ปุ่มอนุมัติ/ปฏิเสธ และ FIFO Lot แสดงให้ Admin)
+      2. [frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/inventory/page.tsx) (ปุ่มดูสต็อกแยกตาม Lot และ Lot Modal เปิดให้ Admin)
+    - **E2E Tests (TEST OUTDATED)**: `roles.spec.ts` และ `flows.spec.ts` ใช้ Mock user เป็น `role: 'admin'` สำหรับทดสอบ Supervisor flow
+    - **Documentation (DOCUMENTATION OUTDATED)**: `CONTEXT.md` ยังรวมหน้าที่ Manager กับ Admin ไว้ด้วยกันจากยุค 2-Tier
+  - สรุปผลการตรวจสอบพบจุดที่ต้องแก้ไข (ROLE SEPARATION ISSUES FOUND) พร้อมเข้าสู่การแก้ปัญหา (READY FOR ROLE FIX)
+- **ตรวจสอบสิทธิ์และบทบาทผู้ใช้งานใหม่ตามข้อกำหนดทางธุรกิจปัจจุบัน (STEP 4.10.1.5 — Role Permission Re-Verification: Admin vs Supervisor) (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการตรวจสอบเชิงวิเคราะห์ (Verification / Audit Only โดยไม่มีการแก้ไข Source Code, Database, Schema, API, UI, Permission, Workflow, FIFO Logic, Notification Logic หรือ Test Files):
+  - **การยืนยัน Business Requirement ปัจจุบัน (3 บทบาทแยกจากกันโดยสิ้นเชิง ปราศจาก Role Hierarchy Assumption)**:
+    - **Staff**: พนักงานทั่วไป สแกน QR ทำรายการรับ/จ่าย ไม่สามารถ Confirm/Reject และไม่สามารถจัดการ User
+    - **Supervisor**: ผู้ดูแลกระบวนการคลังสินค้า มีหน้าที่และสิทธิ์แต่เพียงผู้เดียวในการ Confirm/Reject รายการ และจัดการสต็อก/สินค้า
+    - **Admin**: ผู้ดูแลระบบด้านบัญชีผู้ใช้งาน (User Management) **ไม่ได้ทำหน้าที่ Supervisor และไม่ควรมีสิทธิ์ Confirm/Reject รายการคลังสินค้า**
+  - **การประเมินสถานะข้อผิดพลาดใหม่ตาม Requirement ปัจจุบัน**:
+    - **BUG-001 (Backend `requireRole('supervisor')`)**: สถานะ **NOT A BUG (บน Backend)** เนื่องจาก Backend ป้องกันไม่ให้ Admin เข้ามาก้าวก่ายการ Confirm/Reject ได้อย่างถูกต้องตาม Requirement แต่มีจุดที่ต้องปรับปรุง Frontend UI ให้ซ่อนปุ่มอนุมัติจาก Admin ให้สอดคล้องกัน
+    - **BUG-006 (Pending Notification targetRole: 'admin')**: สถานะ **REAL BUG** เนื่องจาก Supervisor เป็นผู้มีหน้าที่ Confirm/Reject แต่กลับไม่ได้รับการแจ้งเตือนรายการรออนุมัติ (เพราะ Backend ส่งไปที่ `'admin'`)
+    - **BUG-005 (Integer Quantity)**: สถานะ **NOT A BUG** ยืนยันสินค้า Packaging ต้องนับเป็นจำนวนเต็มเท่านั้น
+  - บันทึกผลการประเมินและ Matrix สิทธิ์ครบถ้วน พร้อมสำหรับการเข้าสู่ขั้นตอนแก้ไข Bug (READY FOR BUG FIX)
+- **ตรวจสอบเชิงลึกและพิสูจน์ยืนยัน BUG-001 และ BUG-006 ก่อนดำเนินการแก้ไข (STEP 4.10.1 — Verify BUG-001 & BUG-006 Before Fix) (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการตรวจสอบเชิงวิเคราะห์ (Verification & Audit Only โดยไม่มีการแก้ไข Source Code, Database, Schema, API, UI, Permission, Workflow, FIFO Logic หรือ Notification Logic):
+  - **การพิสูจน์ BUG-001 (Admin Authorization)**:
+    - ยืนยันเป็น **REAL BUG** เนื่องจาก Frontend (หน้ารายการอนุมัติ) มีปุ่ม "อนุมัติ"/"ปฏิเสธ" ให้ทั้ง Supervisor และ Admin แต่ Backend Endpoints ทั้ง 6 ตัว (`confirm`, `reject`, `with-bom`, `products`, `quantity`, `delete`) ถูกล็อกด้วย `requireRole('supervisor')` ซึ่งปฏิเสธ `admin` ด้วย HTTP 403 Forbidden
+    - ปัญหานี้เป็น **Existing System Bug** จากช่วงแยกบทบาท 3-Tier Roles ไม่ใช่ FIFO Regression
+  - **การพิสูจน์ BUG-006 (Pending Transaction Notification)**:
+    - ยืนยันเป็น **REAL BUG** เนื่องจากเจตนารมณ์ดั้งเดิมของระบบตามโค้ดคอมเมนต์ `// สร้าง Notification แจ้งเตือน Supervisor (Role: admin)` คือการแจ้งเตือนผู้มีหน้าที่อนุมัติรายการ (Supervisor) แต่เมื่อมีการแยก Role เป็น `supervisor` ค่า `targetRole` ยังคงเป็น `'admin'` ส่งผลให้ Supervisor ไม่ได้รับการแจ้งเตือนรายการรออนุมัติ
+    - ปัญหานี้เป็น **Existing System Bug** ไม่ใช่ FIFO Regression
+  - **การตรวจสอบ BUG-005 (Quantity Validation)**:
+    - ยืนยันเป็น **NOT A BUG** เนื่องจากสินค้ากลุ่ม Packaging ต้องนับเป็นจำนวนเต็มเท่านั้น (`Number.isInteger` เป็นการทำงานที่ถูกต้องตาม Requirement)
+  - สรุปผลการตรวจสอบครบถ้วน พร้อมสำหรับการวางแผนแก้ไข Bug ในขั้นตอนถัดไป (READY FOR BUG FIX)
+- **ตรวจสอบข้อผิดพลาดอัตโนมัติด้วย Vitest & Playwright (STEP 4.10 — Automated Bug Audit with Vitest & Playwright) (เสร็จสมบูรณ์ 100%)**:
+  - ดำเนินการทดสอบและตรวจสอบระบบอย่างเป็นระบบ (Testing & Audit Only โดยไม่มีการแก้ไข Source Code, Database, Schema, API, UI, Workflow หรือ FIFO Logic):
+  - **ผลการรัน Test Suites**:
+    - **Vitest (Backend)**: ผ่าน 4/4 Tests (`api.test.ts`)
+    - **Vitest (Frontend)**: ผ่าน 16/16 Tests (`auth.test.ts`, `product-bom.test.ts`, `sample.test.ts`)
+    - **Playwright (E2E)**: รันทั้งหมด 17 Tests ผ่าน 8 Tests, ล้มเหลว 9 Tests (เกิดจาก Test Assertion URL / Selector Mismatch ใน `flows.spec.ts` และ `roles.spec.ts` ไม่ใช่บั๊กของระบบการทำงานจริง)
+  - **การตรวจวิเคราะห์ความถูกต้องของ Business Logic**:
+    - **Quantity Validation & Precision**: มีการใช้ `roundQty()` และ validation แต่พบข้อจำกัด `Number.isInteger` บน `POST /transactions` ที่ยังไม่เปิดรับทศนิยม
+    - **Receive / Issue & FIFO**: ยืนยันความถูกต้อง 100% ครอบคลุม 3-Tier Priority (`receivedDate` -> `Transaction.createdAt` -> `ProductLot.id`), Atomic rollback (`prisma.$transaction`), และ Row locking (`SELECT ... FOR UPDATE`)
+    - **Stock Consistency**: ยืนยัน $\text{Product.quantity} = \sum(\text{ProductLot.remainingQuantity})$ สำหรับ Packaging
+    - **Role / Authorization**: พบ RBAC Gap บน Endpoint ที่ใช้ `requireRole('supervisor')` ซึ่งปฏิเสธสิทธิ์ `admin` (`role === 'admin'`) ส่งผลให้ Admin ไม่สามารถอนุมัติรายการหรือจัดการสินค้าได้
+    - **Notifications**: พบข้อผิดพลาด `targetRole: 'admin'` ใน pending notification ทำให้ Supervisor ไม่ได้รับการแจ้งเตือน
+  - สรุปผลการทดสอบและจัดทำ Bug Report ครบถ้วนตามมาตรฐานเพื่อเตรียมพร้อมก่อนดำเนินการในขั้นตอนถัดไป
+
 ## 4 ก.ย. 2026
 - **ตรวจสอบและปรับปรุงเอกสาร Database Schema ให้ตรงกับ Prisma Schema จริง (STEP 4.8.5 — Documentation & Database Schema Correction) (เสร็จสมบูรณ์ 100%)**:
   - ดำเนินการตรวจสอบเชิงวิเคราะห์และปรับปรุงเอกสาร (Documentation Verification & Correction Only โดยไม่มีการแก้ไข Source Code, Database หรือ Prisma Schema ใดๆ):

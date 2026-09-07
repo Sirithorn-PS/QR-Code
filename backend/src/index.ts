@@ -274,7 +274,23 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
       })
     }
     if (username === 'supervisor' && password === 'super1234') {
-      const defaultSupervisor = { id: 6, username: 'supervisor', password: '', fullName: 'ผู้ควบคุมดูแลระบบ (Supervisor)', role: 'supervisor', status: 'approved', createdAt: new Date() }
+      try {
+        const dbSupervisor = await prisma.user.findFirst({
+          where: { username: { equals: 'supervisor', mode: 'insensitive' } },
+        })
+        if (dbSupervisor && (await bcrypt.compare(password, dbSupervisor.password))) {
+          if (dbSupervisor.status === 'disabled' || dbSupervisor.status === 'rejected') {
+            return res.status(403).json({ error: 'บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อแอดมินระบบ (System Admin)' })
+          }
+          return res.json({
+            token: signToken(dbSupervisor),
+            user: toPublicUser(dbSupervisor),
+          })
+        }
+      } catch (dbErr) {
+        console.error('Failed to query supervisor from database, falling back to User 10:', dbErr)
+      }
+      const defaultSupervisor = { id: 10, username: 'supervisor', password: '', fullName: 'ผู้ควบคุมดูแลระบบ (Supervisor)', role: 'supervisor', status: 'approved', createdAt: new Date() }
       return res.json({
         token: signToken(defaultSupervisor),
         user: toPublicUser(defaultSupervisor),
@@ -1020,11 +1036,11 @@ app.post('/transactions', authenticate, async (req: AuthenticatedRequest, res: R
       },
     })
 
-    // สร้าง Notification แจ้งเตือน Supervisor (Role: admin)
+    // สร้าง Notification แจ้งเตือน Supervisor
     try {
       await prisma.notification.create({
         data: {
-          targetRole: 'admin',
+          targetRole: 'supervisor',
           type: 'pending_approval',
           title: `มีรายการ${type === 'receive' ? 'รับเข้า' : 'เบิกออก'}ใหม่รออนุมัติ`,
           message: `${product.description}\nจำนวน ${quantity.toLocaleString()} ${product.unit}`,

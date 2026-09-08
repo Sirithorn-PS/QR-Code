@@ -766,7 +766,6 @@ export default function InventoryPage() {
                             <th className="px-4 py-3.5 font-semibold">คลัง / โซน</th>
                             <th className="px-4 py-3.5 font-semibold">👑 สูตรสินค้าหลัก Item 1 ที่ใช้งาน</th>
                             <th className="px-4 py-3.5 font-semibold text-right">คงเหลือ</th>
-                            {user?.role === 'supervisor' && <th className="px-4 py-3.5 font-semibold text-center">จัดการ</th>}
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -864,18 +863,6 @@ export default function InventoryPage() {
                                     )}
                                   </div>
                                 </td>
-                                {user?.role === 'supervisor' && (
-                                  <td className="px-4 py-3.5 text-center">
-                                    <button
-                                      type="button"
-                                      onClick={() => setDeleteTarget(item)}
-                                      className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer"
-                                      title="ลบรายการสินค้า"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                  </td>
-                                )}
                               </tr>
                             )
                           })}
@@ -1147,16 +1134,6 @@ export default function InventoryPage() {
                               <FileText className="w-4 h-4 shrink-0" />
                               <span>ดูรายละเอียด BOM</span>
                             </button>
-                            {user?.role === 'supervisor' && (
-                              <button
-                                type="button"
-                                onClick={() => setDeleteTarget(item)}
-                                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-red-50 text-gray-400 hover:text-red-600 font-bold text-xs border border-gray-200 hover:border-red-200 cursor-pointer shadow-2xs active:scale-95 transition-all"
-                              >
-                                <Trash2 className="w-4 h-4 shrink-0" />
-                                <span>ลบรายการ</span>
-                              </button>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -1213,7 +1190,6 @@ export default function InventoryPage() {
                           <th className="px-4 py-3 font-semibold">ชื่อรายการสินค้า</th>
                           <th className="px-4 py-3 font-semibold">คลัง / โซน</th>
                           <th className="px-4 py-3 font-semibold text-right">คงเหลือ</th>
-                          {user?.role === 'supervisor' && <th className="px-4 py-3 font-semibold text-center">จัดการ</th>}
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
@@ -1245,17 +1221,6 @@ export default function InventoryPage() {
                             <td className="px-4 py-3 text-right font-bold text-gray-900">
                               {item.quantity.toLocaleString()} <span className="font-normal text-gray-500 text-[11px]">{item.unit}</span>
                             </td>
-                            {user?.role === 'supervisor' && (
-                              <td className="px-4 py-3 text-center">
-                                <button
-                                  type="button"
-                                  onClick={() => setDeleteTarget(item)}
-                                  className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </td>
-                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -1298,7 +1263,6 @@ export default function InventoryPage() {
                     <th className="px-4 py-3.5 font-semibold">ชื่อสินค้า</th>
                     <th className="px-4 py-3.5 font-semibold">คลังวัตถุดิบ / ตำแหน่ง</th>
                     <th className="px-4 py-3.5 font-semibold text-right">จำนวนคงเหลือ</th>
-                    {user?.role === 'supervisor' && <th className="px-4 py-3.5 font-semibold text-center">จัดการ</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -1307,7 +1271,7 @@ export default function InventoryPage() {
                     if (filteredFlat.length === 0) {
                       return (
                         <tr>
-                          <td colSpan={user?.role === 'supervisor' ? 6 : 5} className="px-6 py-12 text-center text-gray-500 font-medium">
+                          <td colSpan={5} className="px-6 py-12 text-center text-gray-500 font-medium">
                             ไม่พบรายการสินค้าในหมวดหมู่นี้
                           </td>
                         </tr>
@@ -1406,18 +1370,6 @@ export default function InventoryPage() {
                               )}
                             </div>
                           </td>
-                          {user?.role === 'supervisor' && (
-                            <td className="px-4 py-3.5 text-center">
-                              <button
-                                type="button"
-                                onClick={() => setDeleteTarget(item)}
-                                className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer"
-                                title="ลบรายการสินค้า"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </td>
-                          )}
                         </tr>
                       )
                     })

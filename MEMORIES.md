@@ -1,5 +1,20 @@
 # บันทึกการทำงาน (Memories)
 
+## 8 ก.ย. 2026
+- **ถอดปุ่มลบสินค้าออกจากหน้าคลังสินค้า/สต็อกเพื่อความปลอดภัยของ Master Data (STEP 4.11.8 — Product Delete Button Removal) (เสร็จสมบูรณ์ 100%)**:
+  - **การวิเคราะห์ผลกระทบและความปลอดภัยของข้อมูล (Master Data Safety & Impact Analysis)**:
+    - ข้อมูลสินค้า (`Product`) ในระบบ WPK MMS ถือเป็น Master Data หลักที่มีความสัมพันธ์กับตาราง `Transaction`, `ProductLot`, `TransactionLotAllocation`, `BillOfMaterial` และรายงานย้อนหลัง
+    - เพื่อป้องกันการลบข้อมูลสินค้าโดยไม่ตั้งใจ จึงทำการถอดปุ่ม "ลบสินค้า" (Delete Product) ออกจากหน้าจัดการสต็อกคลังสินค้า (`/inventory`) ทั้งหมด
+  - **การแก้ไขในส่วนแสดงผล ([frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/inventory/page.tsx))**:
+    1. ถอดปุ่มลบสินค้า (`Trash2`) และคอลัมน์หัวตาราง "จัดการ" ออกจากตาราง Flat View (หมวด Packaging / Active Tab)
+    2. ถอดปุ่ม "ลบรายการ" ออกจากส่วน Action Buttons ท้ายการ์ด Group Card ของ Parent FG แต่ละรายการ
+    3. ถอดปุ่มลบสินค้าและคอลัมน์หัวตาราง "จัดการ" ออกจากตาราง Unassigned Items
+    4. ถอดปุ่มลบสินค้าและคอลัมน์หัวตาราง "จัดการ" ออกจากตาราง All Products Flat View พร้อมปรับ `colSpan` เป็น 5 สำหรับ Empty State
+  - **คงสภาพระบบส่วนอื่นโดยสมบูรณ์ (Zero Regression)**:
+    - Backend API `DELETE /products/:id` และ Authorization สิทธิ์ `supervisor` คงเดิม ไม่มีการแก้ไข Backend หรือฐานข้อมูล
+    - ไม่มีการแก้ไข Schema, Database Data, FIFO Logic, Transaction Workflow หรือ Role Permission อื่นใด
+    - ผลการรันชุดทดสอบ Regression: Backend Vitest 4/4 PASS, Frontend Vitest 16/16 PASS, Playwright E2E 18/18 PASS, TypeScript 0 errors รวม 38/38 PASS 100%
+
 ## 7 ก.ย. 2026
 - **แก้ไขปัญหาความไม่สอดคล้องของบัญชี Supervisor (Supervisor Account Role Inconsistency Resolution) (เสร็จสมบูรณ์ 100%)**:
   - **การวิเคราะห์ผลกระทบและสาเหตุ (Root Cause & Impact Analysis)**:

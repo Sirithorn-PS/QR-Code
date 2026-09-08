@@ -269,7 +269,23 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
 
     // Fast-path for default Master Data users
     if (username === 'admin' && password === 'admin123') {
-      const defaultAdmin = { id: 5, username: 'admin', password: '', fullName: 'แอดมินระบบ (System Admin)', role: 'admin', status: 'approved', createdAt: new Date() }
+      try {
+        const dbAdmin = await prisma.user.findFirst({
+          where: { username: { equals: 'admin', mode: 'insensitive' } },
+        })
+        if (dbAdmin && (await bcrypt.compare(password, dbAdmin.password))) {
+          if (dbAdmin.status === 'disabled' || dbAdmin.status === 'rejected') {
+            return res.status(403).json({ error: 'บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อแอดมินระบบ (System Admin)' })
+          }
+          return res.json({
+            token: signToken(dbAdmin),
+            user: toPublicUser(dbAdmin),
+          })
+        }
+      } catch (dbErr) {
+        console.error('Failed to query admin from database, falling back to User 6:', dbErr)
+      }
+      const defaultAdmin = { id: 6, username: 'admin', password: '', fullName: 'แอดมินระบบ (System Admin)', role: 'admin', status: 'approved', createdAt: new Date() }
       return res.json({
         token: signToken(defaultAdmin),
         user: toPublicUser(defaultAdmin),
@@ -299,6 +315,22 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
       })
     }
     if (username === 'staff' && password === 'staff123') {
+      try {
+        const dbStaff = await prisma.user.findFirst({
+          where: { username: { equals: 'staff', mode: 'insensitive' } },
+        })
+        if (dbStaff && (await bcrypt.compare(password, dbStaff.password))) {
+          if (dbStaff.status === 'disabled' || dbStaff.status === 'rejected') {
+            return res.status(403).json({ error: 'บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อแอดมินระบบ (System Admin)' })
+          }
+          return res.json({
+            token: signToken(dbStaff),
+            user: toPublicUser(dbStaff),
+          })
+        }
+      } catch (dbErr) {
+        console.error('Failed to query staff from database, falling back to User 7:', dbErr)
+      }
       const defaultStaff = { id: 7, username: 'staff', password: '', fullName: 'พนักงานทั่วไป (Staff)', role: 'warehouse_staff', status: 'approved', createdAt: new Date() }
       return res.json({
         token: signToken(defaultStaff),
@@ -1074,7 +1106,11 @@ app.get('/transactions', authenticate, async (req, res) => {
   }
 })
 
-app.post('/transactions', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+app.post(
+  '/transactions',
+  authenticate,
+  requireRole('warehouse_staff', 'supervisor'),
+  async (req: AuthenticatedRequest, res: Response) => {
   try {
     const body = req.body as TransactionBody
     const itemCode = normalizeText(body.itemCode)

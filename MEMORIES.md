@@ -1,6 +1,27 @@
 # บันทึกการทำงาน (Memories)
 
 ## 8 ก.ย. 2026
+- **ปรับปรุงความปลอดภัยของระบบและการจำกัดขอบเขตสิทธิ์ (STEP 4.14.2 — Security & Role Boundary Hardening) (เสร็จสมบูรณ์ 100%)**:
+  - **FIX #1: Authentication Fast-path Alignment ([backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts))**:
+    - ปรับปรุง Fast-path Login ของ `admin` และ `staff` ให้ตรวจสอบข้อมูลจริงกับฐานข้อมูล (Database) ด้วย `bcrypt.compare` และตรวจสอบสถานะบัญชี `status` เช่นเดียวกับ `supervisor`
+    - หากสถานะบัญชีเป็น `disabled` หรือ `rejected` ระบบจะบล็อกการเข้าสู่ระบบและตอบกลับ HTTP 403 Forbidden ทันที
+    - โทเค็น JWT และข้อมูลผู้ใช้ใช้ User ID จริงจากฐานข้อมูล (`admin` ID: 6, `staff` ID: 7, `supervisor` ID: 10)
+    - คงการทำงานของ Supervisor ไว้อย่างถูกต้องตามเดิม และคง Fallback ID ที่ถูกต้องเฉพาะกรณีเกิด Database Connection Error เท่านั้น
+  - **FIX #2: Backend Role Guard on POST /transactions ([backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts))**:
+    - ติดตั้ง Middleware `requireRole('warehouse_staff', 'supervisor')` ให้กับ `POST /transactions`
+    - กำหนดให้เฉพาะบทบาท `warehouse_staff` (พนักงานทั่วไป) และ `supervisor` (หัวหน้างาน) เท่านั้นที่สามารถสร้างรายการรับเข้า/เบิกออกได้
+    - บล็อกสิทธิ์ `admin` ไม่ให้สามารถทำรายการ Transaction สต็อกสินค้า โดยตอบกลับ HTTP 403 Forbidden เพื่อรักษาหลักการ Separation of Duties (Admin จัดการเฉพาะ User เท่านั้น)
+    - คำขอที่ไม่มี Token จะถูกปฏิเสธด้วย HTTP 401 Unauthorized
+    - ไม่มีการเปลี่ยนแปลง Business Logic ในการคำนวณสต็อก, FIFO, ProductLot หรือ Lifecycle ใดๆ ทั้งสิ้น
+  - **Automated Tests & Regression Verification ([backend/__tests__/api.test.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/__tests__/api.test.ts))**:
+    - เพิ่มชุดทดสอบ Security & Role Boundary Hardening 10 ข้อ ครอบคลุมการเข้าสู่ระบบแบบปกติและแบบระงับการใช้งานของทั้ง 3 Roles, การตรวจสอบ User ID ใน JWT, และการทดสอบ Role Guard ของ `POST /transactions`
+    - Backend Vitest: 31/31 PASS (100%)
+    - Frontend Vitest: 30/30 PASS (100%)
+    - Playwright E2E: 18/18 PASS (100%)
+    - TypeScript Type Check: 0 errors ทั้งฝั่ง Backend และ Frontend
+    - Next.js Production Build: สำเร็จสมบูรณ์ (12/12 static pages)
+    - Database Integrity: ข้อมูล Products (44 รายการ), Packaging (24 รายการ), Lots (24 รายการ), Transactions (16 รายการ), BOMs (118 รายการ) คงเดิมทุกประการ ไม่มีการเปลี่ยนแปลงของสต็อกหรือข้อมูล Master Users
+
 - **พัฒนา Frontend UI/UX สำหรับ Product Lifecycle Active/Inactive เน้นเฉพาะหมวด Packaging (STEP 4.12.3) (เสร็จสมบูรณ์ 100%)**:
   - **Interface & API Helper ([frontend/lib/auth.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/lib/auth.ts))**:
     - อัปเดต `interface Product` ให้รองรับฟิลด์ `status?: 'active' | 'inactive' | string` จาก Backend

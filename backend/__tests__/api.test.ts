@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import request from 'supertest'
 import { app, prisma } from '../src/index'
+import jwt from 'jsonwebtoken'
 
 describe('API Integration Tests (Security & Roles)', () => {
   it('should reject unauthenticated access to /transactions', async () => {
@@ -352,6 +353,139 @@ describe('Product Lifecycle & Hard Delete Guard Integration Tests', () => {
       // Verify product is gone
       const check = await prisma.product.findUnique({ where: { id: testProductId } })
       expect(check).toBeNull()
+    })
+  })
+})
+
+describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
+  afterAll(async () => {
+    // Ensure all master users are restored to approved status
+    await prisma.user.updateMany({
+      where: { username: { in: ['admin', 'staff', 'supervisor'] } },
+      data: { status: 'approved' },
+    })
+  })
+
+  describe('1. Authentication Fast-path & Status Guard Tests', () => {
+    it('Active Admin Login: should return 200 with real DB ID 6 and role admin', async () => {
+      const res = await request(app).post('/auth/login').send({ username: 'admin', password: 'admin123' })
+      expect(res.status).toBe(200)
+      expect(res.body.user.id).toBe(6)
+      expect(res.body.user.role).toBe('admin')
+
+      const decoded = jwt.decode(res.body.token) as { userId: number; role: string }
+      expect(decoded.userId).toBe(6)
+      expect(decoded.role).toBe('admin')
+    })
+
+    it('Disabled Admin Login: should reject with 403 when admin status is disabled', async () => {
+      try {
+        await prisma.user.update({ where: { username: 'admin' }, data: { status: 'disabled' } })
+        const res = await request(app).post('/auth/login').send({ username: 'admin', password: 'admin123' })
+        expect(res.status).toBe(403)
+        expect(res.body.error).toContain('ระงับการใช้งาน')
+      } finally {
+        await prisma.user.update({ where: { username: 'admin' }, data: { status: 'approved' } })
+      }
+    })
+
+    it('Active Staff Login: should return 200 with real DB ID 7 and role warehouse_staff', async () => {
+      const res = await request(app).post('/auth/login').send({ username: 'staff', password: 'staff123' })
+      expect(res.status).toBe(200)
+      expect(res.body.user.id).toBe(7)
+      expect(res.body.user.role).toBe('warehouse_staff')
+
+      const decoded = jwt.decode(res.body.token) as { userId: number; role: string }
+      expect(decoded.userId).toBe(7)
+      expect(decoded.role).toBe('warehouse_staff')
+    })
+
+    it('Disabled Staff Login: should reject with 403 when staff status is disabled', async () => {
+      try {
+        await prisma.user.update({ where: { username: 'staff' }, data: { status: 'disabled' } })
+        const res = await request(app).post('/auth/login').send({ username: 'staff', password: 'staff123' })
+        expect(res.status).toBe(403)
+        expect(res.body.error).toContain('ระงับการใช้งาน')
+      } finally {
+        await prisma.user.update({ where: { username: 'staff' }, data: { status: 'approved' } })
+      }
+    })
+
+    it('Active Supervisor Login: should return 200 with real DB ID 10 and role supervisor', async () => {
+      const res = await request(app).post('/auth/login').send({ username: 'supervisor', password: 'super1234' })
+      expect(res.status).toBe(200)
+      expect(res.body.user.id).toBe(10)
+      expect(res.body.user.role).toBe('supervisor')
+
+      const decoded = jwt.decode(res.body.token) as { userId: number; role: string }
+      expect(decoded.userId).toBe(10)
+      expect(decoded.role).toBe('supervisor')
+    })
+
+    it('Disabled Supervisor Login: should reject with 403 when supervisor status is disabled', async () => {
+      try {
+        await prisma.user.update({ where: { username: 'supervisor' }, data: { status: 'disabled' } })
+        const res = await request(app).post('/auth/login').send({ username: 'supervisor', password: 'super1234' })
+        expect(res.status).toBe(403)
+        expect(res.body.error).toContain('ระงับการใช้งาน')
+      } finally {
+        await prisma.user.update({ where: { username: 'supervisor' }, data: { status: 'approved' } })
+      }
+    })
+  })
+
+  describe('2. POST /transactions Role Boundary Authorization Tests', () => {
+    let adminToken: string
+    let staffToken: string
+    let supervisorToken: string
+
+    beforeAll(async () => {
+      const aRes = await request(app).post('/auth/login').send({ username: 'admin', password: 'admin123' })
+      adminToken = aRes.body.token
+      const sRes = await request(app).post('/auth/login').send({ username: 'staff', password: 'staff123' })
+      staffToken = sRes.body.token
+      const supRes = await request(app).post('/auth/login').send({ username: 'supervisor', password: 'super1234' })
+      supervisorToken = supRes.body.token
+    })
+
+    it('Admin Token: should reject POST /transactions with 403 Forbidden', async () => {
+      const res = await request(app)
+        .post('/transactions')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ itemCode: '7520000062', type: 'receive', quantity: 1 })
+
+      expect(res.status).toBe(403)
+      expect(res.body.error).toContain('Forbidden')
+    })
+
+    it('Staff Token: should pass authorization (not 403)', async () => {
+      const res = await request(app)
+        .post('/transactions')
+        .set('Authorization', `Bearer ${staffToken}`)
+        .send({ itemCode: 'NON-EXISTENT-XYZ', type: 'receive', quantity: 1 })
+
+      // Passes role guard and reaches product lookup (returns 404), proving authorization succeeded
+      expect(res.status).not.toBe(403)
+      expect(res.status).toBe(404)
+    })
+
+    it('Supervisor Token: should pass authorization (not 403)', async () => {
+      const res = await request(app)
+        .post('/transactions')
+        .set('Authorization', `Bearer ${supervisorToken}`)
+        .send({ itemCode: 'NON-EXISTENT-XYZ', type: 'receive', quantity: 1 })
+
+      // Passes role guard and reaches product lookup (returns 404), proving authorization succeeded
+      expect(res.status).not.toBe(403)
+      expect(res.status).toBe(404)
+    })
+
+    it('No Token: should reject unauthenticated POST /transactions with 401', async () => {
+      const res = await request(app)
+        .post('/transactions')
+        .send({ itemCode: '7520000062', type: 'receive', quantity: 1 })
+
+      expect(res.status).toBe(401)
     })
   })
 })

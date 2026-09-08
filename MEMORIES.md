@@ -1,6 +1,30 @@
 # บันทึกการทำงาน (Memories)
 
 ## 8 ก.ย. 2026
+- **พัฒนา Frontend UI/UX สำหรับ Product Lifecycle Active/Inactive เน้นเฉพาะหมวด Packaging (STEP 4.12.3) (เสร็จสมบูรณ์ 100%)**:
+  - **Interface & API Helper ([frontend/lib/auth.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/lib/auth.ts))**:
+    - อัปเดต `interface Product` ให้รองรับฟิลด์ `status?: 'active' | 'inactive' | string` จาก Backend
+    - เพิ่มฟังก์ชัน `updateProductStatus(id, status)` สำหรับส่งคำขอ `PATCH /products/:id/status`
+  - **หน้าคลังสินค้าและสต็อก ([frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/inventory/page.tsx))**:
+    - **Status Badge**: แสดงสถานะ Active (สีเขียว `Active (ใช้งานอยู่)`) หรือ Inactive (สีแดง `Inactive (ปิดใช้งาน)`) บนการ์ดบรรจุภัณฑ์และในตาราง Flat View
+    - **Supervisor Status Action**: แสดงปุ่ม "ปิดใช้งาน" เมื่อสินค้าเป็น Active และปุ่ม "เปิดใช้งาน" เมื่อสินค้าเป็น Inactive เฉพาะผู้ใช้ที่มีสิทธิ์ `supervisor` และสินค้าเป็นประเภท `Packaging` เท่านั้น (Admin และ Staff มองไม่เห็นปุ่มนี้)
+    - **Confirmation Modal**: แสดงกล่องข้อความยืนยันก่อนเปลี่ยนสถานะ ป้องกันการกดโดยไม่ได้ตั้งใจ พร้อมสถานะ Loading และป้องกัน Double-click
+    - **Status Filter**: เพิ่มแถบตัวกรองสถานะสำหรับ Packaging ([ทั้งหมด] [Active] [Inactive]) ที่ทำงานร่วมกับ Search และ Category Subtabs โดยไม่กระทบ Layout เดิม
+    - **Direct Stock Edit Guard**: ปิดกั้น (Disable) การแก้ไขจำนวนสต็อกคงเหลือโดยตรงสำหรับสินค้าที่ Inactive
+  - **หน้าสแกนสินค้า ([frontend/app/scan/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/scan/page.tsx))**:
+    - แสดง Status Badge ในส่วนหัวของรายละเอียดสินค้าเมื่อสแกนพบ
+    - หากสินค้ามีสถานะ Inactive: ซ่อนฟอร์มรับเข้า/เบิกออก และแสดงแบนเนอร์แจ้งเตือน "สินค้านี้ถูกปิดการใช้งาน ไม่สามารถทำรายการรับเข้าหรือเบิกออกได้"
+    - ติดตั้ง Client-side Guard ใน `submitTransaction` เพื่อบล็อกการส่งคำขอหากสินค้า Inactive
+  - **ผลการทดสอบและการตรวจสอบความสมบูรณ์ (Verification)**:
+    - Frontend TypeScript Check: 0 errors
+    - Backend TypeScript Check: 0 errors
+    - Frontend Vitest: 30/30 PASS (เพิ่ม 14 unit tests ครอบคลุม Status API, Role UI Logic, Filter, และ Scan Inactive Guard)
+    - Backend Vitest: 21/21 PASS
+    - Playwright E2E: 18/18 PASS
+    - รวม Automated Tests: 69/69 PASS (100%)
+    - Next.js Production Build: สำเร็จสมบูรณ์ (12/12 static pages)
+    - Database Integrity: ข้อมูลสินค้า 44 รายการ (Active 100%), สต็อกรวม 176.2023, Lots 24, Transactions 16, BOM 118 คงเดิมทุกประการ
+
 - **พัฒนาตรรกะ Product Lifecycle และ Guards สำหรับการเปลี่ยนสถานะและการลบสินค้า (STEP 4.12.2 — Product Lifecycle Backend Logic) (เสร็จสมบูรณ์ 100%)**:
   - **PATCH /products/:id/status (Product Status API)**:
     - เพิ่ม Endpoint ปรับเปลี่ยนสถานะสินค้า Active / Inactive

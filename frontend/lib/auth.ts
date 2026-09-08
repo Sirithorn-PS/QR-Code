@@ -42,6 +42,7 @@ export interface Product {
   location: string
   quantity: number
   itemType?: string
+  status?: 'active' | 'inactive' | string
   parentItemCodes?: string[]
 }
 
@@ -295,6 +296,13 @@ export function updateProductQuantity(id: number, quantity: number) {
   return apiRequest<Product>(`/products/${id}/quantity`, {
     method: 'PATCH',
     body: JSON.stringify({ quantity }),
+  })
+}
+
+export function updateProductStatus(id: number, status: 'active' | 'inactive') {
+  return apiRequest<Product>(`/products/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
   })
 }
 

@@ -4,7 +4,7 @@ import { FormEvent, useState, useCallback, useEffect } from 'react'
 import { createTransaction, fetchProduct, fetchProductBom, Product, BillOfMaterial } from '@/lib/auth'
 import { motion, AnimatePresence } from 'framer-motion'
 import QRScanner from '@/components/QRScanner'
-import { FileText, ChevronDown, ChevronUp, Droplets, Box, FlaskConical, ExternalLink, ArrowLeft, PackagePlus, PackageMinus, Search, X } from 'lucide-react'
+import { FileText, ChevronDown, ChevronUp, Droplets, Box, FlaskConical, ExternalLink, ArrowLeft, PackagePlus, PackageMinus, Search, X, AlertCircle } from 'lucide-react'
 
 export default function ScanPage() {
   const [, setItemCode] = useState('')
@@ -169,6 +169,11 @@ export default function ScanPage() {
 
     if (!product) {
       setError('กรุณาค้นหาสินค้าก่อนสร้างรายการ')
+      return
+    }
+
+    if (product.status === 'inactive') {
+      setError('สินค้านี้ถูกปิดการใช้งาน ไม่สามารถทำรายการรับเข้าหรือเบิกออกได้')
       return
     }
 
@@ -421,7 +426,7 @@ export default function ScanPage() {
 
                 <div className="flex items-start justify-between mb-5">
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700">
                         <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -437,6 +442,19 @@ export default function ScanPage() {
                         }`}>
                           {product.itemType}
                         </span>
+                      )}
+                      {product.itemType === 'Packaging' && (
+                        product.status === 'inactive' ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 font-display">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                            Inactive (ปิดใช้งาน)
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 font-display">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Active (ใช้งานอยู่)
+                          </span>
+                        )
                       )}
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mt-2">{product.name}</h3>
@@ -615,7 +633,18 @@ export default function ScanPage() {
 
               {/* Action Form */}
               {getProductGroup(product) === 'Packaging' && (product.warehouse || '').toUpperCase().trim() === 'WPK' ? (
-              <form onSubmit={submitTransaction}>
+                product.status === 'inactive' ? (
+                  <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-5 text-center shadow-2xs">
+                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-rose-100 mb-2 text-rose-600">
+                      <AlertCircle className="w-5 h-5" />
+                    </div>
+                    <h4 className="text-sm font-bold text-rose-900 mb-1">สินค้านี้ถูกปิดการใช้งาน (Inactive)</h4>
+                    <p className="text-xs text-rose-700 leading-relaxed font-medium">
+                      สินค้านี้ถูกปิดการใช้งาน ไม่สามารถทำรายการรับเข้าหรือเบิกออกได้
+                    </p>
+                  </div>
+                ) : (
+                  <form onSubmit={submitTransaction}>
 
                 <div className="mb-5">
                   <label htmlFor="quantity" className="mb-2 block text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -676,6 +705,7 @@ export default function ScanPage() {
                   )}
                 </motion.button>
               </form>
+                )
               ) : (
                 <div className="space-y-4">
                   {bomList.filter(c => c.componentItemCode !== c.parentItemCode && getBomComponentGroup(c) === 'Packaging').length > 0 && (

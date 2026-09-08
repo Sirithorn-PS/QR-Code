@@ -1,6 +1,50 @@
 # บันทึกการทำงาน (Memories)
 
 ## 8 ก.ย. 2026
+- **พัฒนาตรรกะ Product Lifecycle และ Guards สำหรับการเปลี่ยนสถานะและการลบสินค้า (STEP 4.12.2 — Product Lifecycle Backend Logic) (เสร็จสมบูรณ์ 100%)**:
+  - **PATCH /products/:id/status (Product Status API)**:
+    - เพิ่ม Endpoint ปรับเปลี่ยนสถานะสินค้า Active / Inactive
+    - กำหนดสิทธิ์ให้เฉพาะ `supervisor` เท่านั้น (Admin คืนค่า 403, Staff คืนค่า 403)
+    - บังคับ Scope เฉพาะสินค้าประเภท Packaging (`itemType === 'Packaging'`) หากเป็นประเภทอื่นจะคืนค่า 400 Bad Request
+    - ตรวจสอบค่าสถานะอย่างเข้มงวด รับเฉพาะ `'active'` หรือ `'inactive'` (หากส่งค่าอื่น คืนค่า 400 Bad Request)
+  - **Inactive Guards สำหรับ Transactions และ Stock Quantity**:
+    - **POST /transactions**: ตรวจสอบสถานะสินค้า หาก `status === 'inactive'` จะปฏิเสธการทำรายการรับเข้า (Receive) หรือเบิกออก (Issue) ทันที พร้อมส่ง HTTP 409 Conflict เพื่อป้องกันการเคลื่อนไหวสต็อกของบรรจุภัณฑ์ที่เลิกใช้งานแล้ว
+    - **PATCH /products/:id/quantity**: หากสินค้ามี `status === 'inactive'` จะปฏิเสธการแก้ไขจำนวนสต็อก พร้อมส่ง HTTP 409 Conflict
+  - **4 Strict Hard Delete Guards สำหรับ DELETE /products/:id**:
+    - ยกเลิกคำสั่ง `prisma.transaction.deleteMany` เพื่อรักษา Audit Trail และประวัติย้อนหลังของระบบ 100%
+    - **Guard 1 (Quantity Guard)**: ตรวจสอบ `quantity === 0` หากยังมีสต็อกคงเหลือจะไม่อนุญาตให้ลบ คืนค่า 400 Bad Request
+    - **Guard 2 (Transaction Guard)**: ตรวจสอบว่าไม่มีประวัติ Transaction ใดๆ อ้างอิงสินค้านี้ หากมีคืนค่า 409 Conflict
+    - **Guard 3 (ProductLot Guard)**: ตรวจสอบว่าไม่มีประวัติ ProductLot อ้างอิงสินค้านี้ หากมีคืนค่า 409 Conflict
+    - **Guard 4 (BOM Guard)**: ตรวจสอบว่าไม่มีการอ้างอิงสินค้าทั้งในฐานะ Parent หรือ Component ของ Bill of Material (BOM) หากมีคืนค่า 409 Conflict
+    - หากผ่านครบทุก Guard และเป็นสิทธิ์ Supervisor ระบบจะอนุญาตให้ลบสินค้าได้ตามปกติ
+  - **การรักษาความสมบูรณ์ของข้อมูล (Database Integrity & Zero Regression)**:
+    - ไม่มีการแก้ไข Frontend UI หรือเปลี่ยนแปลงดีไซน์ใดๆ ในขั้นตอนนี้
+    - ข้อมูลสินค้าในระบบคงเดิมทั้ง 44 รายการ (Active 100%), สต็อกรวม 176.2023, ProductLot 24 รายการ, Transaction 16 รายการ, BOM 118 รายการ, User 11 บัญชี ไม่มีการเปลี่ยนแปลงหรือสูญหาย
+    - อัลกอริทึม FIFO และข้อมูล Allocation ย้อนหลังยังคงเดิม 100%
+  - **ผลการทดสอบทั้งหมด (55/55 PASS 100%)**:
+    - Backend Vitest: 21/21 PASS (เพิ่มชุดทดสอบครอบคลุม Status API, Inactive Guards, และ Hard Delete Guards 1-4)
+    - Frontend Vitest: 16/16 PASS
+    - Playwright E2E: 18/18 PASS
+    - Next.js Build: ผ่านสมบูรณ์ (12/12 static pages)
+    - TypeScript: 0 errors ทั้งฝั่ง Backend และ Frontend
+
+- **เพิ่มสถานะสินค้า Product Active / Inactive ใน Schema และ Database (STEP 4.12.1) (เสร็จสมบูรณ์ 100%)**:
+  - **Prisma Schema ([backend/prisma/schema.prisma](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/prisma/schema.prisma))**:
+    - เพิ่มคอลัมน์ `status String @default("active")` ในโมเดล `Product`
+    - เพิ่ม Index `@@index([status])` เพื่อประสิทธิภาพในการ Query
+  - **Database Migration (Supabase PostgreSQL)**:
+    - รันคำสั่ง `npx prisma db push` ปรับโครงสร้างตาราง `Product` ใน Supabase สำเร็จ โดยไม่มีการ reset หรือสูญหายของข้อมูล
+    - ข้อมูลสินค้าเดิมทั้งหมด 44 รายการได้รับค่า `status = 'active'` ครบถ้วน 100%
+    - จำนวนสินค้า (44 รายการ), ยอดสต็อกรวม (176.2023), ProductLot (24 lots), Transaction (16 รายการ), BOM (118 รายการ), User (11 บัญชี) คงเดิมทุกประการ ไม่มีการเปลี่ยนแปลง
+  - **ผลการทดสอบ (Verification & Zero Regression)**:
+    - Backend TypeScript Check: 0 errors
+    - Frontend TypeScript Check: 0 errors
+    - Backend Vitest: 4/4 PASS
+    - Frontend Vitest: 16/16 PASS
+    - Playwright E2E: 18/18 PASS (รวม Automated Tests 38/38 PASS 100%)
+    - Next.js Production Build: สำเร็จ (12/12 static pages)
+    - Backend tsc build: สำเร็จ
+
 - **ถอดปุ่มลบสินค้าออกจากหน้าคลังสินค้า/สต็อกเพื่อความปลอดภัยของ Master Data (STEP 4.11.8 — Product Delete Button Removal) (เสร็จสมบูรณ์ 100%)**:
   - **การวิเคราะห์ผลกระทบและความปลอดภัยของข้อมูล (Master Data Safety & Impact Analysis)**:
     - ข้อมูลสินค้า (`Product`) ในระบบ WPK MMS ถือเป็น Master Data หลักที่มีความสัมพันธ์กับตาราง `Transaction`, `ProductLot`, `TransactionLotAllocation`, `BillOfMaterial` และรายงานย้อนหลัง

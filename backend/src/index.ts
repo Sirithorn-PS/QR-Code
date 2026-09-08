@@ -171,6 +171,7 @@ function productSnapshot(product: {
   location: string
   quantity: number
   itemType?: string
+  status?: string
   parentItemCodes?: string[]
 }) {
   return {
@@ -183,6 +184,7 @@ function productSnapshot(product: {
     location: product.location,
     quantity: product.quantity,
     itemType: product.itemType || 'FG',
+    status: product.status || 'active',
     parentItemCodes: product.parentItemCodes || (product.itemType === 'FG' ? [product.itemCode] : [])
   }
 }
@@ -862,6 +864,12 @@ app.patch('/products/:id/quantity', authenticate, requireRole('supervisor'), asy
       return res.status(404).json({ error: 'ไม่พบสินค้ารายการนี้ในระบบ' })
     }
 
+    if (product.status === 'inactive') {
+      return res.status(409).json({
+        error: 'สินค้ารายการนี้ถูกปิดการใช้งาน (Inactive) ไม่สามารถแก้ไขจำนวนสต็อกได้',
+      })
+    }
+
     if (product.quantity === quantity) {
       return res.json(productSnapshot(product))
     }
@@ -900,26 +908,106 @@ app.patch('/products/:id/quantity', authenticate, requireRole('supervisor'), asy
   }
 })
 
+app.patch(
+  '/products/:id/status',
+  authenticate,
+  requireRole('supervisor'),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const id = Number(req.params.id)
+      if (isNaN(id) || !Number.isInteger(id)) {
+        return res.status(400).json({ error: 'รหัสสินค้าไม่ถูกต้อง' })
+      }
+
+      const { status } = req.body as { status?: unknown }
+      if (typeof status !== 'string' || !['active', 'inactive'].includes(status)) {
+        return res.status(400).json({ error: 'สถานะไม่ถูกต้อง อนุญาตเฉพาะ active หรือ inactive เท่านั้น' })
+      }
+
+      const product = await prisma.product.findUnique({ where: { id } })
+      if (!product) {
+        return res.status(404).json({ error: 'ไม่พบสินค้ารายการนี้ในระบบ' })
+      }
+
+      if (product.itemType !== 'Packaging') {
+        return res.status(400).json({ error: 'ระบบจัดการสถานะ Active/Inactive รองรับเฉพาะสินค้าประเภท Packaging เท่านั้น' })
+      }
+
+      const updatedProduct = await prisma.product.update({
+        where: { id },
+        data: { status },
+      })
+
+      return res.json(productSnapshot(updatedProduct))
+    } catch (error) {
+      console.error('Error updating product status:', error)
+      return res.status(500).json({ error: 'ไม่สามารถเปลี่ยนสถานะสินค้าได้ เกิดข้อผิดพลาดที่เซิร์ฟเวอร์' })
+    }
+  },
+)
+
 app.delete('/products/:id', authenticate, requireRole('supervisor'), async (req, res) => {
   try {
     const id = Number(req.params.id)
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid product ID' })
+    if (isNaN(id) || !Number.isInteger(id)) {
+      return res.status(400).json({ error: 'รหัสสินค้าไม่ถูกต้อง' })
     }
 
-    // Delete related transactions first (due to no cascade delete in Prisma schema)
-    await prisma.transaction.deleteMany({
+    const product = await prisma.product.findUnique({ where: { id } })
+    if (!product) {
+      return res.status(404).json({ error: 'ไม่พบสินค้ารายการนี้ในระบบ' })
+    }
+
+    // GUARD 1: Product.quantity === 0
+    if (product.quantity !== 0) {
+      return res.status(400).json({
+        error: `ไม่สามารถลบสินค้าได้เนื่องจากยังมีสต็อกคงเหลือ (${product.quantity} ${product.unit}) กรุณาปรับสต็อกเป็น 0 ก่อน หรือใช้วิธีเปลี่ยนสถานะเป็น Inactive`,
+      })
+    }
+
+    // GUARD 2: ไม่มี Transaction ที่อ้างอิง Product
+    const txCount = await prisma.transaction.count({
       where: { productId: id },
     })
+    if (txCount > 0) {
+      return res.status(409).json({
+        error: `ไม่สามารถลบสินค้าได้เนื่องจากมีประวัติการทำรายการแล้ว (${txCount} รายการ) เพื่อรักษา Audit Trail กรุณาใช้วิธีเปลี่ยนสถานะเป็น Inactive แทน`,
+      })
+    }
+
+    // GUARD 3: ไม่มี ProductLot
+    const lotCount = await prisma.productLot.count({
+      where: { productId: id },
+    })
+    if (lotCount > 0) {
+      return res.status(409).json({
+        error: `ไม่สามารถลบสินค้าได้เนื่องจากมีประวัติ Lot บรรจุภัณฑ์ (${lotCount} Lots) กรุณาใช้วิธีเปลี่ยนสถานะเป็น Inactive`,
+      })
+    }
+
+    // GUARD 4: ไม่มี BOM Reference (ตรวจสอบทั้ง Parent และ Component)
+    const bomCount = await prisma.billOfMaterial.count({
+      where: {
+        OR: [
+          { parentItemCode: { equals: product.itemCode, mode: 'insensitive' } },
+          { componentItemCode: { equals: product.itemCode, mode: 'insensitive' } },
+        ],
+      },
+    })
+    if (bomCount > 0) {
+      return res.status(409).json({
+        error: `ไม่สามารถลบสินค้าได้เนื่องจากผูกอยู่ในสูตรโครงสร้าง BOM (${bomCount} รายการ) กรุณาลบสูตร BOM ที่เกี่ยวข้องก่อน หรือใช้วิธีเปลี่ยนสถานะเป็น Inactive`,
+      })
+    }
 
     await prisma.product.delete({
       where: { id },
     })
 
-    return res.status(200).json({ success: true })
+    return res.status(200).json({ success: true, message: `ลบสินค้า ${product.itemCode} สำเร็จ` })
   } catch (error) {
     console.error('Error deleting product:', error)
-    return res.status(500).json({ error: 'Failed to delete product' })
+    return res.status(500).json({ error: 'ไม่สามารถลบสินค้าได้ เกิดข้อผิดพลาดที่เซิร์ฟเวอร์' })
   }
 })
 
@@ -1000,6 +1088,12 @@ app.post('/transactions', authenticate, async (req: AuthenticatedRequest, res: R
     const product = await prisma.product.findUnique({ where: { itemCode } })
     if (!product) {
       return res.status(404).json({ error: 'Product not found' })
+    }
+
+    if (product.status === 'inactive') {
+      return res.status(409).json({
+        error: 'สินค้ารายการนี้ถูกปิดการใช้งาน (Inactive) ไม่สามารถสร้างรายการรับเข้าหรือเบิกออกได้',
+      })
     }
 
     const supplierLot = normalizeText(body.supplierLot) || null
@@ -1856,17 +1950,25 @@ process.on('uncaughtException', (error: Error) => {
 })
 
 const port = process.env.PORT || 4000
-const server = app.listen(port, () => {
-  console.log(`Backend listening on ${port}`)
-})
+const server =
+  process.env.NODE_ENV !== 'test'
+    ? app.listen(port, () => {
+        console.log(`Backend listening on ${port}`)
+      })
+    : null
 
 // Graceful shutdown: Disconnect Prisma completely when restarting or exiting to release Supabase connection pool
 const gracefulShutdown = async (signal: string) => {
   console.log(`Received ${signal}. Gracefully shutting down backend and releasing database connections...`)
-  server.close(async () => {
+  if (server) {
+    server.close(async () => {
+      await prisma.$disconnect()
+      process.exit(0)
+    })
+  } else {
     await prisma.$disconnect()
     process.exit(0)
-  })
+  }
 }
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
@@ -1875,4 +1977,4 @@ process.on('beforeExit', async () => {
   await prisma.$disconnect()
 })
 
-export { app }
+export { app, prisma }

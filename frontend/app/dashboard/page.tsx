@@ -2,30 +2,37 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { fetchTransactions, fetchProducts, StockTransaction, Product } from '@/lib/auth'
-import { 
-  ArrowDownToLine, 
-  ArrowUpFromLine, 
-  Clock, 
-  Package, 
-  ScanLine, 
-  BarChart3, 
-  ChevronRight, 
+import { fetchTransactions, fetchProducts, StockTransaction, Product, getUser, UserItem } from '@/lib/auth'
+import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Clock,
+  Package,
+  BarChart3,
+  ChevronRight,
   Calendar,
   CheckCircle2,
   XCircle,
   SlidersHorizontal,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  User,
+  Layers,
+  AlertTriangle,
+  Boxes
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function DashboardPage() {
+  const [currentUser, setCurrentUser] = useState<UserItem | null>(null)
   const [transactions, setTransactions] = useState<StockTransaction[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCurrentUser(getUser())
+
     async function loadData() {
       try {
         setLoading(true)
@@ -44,6 +51,7 @@ export default function DashboardPage() {
     loadData()
 
     const handleRefresh = () => {
+      setCurrentUser(getUser())
       loadData()
     }
 
@@ -62,7 +70,9 @@ export default function DashboardPage() {
     }
   }, [])
 
-  // --- 1. คำนวณสถิติ KPI Cards ---
+  const isStaff = currentUser?.role === 'warehouse_staff'
+
+  // --- 1. คำนวณสถิติ Personal Activity / Transactions ---
   const todayStr = new Date().toISOString().split('T')[0]
   const yesterdayDate = new Date()
   yesterdayDate.setDate(yesterdayDate.getDate() - 1)
@@ -78,31 +88,38 @@ export default function DashboardPage() {
   const yesterdayIssues = transactions.filter(t => t.type === 'issue' && t.createdAt.startsWith(yesterdayStr)).length
   const issueDiffPercent = yesterdayIssues === 0 ? (todayIssues > 0 ? 100 : 0) : Math.round(((todayIssues - yesterdayIssues) / yesterdayIssues) * 100)
 
-  // รายการรออนุมัติ
+  // รายการรอยืนยัน
   const pendingCount = transactions.filter(t => t.status === 'pending').length
 
-  // สินค้าทั้งหมดในคลัง (คลัง WPK / Packaging)
-  const totalProductsCount = products.filter(p => p.itemType === 'Packaging').length
+  // --- 2. คำนวณสถิติ Warehouse Overview ---
+  // สินค้ากลุ่ม Packaging ในคลัง
+  const packagingProducts = products.filter(p => p.itemType === 'Packaging')
+  const totalPackagingCount = packagingProducts.length
 
-  // --- 2. คำนวณกราฟสรุป 7 วันล่าสุด ---
+  // ยอดรวมจำนวนชิ้น Packaging คงเหลือทั้งหมดในคลัง
+  const totalStockQuantity = packagingProducts.reduce((sum, p) => sum + (p.quantity || 0), 0)
+
+  // จำนวนรายการที่สต็อกต่ำกว่าหรือเท่ากับจุดสั่งซื้อขั้นต่ำ (Low Stock Alert)
+  const lowStockCount = packagingProducts.filter(
+    p => p.minStock !== null && p.minStock !== undefined && p.quantity <= p.minStock
+  ).length
+
+  // --- 3. คำนวณกราฟสรุป 7 วันล่าสุด ---
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
     d.setDate(d.getDate() - (6 - i))
     const dateStr = d.toISOString().split('T')[0]
     const dayLabel = `${d.getDate()} ${d.toLocaleDateString('th-TH', { month: 'short' })}`
-    
+
     const receiveCount = transactions.filter(t => t.type === 'receive' && t.createdAt.startsWith(dateStr)).length
     const issueCount = transactions.filter(t => t.type === 'issue' && t.createdAt.startsWith(dateStr)).length
-    
+
     return { dateStr, dayLabel, receiveCount, issueCount }
   })
 
   const maxTxIn7Days = Math.max(...last7Days.map(d => Math.max(d.receiveCount, d.issueCount)), 5)
 
-  // --- 3. คำนวณสัดส่วนหมวดบรรจุภัณฑ์ (Donut Chart Data) ---
-  const packagingProducts = products.filter(p => p.itemType === 'Packaging')
-  const totalPackagingCount = packagingProducts.length
-
+  // --- 4. คำนวณสัดส่วนหมวดบรรจุภัณฑ์ (Donut Chart Data) ---
   const getSubCategory = (item: Product): 'gallon' | 'foil' | 'cap' | 'box' | 'label' | 'other' => {
     const code = (item.itemCode || '').toLowerCase()
     const name = (item.name || '').toLowerCase()
@@ -177,7 +194,7 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-slate-50/60 px-4 sm:px-6 py-8">
       <div className="mx-auto max-w-7xl space-y-8">
-        
+
         {/* Top Header Banner */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-xs">
           <div>
@@ -185,7 +202,9 @@ export default function DashboardPage() {
               ระบบบริหารจัดการคลังวัตถุดิบบรรจุภัณฑ์
             </h1>
             <p className="mt-1.5 text-sm sm:text-base text-slate-500 font-medium">
-              จัดการรับเข้า - เบิกออกวัตถุดิบบรรจุภัณฑ์ แบรนด์ YAMALUBE
+              {isStaff
+                ? 'ติดตามสถิติการทำงานของคุณ และตรวจสอบภาพรวมคลังวัตถุดิบบรรจุภัณฑ์'
+                : 'จัดการรับเข้า - เบิกออกวัตถุดิบบรรจุภัณฑ์ แบรนด์ YAMALUBE'}
             </p>
           </div>
           <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200/60 text-slate-600 text-sm font-semibold whitespace-nowrap shrink-0 self-start md:self-auto shadow-2xs">
@@ -194,114 +213,233 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 4 Summary KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* Card 1: รับเข้าวันนี้ */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.05 }}
-            className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs flex flex-col justify-between"
-          >
-            <div className="flex items-center justify-between">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center">
-                <ArrowDownToLine className="w-6 h-6" />
+        {/* ======================================================== */}
+        {/* SECTION 1: Personal Activity (Staff) / Transaction Summary */}
+        {/* ======================================================== */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+            <div className="flex items-center gap-2.5">
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isStaff ? 'bg-red-50 text-[#BE1111]' : 'bg-indigo-50 text-indigo-600'}`}>
+                {isStaff ? <User className="w-4 h-4" /> : <Layers className="w-4 h-4" />}
               </div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">รับเข้าวันนี้</span>
-            </div>
-            <div className="mt-4">
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-display font-extrabold text-slate-900">{loading ? '-' : todayReceives}</span>
-                <span className="text-xs font-semibold text-slate-500">รายการ</span>
-              </div>
-              <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
-                <TrendingUp className="w-3.5 h-3.5" />
-                <span>{receiveDiffPercent >= 0 ? `+${receiveDiffPercent}%` : `${receiveDiffPercent}%`} จากเมื่อวาน</span>
+              <div>
+                <h2 className="text-lg sm:text-xl font-display font-bold text-slate-900">
+                  {isStaff ? 'สถิติการทำงานของฉัน' : 'กิจกรรมธุรกรรมคลังสินค้า'}
+                </h2>
+                <p className="text-xs text-slate-400 font-medium">
+                  {isStaff
+                    ? 'สรุปรายการรับเข้า เบิกออก และรายการของคุณที่รอยืนยัน'
+                    : 'สรุปรายการรับเข้า เบิกออก และรายการรอยืนยันทั้งหมดในคลังสินค้า'}
+                </p>
               </div>
             </div>
-          </motion.div>
+            <span className={`self-start sm:self-auto text-xs font-semibold px-3 py-1 rounded-full border ${
+              isStaff
+                ? 'bg-red-50/70 text-[#BE1111] border-red-200/60'
+                : 'bg-indigo-50/70 text-indigo-700 border-indigo-200/60'
+            }`}>
+              {isStaff ? 'สถิติเฉพาะบุคคล (My Activity)' : 'ภาพรวมทั้งคลัง (Warehouse Scope)'}
+            </span>
+          </div>
 
-          {/* Card 2: เบิกออกวันนี้ */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs flex flex-col justify-between"
-          >
-            <div className="flex items-center justify-between">
-              <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-100 text-[#BE1111] flex items-center justify-center">
-                <ArrowUpFromLine className="w-6 h-6" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            {/* Card 1: คุณรับเข้าวันนี้ / รับเข้าวันนี้ */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.05 }}
+              className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs flex flex-col justify-between"
+            >
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center">
+                  <ArrowDownToLine className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  {isStaff ? 'คุณรับเข้าวันนี้' : 'รับเข้าวันนี้'}
+                </span>
               </div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">เบิกออกวันนี้</span>
-            </div>
-            <div className="mt-4">
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-display font-extrabold text-slate-900">{loading ? '-' : todayIssues}</span>
-                <span className="text-xs font-semibold text-slate-500">รายการ</span>
+              <div className="mt-4">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-display font-extrabold text-slate-900">{loading ? '-' : todayReceives}</span>
+                  <span className="text-xs font-semibold text-slate-500">รายการ</span>
+                </div>
+                <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  <span>{receiveDiffPercent >= 0 ? `+${receiveDiffPercent}%` : `${receiveDiffPercent}%`} จากเมื่อวาน</span>
+                </div>
               </div>
-              <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-[#BE1111]">
-                <TrendingDown className="w-3.5 h-3.5" />
-                <span>{issueDiffPercent >= 0 ? `+${issueDiffPercent}%` : `${issueDiffPercent}%`} จากเมื่อวาน</span>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
 
-          {/* Card 3: รายการรอยืนยัน */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-            className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs flex flex-col justify-between"
-          >
-            <div className="flex items-center justify-between">
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center">
-                <Clock className="w-6 h-6" />
+            {/* Card 2: คุณเบิกออกวันนี้ / เบิกออกวันนี้ */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs flex flex-col justify-between"
+            >
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-100 text-[#BE1111] flex items-center justify-center">
+                  <ArrowUpFromLine className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  {isStaff ? 'คุณเบิกออกวันนี้' : 'เบิกออกวันนี้'}
+                </span>
               </div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">รายการรอยืนยัน</span>
-            </div>
-            <div className="mt-4">
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-display font-extrabold text-slate-900">{loading ? '-' : pendingCount}</span>
-                <span className="text-xs font-semibold text-slate-500">รายการ</span>
+              <div className="mt-4">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-display font-extrabold text-slate-900">{loading ? '-' : todayIssues}</span>
+                  <span className="text-xs font-semibold text-slate-500">รายการ</span>
+                </div>
+                <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-[#BE1111]">
+                  <TrendingDown className="w-3.5 h-3.5" />
+                  <span>{issueDiffPercent >= 0 ? `+${issueDiffPercent}%` : `${issueDiffPercent}%`} จากเมื่อวาน</span>
+                </div>
               </div>
-              <Link href="/transactions" className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-amber-600 hover:text-amber-700 transition-colors">
-                <span>ดูรายการรอยืนยัน</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </motion.div>
+            </motion.div>
 
-          {/* Card 4: วัตถุดิบทั้งหมด */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-            className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs flex flex-col justify-between"
-          >
-            <div className="flex items-center justify-between">
-              <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center">
-                <Package className="w-6 h-6" />
+            {/* Card 3: รายการของคุณที่รอยืนยัน / รายการรอยืนยัน */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.15 }}
+              className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs flex flex-col justify-between"
+            >
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center">
+                  <Clock className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  {isStaff ? 'รายการของคุณที่รอยืนยัน' : 'รายการรอยืนยัน'}
+                </span>
               </div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">วัตถุดิบทั้งหมด</span>
-            </div>
-            <div className="mt-4">
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-display font-extrabold text-slate-900">{loading ? '-' : totalProductsCount}</span>
-                <span className="text-xs font-semibold text-slate-500">รายการ</span>
+              <div className="mt-4">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-display font-extrabold text-slate-900">{loading ? '-' : pendingCount}</span>
+                  <span className="text-xs font-semibold text-slate-500">รายการ</span>
+                </div>
+                <Link href="/transactions" className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-amber-600 hover:text-amber-700 transition-colors">
+                  <span>{isStaff ? 'ดูรายการของคุณ' : 'ดูรายการรอยืนยัน'}</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
-              <Link href="/inventory" className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-purple-600 hover:text-purple-700 transition-colors">
-                <span>ทั้งหมดในคลัง</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
 
-        {/* Charts Section: 7-Day Trend Chart & Packaging Distribution Chart & Quick Action */}
+        {/* ======================================================== */}
+        {/* SECTION 2: Warehouse Overview (ภาพรวมคลังสินค้า)            */}
+        {/* ======================================================== */}
+        <div className="space-y-4 pt-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                <Boxes className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-display font-bold text-slate-900">
+                  ภาพรวมคลังสินค้า (Warehouse Overview)
+                </h2>
+                <p className="text-xs text-slate-400 font-medium">
+                  ข้อมูลสถานะสต็อกและสัดส่วนหมวดหมู่วัตถุดิบบรรจุภัณฑ์ทั้งหมด
+                </p>
+              </div>
+            </div>
+            <span className="self-start sm:self-auto text-xs font-semibold px-3 py-1 rounded-full border bg-purple-50/70 text-purple-700 border-purple-200/60">
+              ข้อมูลรวมทั้งคลัง (Warehouse Aggregate)
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            {/* Overview Card 1: Packaging ทั้งหมด */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs flex flex-col justify-between"
+            >
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center">
+                  <Package className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Packaging ทั้งหมด</span>
+              </div>
+              <div className="mt-4">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-display font-extrabold text-slate-900">{loading ? '-' : totalPackagingCount}</span>
+                  <span className="text-xs font-semibold text-slate-500">รายการ</span>
+                </div>
+                <Link href="/inventory" className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-purple-600 hover:text-purple-700 transition-colors">
+                  <span>ดูสต็อกทั้งหมด</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </motion.div>
+
+            {/* Overview Card 2: ยอดสต็อกรวม */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.22 }}
+              className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs flex flex-col justify-between"
+            >
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center">
+                  <Boxes className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">จำนวนคงเหลือรวม</span>
+              </div>
+              <div className="mt-4">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-display font-extrabold text-slate-900">
+                    {loading ? '-' : totalStockQuantity.toLocaleString()}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-500">ชิ้น / หน่วย</span>
+                </div>
+                <div className="mt-2 text-xs font-medium text-slate-400">
+                  รวมทุกหมวดหมู่วัตถุดิบบรรจุภัณฑ์
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Overview Card 3: สต็อกใกล้หมด */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.24 }}
+              className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs flex flex-col justify-between"
+            >
+              <div className="flex items-center justify-between">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${
+                  lowStockCount > 0
+                    ? 'bg-rose-50 border-rose-100 text-rose-600'
+                    : 'bg-slate-50 border-slate-100 text-slate-400'
+                }`}>
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">สต็อกใกล้หมด</span>
+              </div>
+              <div className="mt-4">
+                <div className="flex items-baseline gap-2">
+                  <span className={`text-3xl font-display font-extrabold ${lowStockCount > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+                    {loading ? '-' : lowStockCount}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-500">รายการ</span>
+                </div>
+                <div className="mt-2 text-xs font-medium text-slate-400">
+                  {lowStockCount > 0 ? 'ควรตรวจสอบและเติมสต็อก' : 'ระดับสต็อกอยู่ในเกณฑ์ปกติ'}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* ======================================================== */}
+        {/* SECTION 3: Charts & Actions (7-Day Trend + Donut + Quick) */}
+        {/* ======================================================== */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
+
           {/* 7-Day Trend Bar Chart (5 Cols) */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.25 }}
@@ -310,8 +448,14 @@ export default function DashboardPage() {
             <div>
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-display font-bold text-slate-900">สรุปการรับเข้า - เบิกออก 7 วันล่าสุด</h3>
-                  <p className="text-xs text-slate-400 mt-0.5 font-medium">เปรียบเทียบจำนวนรายการแยกตามวัน</p>
+                  <h3 className="text-lg font-display font-bold text-slate-900">
+                    {isStaff ? 'สรุปการทำงานของคุณ 7 วันล่าสุด' : 'สรุปการรับเข้า - เบิกออก 7 วันล่าสุด'}
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5 font-medium">
+                    {isStaff
+                      ? 'เปรียบเทียบจำนวนรายการที่คุณรับเข้าและเบิกออกแยกตามวัน'
+                      : 'เปรียบเทียบจำนวนรายการแยกตามวัน'}
+                  </p>
                 </div>
                 <div className="flex items-center gap-4 text-xs font-semibold">
                   <div className="flex items-center gap-1.5">
@@ -334,8 +478,8 @@ export default function DashboardPage() {
                     <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end group">
                       <div className="w-full flex items-end justify-center gap-1 h-full">
                         {/* Receive Bar */}
-                        <div 
-                          style={{ height: `${receiveHeight}%` }} 
+                        <div
+                          style={{ height: `${receiveHeight}%` }}
                           className="w-1/2 max-w-[16px] bg-emerald-500 rounded-t-md transition-all duration-300 group-hover:bg-emerald-600 relative flex justify-center"
                           title={`รับเข้า: ${day.receiveCount} รายการ`}
                         >
@@ -346,8 +490,8 @@ export default function DashboardPage() {
                           )}
                         </div>
                         {/* Issue Bar */}
-                        <div 
-                          style={{ height: `${issueHeight}%` }} 
+                        <div
+                          style={{ height: `${issueHeight}%` }}
                           className="w-1/2 max-w-[16px] bg-[#BE1111] rounded-t-md transition-all duration-300 group-hover:bg-[#A00F0F] relative flex justify-center"
                           title={`เบิกออก: ${day.issueCount} รายการ`}
                         >
@@ -366,8 +510,8 @@ export default function DashboardPage() {
             </div>
           </motion.div>
 
-          {/* Donut Chart Category Distribution (4 Cols - Image 2 Redesign) */}
-          <motion.div 
+          {/* Donut Chart Category Distribution (4 Cols) */}
+          <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.3 }}
@@ -395,7 +539,7 @@ export default function DashboardPage() {
                         const percent = totalCategorized > 0 ? (cat.count / totalCategorized) * 100 : 0
                         if (percent <= 0) return acc
 
-                        const totalC = 2 * Math.PI * 70 // 439.8229715
+                        const totalC = 2 * Math.PI * 70
                         const segmentLen = (percent / 100) * totalC
 
                         const strokeDasharray = `${segmentLen} ${totalC - segmentLen}`
@@ -425,8 +569,8 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  <Link 
-                    href="/inventory" 
+                  <Link
+                    href="/inventory"
                     className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors"
                   >
                     <span>ดูทั้งหมด</span>
@@ -456,7 +600,7 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* Quick Actions (3 Cols) */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.35 }}
@@ -467,8 +611,8 @@ export default function DashboardPage() {
               <p className="text-xs text-slate-400 font-medium mb-6">ปุ่มลัดสำหรับเข้าถึงฟังก์ชันหลัก</p>
 
               <div className="space-y-3">
-                <Link 
-                  href="/scan?mode=receive" 
+                <Link
+                  href="/scan?mode=receive"
                   className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-100/80 text-emerald-800 hover:bg-emerald-100/70 transition-all group font-semibold text-sm shadow-2xs"
                 >
                   <div className="flex items-center gap-3">
@@ -480,8 +624,8 @@ export default function DashboardPage() {
                   <ChevronRight className="w-4 h-4 text-emerald-600 group-hover:translate-x-1 transition-transform" />
                 </Link>
 
-                <Link 
-                  href="/scan?mode=issue" 
+                <Link
+                  href="/scan?mode=issue"
                   className="flex items-center justify-between p-3.5 rounded-2xl bg-red-50/70 border border-red-100/80 text-[#BE1111] hover:bg-red-100/70 transition-all group font-semibold text-sm shadow-2xs"
                 >
                   <div className="flex items-center gap-3">
@@ -493,8 +637,8 @@ export default function DashboardPage() {
                   <ChevronRight className="w-4 h-4 text-[#BE1111] group-hover:translate-x-1 transition-transform" />
                 </Link>
 
-                <Link 
-                  href="/inventory" 
+                <Link
+                  href="/inventory"
                   className="flex items-center justify-between p-3.5 rounded-2xl bg-purple-50/70 border border-purple-100/80 text-purple-800 hover:bg-purple-100/70 transition-all group font-semibold text-sm shadow-2xs"
                 >
                   <div className="flex items-center gap-3">
@@ -506,15 +650,15 @@ export default function DashboardPage() {
                   <ChevronRight className="w-4 h-4 text-purple-600 group-hover:translate-x-1 transition-transform" />
                 </Link>
 
-                <Link 
-                  href="/reports" 
+                <Link
+                  href={isStaff ? "/transactions" : "/reports"}
                   className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-200/60 text-slate-700 hover:bg-slate-100 transition-all group font-semibold text-sm shadow-2xs"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl bg-slate-700 text-white flex items-center justify-center shadow-xs">
                       <BarChart3 className="w-4 h-4" />
                     </div>
-                    <span>ดูรายงานทั้งหมด</span>
+                    <span>{isStaff ? 'ดูรายการของฉัน' : 'ดูรายงานทั้งหมด'}</span>
                   </div>
                   <ChevronRight className="w-4 h-4 text-slate-500 group-hover:translate-x-1 transition-transform" />
                 </Link>
@@ -524,8 +668,10 @@ export default function DashboardPage() {
 
         </div>
 
-        {/* Bottom Section: Recent Transactions Table (Full Width) */}
-        <motion.div 
+        {/* ======================================================== */}
+        {/* SECTION 4: Recent Transactions Table                     */}
+        {/* ======================================================== */}
+        <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.4 }}
@@ -533,11 +679,17 @@ export default function DashboardPage() {
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-lg font-display font-bold text-slate-900">รายการล่าสุด (Recent Transactions)</h3>
-              <p className="text-xs text-slate-400 font-medium mt-0.5">5 รายการประวัติการทำรายการล่าสุดในระบบ</p>
+              <h3 className="text-lg font-display font-bold text-slate-900">
+                {isStaff ? 'รายการของคุณล่าสุด' : 'รายการล่าสุด (Recent Transactions)'}
+              </h3>
+              <p className="text-xs text-slate-400 font-medium mt-0.5">
+                {isStaff
+                  ? '5 รายการประวัติการทำรายการล่าสุดของคุณ'
+                  : '5 รายการประวัติการทำรายการล่าสุดในระบบ'}
+              </p>
             </div>
-            <Link 
-              href="/reports" 
+            <Link
+              href={isStaff ? "/transactions" : "/reports"}
               className="inline-flex items-center gap-1 text-xs font-bold text-[#BE1111] hover:text-red-700 transition-colors"
             >
               <span>ดูทั้งหมด</span>
@@ -569,7 +721,9 @@ export default function DashboardPage() {
                 ) : recentTransactions.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-8 text-center text-slate-400">
-                      ยังไม่มีรายการประวัติการทำรายการในระบบ
+                      {isStaff
+                        ? 'คุณยังไม่มีประวัติการทำรายการในระบบ'
+                        : 'ยังไม่มีรายการประวัติการทำรายการในระบบ'}
                     </td>
                   </tr>
                 ) : (

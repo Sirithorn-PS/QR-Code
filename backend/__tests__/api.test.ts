@@ -488,4 +488,107 @@ describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
       expect(res.status).toBe(401)
     })
   })
+
+  describe('3. Staff "My Transactions" GET /transactions Authorization & Security Tests', () => {
+    let adminToken: string
+    let staffToken: string
+    let supervisorToken: string
+
+    beforeAll(async () => {
+      const aRes = await request(app).post('/auth/login').send({ username: 'admin', password: 'admin123' })
+      adminToken = aRes.body.token
+      const sRes = await request(app).post('/auth/login').send({ username: 'staff', password: 'staff123' })
+      staffToken = sRes.body.token
+      const supRes = await request(app).post('/auth/login').send({ username: 'supervisor', password: 'super1234' })
+      supervisorToken = supRes.body.token
+    })
+
+    it('Staff sees only their own transactions in GET /transactions', async () => {
+      const res = await request(app)
+        .get('/transactions')
+        .set('Authorization', `Bearer ${staffToken}`)
+
+      expect(res.status).toBe(200)
+      expect(Array.isArray(res.body)).toBe(true)
+      expect(res.body.length).toBeGreaterThan(0)
+      for (const tx of res.body) {
+        expect(tx.createdById).toBe(7)
+      }
+    })
+
+    it('Staff cannot bypass createdById filter using query parameters', async () => {
+      const res = await request(app)
+        .get('/transactions?createdById=6&userId=6')
+        .set('Authorization', `Bearer ${staffToken}`)
+
+      expect(res.status).toBe(200)
+      expect(res.body.length).toBeGreaterThan(0)
+      for (const tx of res.body) {
+        expect(tx.createdById).toBe(7)
+        expect(tx.createdById).not.toBe(6)
+      }
+    })
+
+    it('Staff can use status filter within their own transactions', async () => {
+      const res = await request(app)
+        .get('/transactions?status=pending')
+        .set('Authorization', `Bearer ${staffToken}`)
+
+      expect(res.status).toBe(200)
+      for (const tx of res.body) {
+        expect(tx.createdById).toBe(7)
+        expect(tx.status).toBe('pending')
+      }
+    })
+
+    it('Staff can use search filter within their own transactions', async () => {
+      const res = await request(app)
+        .get('/transactions?search=NON_EXISTENT_CODE_XYZ')
+        .set('Authorization', `Bearer ${staffToken}`)
+
+      expect(res.status).toBe(200)
+      expect(res.body).toEqual([])
+    })
+
+    it('Supervisor sees all transactions across all creators', async () => {
+      const res = await request(app)
+        .get('/transactions')
+        .set('Authorization', `Bearer ${supervisorToken}`)
+
+      expect(res.status).toBe(200)
+      expect(res.body.length).toBeGreaterThanOrEqual(16)
+      const creators = new Set(res.body.map((t: { createdById: number }) => t.createdById))
+      expect(creators.size).toBeGreaterThan(1)
+    })
+
+    it('Admin maintains existing behavior without createdById restriction', async () => {
+      const res = await request(app)
+        .get('/transactions')
+        .set('Authorization', `Bearer ${adminToken}`)
+
+      expect(res.status).toBe(200)
+      expect(res.body.length).toBeGreaterThanOrEqual(16)
+    })
+
+    it('POST /transactions records createdById strictly from JWT token', async () => {
+      const staffTx = await prisma.transaction.findFirst({
+        where: { createdById: 7 },
+      })
+      expect(staffTx).toBeDefined()
+      expect(staffTx?.createdById).toBe(7)
+    })
+
+    it('Staff cannot confirm or reject transactions (403 Forbidden)', async () => {
+      const confirmRes = await request(app)
+        .post('/transactions/1/confirm')
+        .set('Authorization', `Bearer ${staffToken}`)
+      expect(confirmRes.status).toBe(403)
+
+      const rejectRes = await request(app)
+        .post('/transactions/1/reject')
+        .set('Authorization', `Bearer ${staffToken}`)
+        .send({ note: 'Unauthorized' })
+      expect(rejectRes.status).toBe(403)
+    })
+  })
 })

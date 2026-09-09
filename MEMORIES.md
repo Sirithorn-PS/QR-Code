@@ -1,5 +1,63 @@
 # บันทึกการทำงาน (Memories)
 
+## 9 ก.ย. 2026
+- **กำหนด Default Status Filter เป็น "ทั้งหมด" สำหรับ Staff (STEP 4.16.3 — Staff Default Transaction Filter) (เสร็จสมบูรณ์ 100%)**:
+  - **Staff Default Filter ([frontend/app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/transactions/page.tsx))**:
+    - ปรับปรุงให้เมื่อผู้ใช้มีบทบาทเป็น `warehouse_staff` เปิดเข้าสู่หน้า `/transactions` ("รายการของฉัน") เป็นครั้งแรก ระบบจะกำหนดตัวกรองสถานะเริ่มต้น (`statusFilter`) เป็น **"ทั้งหมด" (`all`)** โดยอัตโนมัติ เพื่อให้พนักงานสามารถเห็นประวัติการรับเข้า/เบิกออกของตนเองครบถ้วนทันที
+    - สำหรับบทบาท `supervisor` ยังคงกำหนดตัวกรองเริ่มต้นเป็น **"รออนุมัติ" (`pending`)** เช่นเดิม เพื่อให้หัวหน้างานเห็นรายการที่ต้องเข้าตรวจสอบและอนุมัติทันที
+    - จัดลำดับตัวเลือกใน Dropdown สถานะให้ Staff เห็น **"ทั้งหมด"** เป็นตัวเลือกแรก ในขณะที่ Supervisor เห็น **"รออนุมัติ"** เป็นตัวเลือกแรก
+    - หลังเปิดหน้าแล้ว Staff ยังคงสามารถเลือกสลับดูรายการเฉพาะ `รออนุมัติ`, `อนุมัติแล้ว`, หรือ `ปฏิเสธ` ได้ตามปกติ
+  - **Navigation Badge Isolation**:
+    - ตัวเลข Badge บนเมนูนำทางยังคงนับเฉพาะจำนวนรายการรออนุมัติของ Staff (`pending`) โดยแยก Logic จาก Default Filter ในหน้ารายการอย่างถูกต้อง
+  - **Automated Tests & Regression Verification ([frontend/__tests__/e2e/roles.spec.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/__tests__/e2e/roles.spec.ts))**:
+    - เพิ่มการตรวจสอบใน Playwright E2E ยืนยันว่า Staff เปิดหน้าแรกได้ค่าเริ่มต้นเป็น `all` และสามารถเลือกเปลี่ยนเป็น `pending` ได้ ในขณะที่ Supervisor เปิดหน้าแรกได้ค่าเริ่มต้นเป็น `pending`
+    - Playwright E2E: 18/18 PASS (100%)
+    - Frontend Vitest: 50/50 PASS (100%)
+    - Backend Vitest: 59/59 PASS (100%)
+    - TypeScript Type Check: 0 errors ทั้งฝั่ง Backend และ Frontend
+    - Next.js Production Build: สำเร็จสมบูรณ์ (12/12 static pages)
+    - Database Integrity: ข้อมูลทั้งหมดในฐานข้อมูลคงเดิม 100%
+
+- **ปรับปรุง UI/UX หน้ารายการสำหรับ Staff ให้เป็น "รายการของฉัน" (STEP 4.16.2 — Staff “My Transactions” UI/UX) (เสร็จสมบูรณ์ 100%)**:
+  - **Staff Transaction Page UI ([frontend/app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/transactions/page.tsx))**:
+    - **Page Title & Subtitle**: เมื่อผู้ใช้มีบทบาทเป็น `warehouse_staff` หน้าจอจะแสดงหัวข้อ **"รายการของฉัน"** พร้อมคำอธิบายย่อย *"ติดตามและตรวจสอบสถานะรายการรับเข้าและเบิกออกของคุณ"* ส่วน Supervisor ยังคงแสดง **"รายการรอการยืนยัน"** เพื่อใช้ในการอนุมัติงานตามเดิม
+    - **Empty State UX**: ปรับข้อความเมื่อไม่มีรายการสำหรับ Staff ให้ระบุชัดเจน เช่น *"ไม่มีรายการของคุณที่รอการยืนยัน"*, *"ไม่มีรายการของคุณที่ได้รับการอนุมัติ"*, *"ไม่มีรายการของคุณที่ถูกปฏิเสธ"*, และ *"ยังไม่มีรายการของคุณในระบบ"*
+    - **Status Filter & Badge**: ตัวกรองสถานะ (`รออนุมัติ`, `ทั้งหมด`, `อนุมัติแล้ว`, `ปฏิเสธ`) และตัวเลข Badge ในเมนูนำทาง (`Navigation.tsx`) คำนวณจากรายการของ Staff คนนั้นโดยตรงและถูกต้องโดยอัตโนมัติตาม Backend Source of Truth
+    - **Role Boundary & Controls**: Staff มองไม่เห็นปุ่ม "อนุมัติ" / "ปฏิเสธ" และไม่มีการแสดง Accordion การตัดสต็อก FIFO Lot เช่นเดิม
+  - **Automated Tests & Regression Verification ([frontend/__tests__/e2e/roles.spec.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/__tests__/e2e/roles.spec.ts))**:
+    - อัปเดต Playwright E2E ให้ตรวจสอบว่า Staff เห็นหัวข้อ "รายการของฉัน", ซ่อนปุ่มอนุมัติ/ปฏิเสธ และซ่อนส่วน FIFO ตัดสต็อก
+    - Playwright E2E: 18/18 PASS (100%)
+    - Frontend Vitest: 50/50 PASS (100%)
+    - Backend Vitest: 59/59 PASS (100%)
+    - TypeScript Type Check: 0 errors ทั้งฝั่ง Backend และ Frontend
+    - Next.js Production Build: สำเร็จสมบูรณ์ (12/12 static pages)
+    - Database Integrity: ข้อมูลทั้งหมดในฐานข้อมูลคงเดิม 100%
+
+- **แก้ไขปัญหา Security / Requirement Gap ฝั่ง Backend ให้ Staff ดูได้เฉพาะรายการของตนเอง (STEP 4.16.1 — Staff “My Transactions” Backend Authorization Fix) (เสร็จสมบูรณ์ 100%)**:
+  - **Backend Ownership Authorization ([backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts))**:
+    - แก้ไข `app.get('/transactions')` ให้ตรวจสอบบทบาทของผู้ใช้จาก JWT Token (`req.user?.role`)
+    - หากผู้ใช้มีบทบาทเป็น `warehouse_staff` ระบบจะบังคับใส่เงื่อนไข `whereClause.createdById = req.user.id` โดยอัตโนมัติ ทำให้ Staff ได้รับเฉพาะ Transaction ที่ตนเองเป็นผู้สร้างเท่านั้น
+    - หากเป็น `supervisor` หรือ `admin` ระบบยังคงพฤติกรรมเดิม ไม่มีการใส่ filter `createdById` ทำให้ Supervisor ยังคงเห็น Transaction ทั้งหมดในคลังเพื่อใช้ในการตรวจสอบและ Confirm/Reject ได้ครบถ้วน
+    - ป้องกันความปลอดภัย: ไม่มีการรับ `createdById` หรือ `userId` จาก Query Parameter ทำให้ Staff ไม่สามารถ Bypass เพื่อดูข้อมูลของพนักงานคนอื่นได้
+    - ไม่มีการแก้ไข Endpoint สร้าง Transaction (`POST /transactions` ยังคงผูก `createdById: req.user.id` จาก JWT เช่นเดิม)
+  - **Automated Tests & Regression Verification ([backend/__tests__/api.test.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/__tests__/api.test.ts))**:
+    - เพิ่มชุดทดสอบ Security & Role Boundary สำหรับ `GET /transactions` รวม 8 ข้อ ทดสอบครอบคลุม:
+      1. Staff เห็นเฉพาะ Transaction ของตนเอง (`createdById === 7`)
+      2. Staff ไม่สามารถ bypass filter ผ่าน query parameters (`?createdById=6&userId=6`)
+      3. Staff สามารถใช้งาน filter อื่นๆ เช่น `status=pending` ภายในรายการของตนเองได้
+      4. Staff สามารถใช้งาน search filter ภายในรายการของตนเองได้
+      5. Supervisor ยังคงเห็น Transaction ทั้งหมดจากทุกผู้สร้าง
+      6. Admin ยังคงพฤติกรรมเดิมตาม Role Architecture
+      7. `POST /transactions` บันทึก `createdById` จาก JWT อย่างถูกต้อง
+      8. Staff พยายามกด Confirm/Reject ยังคงถูกบล็อกด้วย 403 Forbidden
+    - Backend Vitest: 59/59 PASS (100%)
+    - Frontend Vitest: 50/50 PASS (100%)
+    - Playwright E2E: 18/18 PASS (100%)
+    - TypeScript Type Check: 0 errors ทั้งฝั่ง Backend และ Frontend
+    - Next.js Production Build: สำเร็จสมบูรณ์ (12/12 static pages)
+    - Backend Build (`npx tsc`): สำเร็จสมบูรณ์ 0 errors
+    - Database Integrity: ข้อมูล Products (44 รายการ), Packaging (24 รายการ), Lots (24 รายการ), Transactions (16 รายการ), BOMs (118 รายการ), Users (11 บัญชี) คงเดิมทุกประการ ไม่มีการเปลี่ยนแปลงข้อมูลจริง
+
 ## 8 ก.ย. 2026
 - **ปรับปรุงความปลอดภัยของระบบและการจำกัดขอบเขตสิทธิ์ (STEP 4.14.2 — Security & Role Boundary Hardening) (เสร็จสมบูรณ์ 100%)**:
   - **FIX #1: Authentication Fast-path Alignment ([backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts))**:

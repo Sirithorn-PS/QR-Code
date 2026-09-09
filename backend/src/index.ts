@@ -1132,7 +1132,7 @@ app.delete('/products/:id', authenticate, requireRole('supervisor'), async (req,
   }
 })
 
-app.get('/transactions', authenticate, async (req, res) => {
+app.get('/transactions', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const status = normalizeText(req.query.status)
     const startDate = normalizeText(req.query.startDate)
@@ -1143,7 +1143,13 @@ app.get('/transactions', authenticate, async (req, res) => {
       status?: string
       createdAt?: { gte: Date; lte: Date }
       product?: { itemCode: string }
+      createdById?: number
     } = {}
+
+    // Role-based Ownership Authorization: Staff sees only their own transactions
+    if (req.user?.role === 'warehouse_staff') {
+      whereClause.createdById = req.user.id
+    }
 
     if (status) {
       whereClause.status = status

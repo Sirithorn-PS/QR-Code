@@ -65,7 +65,15 @@ function TransactionsContent() {
     if (typeof window !== 'undefined') {
       const storedUser = localStorage.getItem('user')
       if (storedUser) {
-        setUser(JSON.parse(storedUser))
+        try {
+          const parsedUser = JSON.parse(storedUser)
+          setUser(parsedUser)
+          if (parsedUser.role === 'warehouse_staff' && (!highlightId || !Number.isInteger(highlightId))) {
+            setStatusFilter('all')
+          }
+        } catch (e) {
+          console.error(e)
+        }
       }
     }
 
@@ -183,7 +191,16 @@ function TransactionsContent() {
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-8">
       <div className="mx-auto max-w-6xl">
-        <h1 className="text-3xl font-display font-bold text-slate-900 tracking-tight">รายการรอการยืนยัน</h1>
+        <div>
+          <h1 className="text-3xl font-display font-bold text-slate-900 tracking-tight">
+            {user?.role === 'warehouse_staff' ? 'รายการของฉัน' : 'รายการรอการยืนยัน'}
+          </h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-500">
+            {user?.role === 'warehouse_staff'
+              ? 'ติดตามและตรวจสอบสถานะรายการรับเข้าและเบิกออกของคุณ'
+              : 'ตรวจสอบและอนุมัติรายการรับเข้าและเบิกออกจากคลังสินค้า'}
+          </p>
+        </div>
 
         {/* แถบแจ้งเตือนข้อความ (หายไปเองใน 3.5 วินาที) */}
         {error && (
@@ -208,10 +225,21 @@ function TransactionsContent() {
               onChange={(e) => setStatusFilter(e.target.value as 'pending' | 'all' | 'confirmed' | 'rejected')}
               className="w-full text-xs sm:text-sm font-bold text-slate-900 focus:outline-none bg-transparent cursor-pointer"
             >
-              <option value="pending">รออนุมัติ ({pendingCount})</option>
-              <option value="all">ทั้งหมด ({totalCount})</option>
-              <option value="confirmed">อนุมัติแล้ว ({confirmedCount})</option>
-              <option value="rejected">ปฏิเสธ ({rejectedCount})</option>
+              {user?.role === 'warehouse_staff' ? (
+                <>
+                  <option value="all">ทั้งหมด ({totalCount})</option>
+                  <option value="pending">รออนุมัติ ({pendingCount})</option>
+                  <option value="confirmed">อนุมัติแล้ว ({confirmedCount})</option>
+                  <option value="rejected">ปฏิเสธ ({rejectedCount})</option>
+                </>
+              ) : (
+                <>
+                  <option value="pending">รออนุมัติ ({pendingCount})</option>
+                  <option value="all">ทั้งหมด ({totalCount})</option>
+                  <option value="confirmed">อนุมัติแล้ว ({confirmedCount})</option>
+                  <option value="rejected">ปฏิเสธ ({rejectedCount})</option>
+                </>
+              )}
             </select>
           </div>
         </div>
@@ -224,7 +252,15 @@ function TransactionsContent() {
             </div>
           ) : filteredTransactions.length === 0 ? (
             <div className="rounded-lg border border-slate-200 bg-white p-12 text-center text-slate-500">
-              {statusFilter === 'pending'
+              {user?.role === 'warehouse_staff'
+                ? statusFilter === 'pending'
+                  ? 'ไม่มีรายการของคุณที่รอการยืนยัน'
+                  : statusFilter === 'confirmed'
+                  ? 'ไม่มีรายการของคุณที่ได้รับการอนุมัติ'
+                  : statusFilter === 'rejected'
+                  ? 'ไม่มีรายการของคุณที่ถูกปฏิเสธ'
+                  : 'ยังไม่มีรายการของคุณในระบบ'
+                : statusFilter === 'pending'
                 ? 'ไม่มีรายการรอการยืนยัน'
                 : statusFilter === 'confirmed'
                 ? 'ไม่มีรายการที่ได้รับการอนุมัติ'

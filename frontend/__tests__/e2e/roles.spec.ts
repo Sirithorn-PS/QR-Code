@@ -52,6 +52,7 @@ test.describe('Role-based Access Control (E2E)', () => {
     // Check Transactions page for Approve button
     await page.goto('/transactions');
     await expect(page.getByRole('heading', { name: 'รายการรอการยืนยัน' })).toBeVisible();
+    await expect(page.locator('select')).toHaveValue('pending');
     await expect(page.locator('button:has-text("อนุมัติ")').first()).toBeVisible();
   });
 
@@ -91,7 +92,15 @@ test.describe('Role-based Access Control (E2E)', () => {
 
     // Check Transactions page
     await page.goto('/transactions');
+    await expect(page.getByRole('heading', { name: 'รายการของฉัน' })).toBeVisible();
+    await expect(page.locator('select')).toHaveValue('all');
     await expect(page.locator('button:has-text("อนุมัติ")')).toBeHidden();
+    await expect(page.locator('button:has-text("ปฏิเสธ")')).toBeHidden();
+    await expect(page.locator('text=ตัดสต็อกตามลำดับ FIFO')).toBeHidden();
+
+    // Verify Staff can change filter to 'pending'
+    await page.locator('select').selectOption('pending');
+    await expect(page.locator('select')).toHaveValue('pending');
   });
 
   test('Admin should have User Management access but NOT see approval buttons', async ({ page }: { page: Page }) => {

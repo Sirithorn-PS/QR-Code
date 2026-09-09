@@ -188,6 +188,11 @@ export default function ScanPage() {
       return
     }
 
+    if (scanMode === 'issue' && finalQuantity > (product.quantity ?? 0)) {
+      setError('จำนวนเบิกเกินสต็อกคงเหลือ กรุณาระบุจำนวนไม่เกินสต็อกคงเหลือ')
+      return
+    }
+
     setLoading(true)
     try {
       const transaction = await createTransaction({
@@ -267,6 +272,17 @@ export default function ScanPage() {
 
     return 'Raw Material'
   }
+
+  const numQty = typeof quantity === 'number' ? quantity : (Number(quantity) || 0)
+  const isIssueMode = scanMode === 'issue'
+  const currentStock = product ? (product.quantity ?? 0) : 0
+  const isStockExceeded = Boolean(
+    product &&
+    isIssueMode &&
+    quantity !== '' &&
+    numQty > 0 &&
+    numQty > currentStock
+  )
 
   return (
     <main className="min-h-screen bg-[#f5f5f7] px-4 py-8 md:px-6 md:py-12 flex flex-col items-center">
@@ -659,14 +675,40 @@ export default function ScanPage() {
                       onChange={(event) => {
                         const val = event.target.value.replace(/[^0-9]/g, '')
                         setQuantity(val === '' ? '' : Number(val))
+                        if (error) setError('')
                       }}
                       placeholder="ระบุจำนวนที่ต้องการทำรายการ"
-                      className="w-full rounded-2xl border border-gray-200/80 bg-gray-50/50 backdrop-blur-sm pl-4 pr-16 py-3.5 text-base text-gray-800 font-bold focus:bg-white focus:border-[#BE1111]/30 focus:outline-none focus:ring-4 focus:ring-[#BE1111]/10 transition-all placeholder:font-normal"
+                      className={`w-full rounded-2xl border bg-gray-50/50 backdrop-blur-sm pl-4 pr-16 py-3.5 text-base text-gray-800 font-bold focus:bg-white focus:outline-none transition-all placeholder:font-normal ${
+                        isStockExceeded
+                          ? 'border-red-500/80 bg-red-50/30 focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
+                          : 'border-gray-200/80 focus:border-[#BE1111]/30 focus:ring-4 focus:ring-[#BE1111]/10'
+                      }`}
                     />
                     <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
                       <span className="text-gray-500 font-semibold">{product.unit}</span>
                     </div>
                   </div>
+
+                  {/* Inline Warning เมื่อกรอกจำนวนเบิกเกินสต็อกคงเหลือ (Issue mode เท่านั้น) */}
+                  {isStockExceeded && (
+                    <div
+                      id="stock-exceeded-warning"
+                      role="alert"
+                      className="mt-2.5 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700 space-y-1"
+                    >
+                      <div className="flex items-center gap-1.5 font-bold text-red-800">
+                        <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                        <span>จำนวนเบิกเกินสต็อกคงเหลือ</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-red-600 pt-1 border-t border-red-200/60 font-medium">
+                        <span>สต็อกคงเหลือ: <b>{currentStock.toLocaleString()} {product.unit}</b></span>
+                        <span>จำนวนที่เบิก: <b className="text-red-700">{numQty.toLocaleString()} {product.unit}</b></span>
+                      </div>
+                      <p className="text-[11px] text-red-500 mt-0.5">
+                        กรุณาระบุจำนวนไม่เกินสต็อกคงเหลือ
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mb-6">
@@ -684,9 +726,9 @@ export default function ScanPage() {
 
                 <motion.button
                   type="submit"
-                  disabled={loading}
-                  whileTap={{ scale: 0.98 }}
-                  className={`w-full rounded-2xl px-5 py-4 font-bold text-white shadow-lg disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none transition-all text-sm flex items-center justify-center gap-2 ${
+                  disabled={loading || isStockExceeded}
+                  whileTap={!loading && !isStockExceeded ? { scale: 0.98 } : {}}
+                  className={`w-full rounded-2xl px-5 py-4 font-bold text-white shadow-lg disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:cursor-not-allowed transition-all text-sm flex items-center justify-center gap-2 ${
                     scanMode === 'receive' 
                       ? 'bg-green-600 hover:bg-green-700 shadow-green-600/20' 
                       : 'bg-red-600 hover:bg-red-700 shadow-red-600/20'

@@ -44,6 +44,7 @@ export interface Product {
   itemType?: string
   status?: 'active' | 'inactive' | string
   parentItemCodes?: string[]
+  minStock?: number | null
 }
 
 export interface BillOfMaterial {
@@ -303,6 +304,13 @@ export function updateProductStatus(id: number, status: 'active' | 'inactive') {
   return apiRequest<Product>(`/products/${id}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ status }),
+  })
+}
+
+export function updateProductMinStock(id: number, minStock: number | null) {
+  return apiRequest<Product>(`/products/${id}/min-stock`, {
+    method: 'PATCH',
+    body: JSON.stringify({ minStock }),
   })
 }
 

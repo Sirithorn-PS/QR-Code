@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { fetchProducts, updateProductQuantity, updateProductStatus, createProduct, deleteProduct, fetchProductBom, createProductWithBom, fetchProductLots, Product, BillOfMaterial, ProductLot } from '@/lib/auth'
+import { fetchProducts, updateProductQuantity, updateProductStatus, updateProductMinStock, createProduct, deleteProduct, fetchProductBom, createProductWithBom, fetchProductLots, Product, BillOfMaterial, ProductLot } from '@/lib/auth'
 import QRCode from 'react-qr-code'
 import { Search, Package, ArrowLeft, Layers, Download, Check, History, X, Trash2, FileText, LayoutGrid, Crown, Droplets, Box, FlaskConical, QrCode, Star, Copy, Zap, Disc, Plus, CheckCircle2, AlertCircle, Printer, Power } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -128,6 +128,58 @@ export default function InventoryPage() {
   const [lotList, setLotList] = useState<ProductLot[]>([])
   const [lotLoading, setLotLoading] = useState(false)
   const [lotError, setLotError] = useState('')
+
+  // Min Stock Modal state
+  const [minStockModalTarget, setMinStockModalTarget] = useState<Product | null>(null)
+  const [minStockInput, setMinStockInput] = useState<string>('')
+  const [minStockUpdating, setMinStockUpdating] = useState(false)
+  const [minStockError, setMinStockError] = useState('')
+  const [minStockSuccess, setMinStockSuccess] = useState('')
+
+  const handleOpenMinStockModal = (product: Product) => {
+    if (user?.role !== 'supervisor') return
+    setMinStockModalTarget(product)
+    setMinStockInput(product.minStock !== null && product.minStock !== undefined ? String(product.minStock) : '')
+    setMinStockError('')
+    setMinStockSuccess('')
+  }
+
+  const handleSaveMinStock = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!minStockModalTarget || minStockUpdating) return
+
+    let normalizedValue: number | null = null
+    const trimmed = minStockInput.trim()
+
+    if (trimmed !== '') {
+      const num = Number(trimmed)
+      if (isNaN(num) || !Number.isInteger(num) || num < 0) {
+        setMinStockError('จุดสั่งซื้อ (Min Stock) ต้องเป็นตัวเลขจำนวนเต็มที่ไม่ติดลบ (>= 0)')
+        return
+      }
+      normalizedValue = num
+    }
+
+    setMinStockUpdating(true)
+    setMinStockError('')
+    setMinStockSuccess('')
+
+    try {
+      const updated = await updateProductMinStock(minStockModalTarget.id, normalizedValue)
+      setProducts(prev =>
+        prev.map(p => (p.id === minStockModalTarget.id ? { ...p, minStock: updated.minStock } : p))
+      )
+      setMinStockSuccess('บันทึกจุดสั่งซื้อขั้นต่ำสำเร็จ')
+      setTimeout(() => {
+        setMinStockModalTarget(null)
+        setMinStockSuccess('')
+      }, 700)
+    } catch (err) {
+      setMinStockError(err instanceof Error ? err.message : 'ไม่สามารถบันทึกค่า Min Stock ได้')
+    } finally {
+      setMinStockUpdating(false)
+    }
+  }
 
   const openLotModal = async (product: Product) => {
     if (user?.role !== 'supervisor') {
@@ -537,9 +589,15 @@ export default function InventoryPage() {
       }
     }
 
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+    const querySearch = urlParams?.get('search') || ''
+    if (querySearch) {
+      setSearch(querySearch)
+    }
+
     async function loadInitialProducts() {
       try {
-        const initialProducts = await fetchProducts('', 'ALL')
+        const initialProducts = await fetchProducts(querySearch, 'ALL')
         if (isMounted) setProducts(initialProducts)
       } catch (err) {
         if (isMounted) setError(err instanceof Error ? err.message : 'โหลดข้อมูลสต็อกไม่สำเร็จ')
@@ -1180,7 +1238,7 @@ export default function InventoryPage() {
                         </div>
 
                         <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row items-stretch sm:items-center md:items-stretch lg:items-center gap-3 sm:gap-4 shrink-0 w-full md:w-auto mt-2 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-gray-100">
-                          <div className="bg-slate-50 min-w-[140px] px-4 py-3 rounded-2xl border border-slate-200 flex flex-col items-center justify-center text-center shadow-2xs">
+                          <div className="bg-slate-50 min-w-[130px] px-4 py-3 rounded-2xl border border-slate-200 flex flex-col items-center justify-center text-center shadow-2xs">
                             <span className="text-[10px] sm:text-[11px] text-slate-500 font-bold uppercase tracking-wider text-center">
                               STOCK คงเหลือ
                             </span>
@@ -1189,6 +1247,32 @@ export default function InventoryPage() {
                             </div>
                             <span className="text-xs font-bold text-gray-500 text-center leading-none mt-0.5">
                               {item.unit}
+                            </span>
+                          </div>
+                          <div className={`min-w-[130px] px-4 py-3 rounded-2xl border flex flex-col items-center justify-center text-center shadow-2xs transition-all ${
+                            item.minStock !== null && item.minStock !== undefined && item.quantity <= item.minStock && item.status === 'active'
+                              ? 'bg-red-50/80 border-red-200 text-red-900'
+                              : 'bg-slate-50 border-slate-200 text-slate-700'
+                          }`}>
+                            <div className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-center">
+                              {item.minStock !== null && item.minStock !== undefined && item.quantity <= item.minStock && item.status === 'active' ? (
+                                <span className="inline-flex items-center gap-1 text-[#BE1111] font-black">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-[#BE1111] animate-pulse" />
+                                  ใกล้หมด
+                                </span>
+                              ) : (
+                                <span className="text-slate-500">จุดสั่งซื้อ (MIN)</span>
+                              )}
+                            </div>
+                            <div className={`text-2xl sm:text-3xl font-black leading-tight text-center mt-0.5 ${
+                              item.minStock !== null && item.minStock !== undefined && item.quantity <= item.minStock && item.status === 'active'
+                                ? 'text-[#BE1111]'
+                                : 'text-gray-900'
+                            }`}>
+                              {item.minStock !== null && item.minStock !== undefined ? item.minStock.toLocaleString() : '-'}
+                            </div>
+                            <span className="text-xs font-bold text-gray-500 text-center leading-none mt-0.5">
+                              {item.minStock !== null && item.minStock !== undefined ? item.unit : 'ไม่ระบุ'}
                             </span>
                           </div>
                           <div className="flex flex-col gap-2 shrink-0 min-w-[165px]">
@@ -1200,6 +1284,17 @@ export default function InventoryPage() {
                               >
                                 <QrCode className="w-4 h-4 text-[#BE1111] shrink-0" />
                                 <span>ดู QR Code</span>
+                              </button>
+                            )}
+                            {user?.role === 'supervisor' && (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenMinStockModal(item)}
+                                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 font-extrabold text-xs border border-amber-200/90 shadow-2xs cursor-pointer active:scale-95 transition-all"
+                                title="ตั้งค่าจุดสั่งซื้อขั้นต่ำสำหรับการแจ้งเตือนสต็อกใกล้หมด"
+                              >
+                                <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+                                <span>ตั้งค่า Min Stock</span>
                               </button>
                             )}
                             {user?.role === 'supervisor' && (
@@ -1417,6 +1512,15 @@ export default function InventoryPage() {
                               )}
                               {item.itemType === 'Packaging' && user?.role === 'supervisor' && (
                                 <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenMinStockModal(item)}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 font-extrabold text-[10px] border border-amber-200 hover:bg-amber-100 transition-all shadow-2xs cursor-pointer"
+                                    title="ตั้งค่าจุดสั่งซื้อขั้นต่ำ (Min Stock)"
+                                  >
+                                    <AlertCircle className="w-3 h-3 text-amber-700 shrink-0" />
+                                    <span>Min: {item.minStock !== null && item.minStock !== undefined ? item.minStock.toLocaleString() : '-'}</span>
+                                  </button>
                                   <button
                                     type="button"
                                     onClick={() => openLotModal(item)}
@@ -2448,6 +2552,137 @@ export default function InventoryPage() {
               </form>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: ตั้งค่าจุดสั่งซื้อขั้นต่ำ (Min Stock) */}
+      <AnimatePresence>
+        {minStockModalTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs font-display animate-in fade-in duration-150">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-gray-100 relative"
+            >
+              <button
+                type="button"
+                onClick={() => setMinStockModalTarget(null)}
+                disabled={minStockUpdating}
+                className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200/80 flex items-center justify-center shrink-0">
+                  <AlertCircle className="w-5 h-5 text-amber-700" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 leading-snug">
+                    ตั้งค่าจุดสั่งซื้อขั้นต่ำ (Min Stock)
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    กำหนดระดับสต็อกเพื่อสร้างการแจ้งเตือนอัตโนมัติ
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-1.5 mb-5 text-xs">
+                <div className="flex items-center justify-between text-gray-600">
+                  <span>รหัสสินค้า:</span>
+                  <span className="font-mono font-bold text-gray-900">{minStockModalTarget.itemCode}</span>
+                </div>
+                <div className="text-gray-800 font-bold leading-relaxed line-clamp-2">
+                  {minStockModalTarget.name}
+                </div>
+                <div className="flex items-center justify-between pt-1 border-t border-slate-200 text-gray-600">
+                  <span>สต็อกคงเหลือปัจจุบัน:</span>
+                  <span className="font-extrabold text-gray-900">
+                    {minStockModalTarget.quantity.toLocaleString()} {minStockModalTarget.unit}
+                  </span>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveMinStock} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                    จำนวนจุดสั่งซื้อขั้นต่ำ (Min Stock)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="เว้นว่างหากไม่ต้องการแจ้งเตือน"
+                      value={minStockInput}
+                      onChange={(e) => {
+                        setMinStockInput(e.target.value)
+                        setMinStockError('')
+                      }}
+                      disabled={minStockUpdating}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all placeholder:text-gray-400 placeholder:font-normal"
+                    />
+                    {minStockInput !== '' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMinStockInput('')
+                          setMinStockError('')
+                        }}
+                        disabled={minStockUpdating}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 hover:text-gray-600 cursor-pointer"
+                      >
+                        ล้างค่า
+                      </button>
+                    )}
+                  </div>
+                  <p className="mt-1.5 text-[11px] text-gray-500 leading-relaxed">
+                    ระบบจะแจ้งเตือนเมื่อสต็อกคงเหลือลดลงจน <strong>&le; ค่านี้</strong> (เว้นว่างไว้เพื่อปิดการแจ้งเตือนสำหรับสินค้านี้)
+                  </p>
+                </div>
+
+                {minStockError && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{minStockError}</span>
+                  </div>
+                )}
+
+                {minStockSuccess && (
+                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span>{minStockSuccess}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setMinStockModalTarget(null)}
+                    disabled={minStockUpdating}
+                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 text-xs font-bold hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={minStockUpdating}
+                    className="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  >
+                    {minStockUpdating ? (
+                      <>
+                        <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span>กำลังบันทึก...</span>
+                      </>
+                    ) : (
+                      <span>บันทึกจุดสั่งซื้อ</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

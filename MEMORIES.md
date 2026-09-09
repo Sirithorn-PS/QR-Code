@@ -1244,3 +1244,35 @@
   - **การทดสอบ**: ทดสอบรันคำสั่ง `npm run build` ผ่านสมบูรณ์ 100% ไร้ข้อผิดพลาด
 
 
+
+## 8 September 2026
+- **พัฒนาระบบแจ้งเตือนบรรจุภัณฑ์ใกล้หมดและจัดการจุดสั่งซื้อขั้นต่ำ (Low Stock Notification & Min Stock Management — STEP 4.15.3)**:
+  - **ขอบเขตและเงื่อนไขทางธุรกิจ (Business Rules)**:
+    - จำกัดขอบเขตเฉพาะสินค้ากลุ่มบรรจุภัณฑ์ (`itemType === 'Packaging'`) ที่มีสถานะใช้งานอยู่ (`status === 'active'`)
+    - ใช้เงื่อนไขจุดสั่งซื้อขั้นต่ำ `quantity <= minStock` (โดย `quantity = 0` ถือเป็น Low Stock เช่นกัน)
+    - หาก `minStock === null` จะไม่ตรวจสอบและไม่สร้างการแจ้งเตือน
+    - ผู้รับการแจ้งเตือน: เฉพาะบทบาทหัวหน้างาน (`targetRole: 'supervisor'`) เท่านั้น (Admin และ Staff จะไม่ได้รับแจ้งเตือน `low_stock`)
+  - **การตรวจจับการเปลี่ยนแปลงสถานะ (Edge-Triggered State Transition)**:
+    - ระบบจะแจ้งเตือนเมื่อเกิดการลดลงของสต็อกจากปกติเข้าสู่เกณฑ์ต่ำเท่านั้น (`previousQty > minStock && nextQty <= minStock`)
+    - ป้องกันการแจ้งเตือนซ้ำซ้อน (Duplicate Prevention): เมื่อสต็อกลดลงอีกขณะที่ต่ำกว่าเกณฑ์อยู่แล้ว (เช่น 10 -> 9) จะไม่สร้าง Notification ซ้ำ
+    - เมื่อสต็อกได้รับการเติมกลับมาสูงกว่าเกณฑ์ (`nextQty > minStock`) จะถือว่ากลับสู่สถานะปกติ และพร้อมตรวจจับการตกสู่เกณฑ์ต่ำอีกครั้ง
+  - **จุดทริกเกอร์ (Trigger Points) & ความปลอดภัยของธุรกรรม (Transaction Safety)**:
+    - ตรวจสอบ Low Stock เมื่อ Supervisor กดยืนยันการเบิกสินค้า (`POST /transactions/:id/confirm`) หลังจากหักสต็อกและจัดสรร FIFO สำเร็จ
+    - ตรวจสอบ Low Stock เมื่อ Supervisor ปรับปรุงจำนวนสต็อกโดยตรง (`PATCH /products/:id/quantity`)
+    - การสร้าง Notification เป็น Non-Critical Side Effect: หากเกิดข้อผิดพลาดในการสร้าง Notification ระบบจะบันทึก Log และจะไม่ทำให้ Transaction หลักหรือการตัดสต็อกถูก Rollback เด็ดขาด
+  - **การจัดการจุดสั่งซื้อขั้นต่ำ (Min Stock Management API)**:
+    - เพิ่ม Endpoint `PATCH /products/:id/min-stock` อนุญาตเฉพาะ Supervisor
+    - ตรวจสอบค่าความถูกต้อง: อนุญาตเฉพาะจำนวนเต็มบวกหรือศูนย์ (`Integer >= 0`) หรือ `null` (เพื่อปิดการแจ้งเตือน) หากเป็นทศนิยมหรือค่าลบจะส่งคืน HTTP 400
+    - ป้องกันไม่ให้แก้ไขสินค้ากลุ่ม Non-Packaging (ส่งคืน HTTP 400)
+    - อัปเดต `productSnapshot` ให้ส่งข้อมูล `minStock` กลับไปในทุก Endpoint ที่เกี่ยวข้อง
+  - **การปรับปรุงหน้าเว็บ (Frontend UI & Navigation)**:
+    - ในหน้าคลังสินค้าบรรจุภัณฑ์ (`frontend/app/inventory/page.tsx`): เพิ่มการแสดงผลกล่อง Min Stock ควบคู่กับยอดคงเหลือ, เพิ่ม Badge แจ้งเตือน `⚠️ ใกล้หมด`, และเพิ่มปุ่มพร้อม Modal สไตล์ Modern Glassmorphism สำหรับ Supervisor ในการกำหนดค่า Min Stock พร้อมระบบป้องกัน Double Submit
+    - รองรับการกรองอัตโนมัติเมื่อกดลิงก์จากการแจ้งเตือน โดยอ่าน URL Query `search=[itemCode]` มากรองและเปิดดูข้อมูลได้ทันที
+    - ปรับปรุงแถบนำทาง (`frontend/components/Navigation.tsx`): ให้ลิงก์การแจ้งเตือนประเภท `low_stock` นำทางไปยัง `/inventory?search=[itemCode]` อย่างถูกต้อง
+  - **การทดสอบความถูกต้องและการป้องกันการถดถอย (Testing & Quality Assurance)**:
+    - สร้างชุดทดสอบ Backend Integration Tests (`backend/__tests__/low-stock.test.ts`) ครอบคลุมทั้ง 20 กรณีทดสอบ (ผลการทดสอบผ่าน 20/20 รายการ)
+    - ทดสอบ Backend Existing API Tests (`backend/__tests__/api.test.ts`) ผลการทดสอบผ่าน 31/31 รายการ
+    - สร้างชุดทดสอบ Frontend Unit Tests (`frontend/__tests__/unit/low-stock.test.ts`) ผลการทดสอบผ่านครบ 50/50 รายการ
+    - ทดสอบ Playwright E2E Tests ครบทุก Flow ผ่าน 18/18 รายการ
+    - ตรวจสอบ Type Safety (`tsc --noEmit`) ทั้ง Frontend และ Backend ผ่าน 100% ไม่มีข้อผิดพลาด
+    - ตรวจสอบความถูกต้องของฐานข้อมูล (Data Integrity): ข้อมูลเดิมทั้งหมด (Products, Packaging, ProductLots, Transactions, BOM, Users) ยังคงอยู่ครบถ้วน 100%

@@ -173,6 +173,7 @@ function productSnapshot(product: {
   itemType?: string
   status?: string
   parentItemCodes?: string[]
+  minStock?: number | null
 }) {
   return {
     id: product.id,
@@ -185,7 +186,8 @@ function productSnapshot(product: {
     quantity: product.quantity,
     itemType: product.itemType || 'FG',
     status: product.status || 'active',
-    parentItemCodes: product.parentItemCodes || (product.itemType === 'FG' ? [product.itemCode] : [])
+    parentItemCodes: product.parentItemCodes || (product.itemType === 'FG' ? [product.itemCode] : []),
+    minStock: product.minStock !== undefined ? product.minStock : null,
   }
 }
 
@@ -910,28 +912,61 @@ app.patch('/products/:id/quantity', authenticate, requireRole('supervisor'), asy
     const type = diff > 0 ? 'receive' : 'issue'
     const absDiff = Math.abs(diff)
 
-    const updatedProduct = await prisma.$transaction(async (tx) => {
-      const p = await tx.product.update({
-        where: { id },
-        data: { quantity },
-      })
+    let directAdjTxId: number | null = null
 
-      await tx.transaction.create({
-        data: {
-          productId: id,
-          type,
-          quantity: absDiff,
-          status: 'confirmed',
-          note: `ปรับปรุงสต็อก (เดิม ${product.quantity.toLocaleString()} -> ใหม่ ${quantity.toLocaleString()})`,
-          itemSnapshot: productSnapshot(p),
-          createdById: req.user!.id,
-          approvedById: req.user!.id,
-          confirmedAt: new Date(),
-        },
-      })
+    const updatedProduct = await prisma.$transaction(
+      async (tx) => {
+        const p = await tx.product.update({
+          where: { id },
+          data: { quantity },
+        })
 
-      return p
-    })
+        const adjTx = await tx.transaction.create({
+          data: {
+            productId: id,
+            type,
+            quantity: absDiff,
+            status: 'confirmed',
+            note: `ปรับปรุงสต็อก (เดิม ${product.quantity.toLocaleString()} -> ใหม่ ${quantity.toLocaleString()})`,
+            itemSnapshot: productSnapshot(p),
+            createdById: req.user!.id,
+            approvedById: req.user!.id,
+            confirmedAt: new Date(),
+          },
+        })
+
+        directAdjTxId = adjTx.id
+        return p
+      },
+      { maxWait: 15000, timeout: 30000 }
+    )
+
+    // ตรวจสอบ Low Stock สำหรับสินค้า Packaging ที่ Active เมื่อปรับสต็อกลดลงจนเข้าเกณฑ์ (Edge-Triggered)
+    if (
+      product.itemType === 'Packaging' &&
+      product.status === 'active' &&
+      product.minStock !== null &&
+      product.minStock !== undefined &&
+      product.quantity > product.minStock &&
+      quantity <= product.minStock
+    ) {
+      try {
+        await prisma.notification.create({
+          data: {
+            type: 'low_stock',
+            targetRole: 'supervisor',
+            userId: null,
+            transactionId: directAdjTxId,
+            title: `⚠️ วัตถุดิบบรรจุภัณฑ์ใกล้หมด: ${product.itemCode}`,
+            message: `${product.description}\nคงเหลือ: ${quantity.toLocaleString()} ${product.unit} (จุดสั่งซื้อ: ${product.minStock.toLocaleString()} ${product.unit})\nกรุณาตรวจสอบและเตรียมสั่งซื้อเพิ่ม`,
+            link: `/inventory?search=${encodeURIComponent(product.itemCode)}`,
+            isRead: false,
+          },
+        })
+      } catch (notifErr) {
+        console.error('Failed to create low_stock notification on direct quantity adjustment:', notifErr)
+      }
+    }
 
     return res.json(productSnapshot(updatedProduct))
   } catch (error) {
@@ -939,6 +974,60 @@ app.patch('/products/:id/quantity', authenticate, requireRole('supervisor'), asy
     return res.status(500).json({ error: 'อัปเดตจำนวนสต็อกไม่สำเร็จ' })
   }
 })
+
+app.patch(
+  '/products/:id/min-stock',
+  authenticate,
+  requireRole('supervisor'),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const id = Number(req.params.id)
+      if (isNaN(id) || !Number.isInteger(id)) {
+        return res.status(400).json({ error: 'รหัสสินค้าไม่ถูกต้อง' })
+      }
+
+      const { minStock } = req.body as { minStock?: unknown }
+
+      let normalizedMinStock: number | null = null
+
+      if (minStock === null || minStock === undefined || minStock === '') {
+        normalizedMinStock = null
+      } else if (typeof minStock === 'number') {
+        if (!Number.isInteger(minStock) || minStock < 0) {
+          return res.status(400).json({ error: 'minStock ต้องเป็นจำนวนเต็มที่ไม่ติดลบ หรือ null' })
+        }
+        normalizedMinStock = minStock
+      } else if (typeof minStock === 'string' && minStock.trim() !== '') {
+        const parsed = Number(minStock.trim())
+        if (isNaN(parsed) || !Number.isInteger(parsed) || parsed < 0) {
+          return res.status(400).json({ error: 'minStock ต้องเป็นจำนวนเต็มที่ไม่ติดลบ หรือ null' })
+        }
+        normalizedMinStock = parsed
+      } else {
+        return res.status(400).json({ error: 'รูปแบบ minStock ไม่ถูกต้อง' })
+      }
+
+      const product = await prisma.product.findUnique({ where: { id } })
+      if (!product) {
+        return res.status(404).json({ error: 'ไม่พบสินค้ารายการนี้ในระบบ' })
+      }
+
+      if (product.itemType !== 'Packaging') {
+        return res.status(400).json({ error: 'สามารถกำหนด minStock ได้เฉพาะสินค้าประเภท Packaging เท่านั้น' })
+      }
+
+      const updatedProduct = await prisma.product.update({
+        where: { id },
+        data: { minStock: normalizedMinStock },
+      })
+
+      return res.json(productSnapshot(updatedProduct))
+    } catch (error) {
+      console.error('Error updating product minStock:', error)
+      return res.status(500).json({ error: 'ไม่สามารถอัปเดต minStock ได้ เกิดข้อผิดพลาดที่เซิร์ฟเวอร์' })
+    }
+  },
+)
 
 app.patch(
   '/products/:id/status',
@@ -1239,7 +1328,15 @@ app.post(
         }
       }
 
-      const result = await prisma.$transaction(async (tx) => {
+      const { result, lowStockAlertData } = await prisma.$transaction(async (tx) => {
+        let lowStockAlertData: {
+          itemCode: string
+          description: string
+          unit: string
+          quantity: number
+          minStock: number
+        } | null = null
+
         // Concurrency Control: ใช้ Row Lock บน Product เพื่อป้องกัน Race Condition จากการยืนยันพร้อมกัน
         await tx.$executeRaw`SELECT id FROM "Product" WHERE id = ${transaction.productId} FOR UPDATE`
 
@@ -1366,6 +1463,27 @@ app.post(
               where: { id: transaction.productId },
               data: { quantity: nextQuantity },
             })
+
+            // ตรวจสอบเงื่อนไข Low Stock State Transition (Edge-Triggered):
+            // 1. itemType === 'Packaging'
+            // 2. status === 'active'
+            // 3. minStock !== null
+            // 4. previousQty > minStock && nextQty <= minStock
+            if (
+              freshProduct.status === 'active' &&
+              freshProduct.minStock !== null &&
+              freshProduct.minStock !== undefined &&
+              freshProduct.quantity > freshProduct.minStock &&
+              nextQuantity <= freshProduct.minStock
+            ) {
+              lowStockAlertData = {
+                itemCode: freshProduct.itemCode,
+                description: freshProduct.description,
+                unit: freshProduct.unit,
+                quantity: nextQuantity,
+                minStock: freshProduct.minStock,
+              }
+            }
           }
           // 2.2 หากเป็นสินค้า Non-Packaging (FG / Raw Material / Bulk): ลดเฉพาะ Product.quantity
           else {
@@ -1384,7 +1502,7 @@ app.post(
         }
 
         // 3. อัปเดตสถานะ Transaction เป็น confirmed
-        return tx.transaction.update({
+        const updatedTx = await tx.transaction.update({
           where: { id },
           data: {
             status: 'confirmed',
@@ -1405,7 +1523,14 @@ app.post(
             },
           },
         })
-      })
+
+        return {
+          result: updatedTx,
+          lowStockAlertData,
+        }
+      },
+      { maxWait: 15000, timeout: 30000 }
+    )
 
       // สร้าง Notification แจ้งเตือน Staff เจ้าของรายการ
       try {
@@ -1421,6 +1546,26 @@ app.post(
         })
       } catch (notifErr) {
         console.error('Failed to create confirm notification:', notifErr)
+      }
+
+      // สร้าง Notification แจ้งเตือน Low Stock สำหรับสินค้า Packaging (ถ้าเข้าเกณฑ์ State Transition)
+      if (lowStockAlertData) {
+        try {
+          await prisma.notification.create({
+            data: {
+              type: 'low_stock',
+              targetRole: 'supervisor',
+              userId: null,
+              transactionId: transaction.id,
+              title: `⚠️ วัตถุดิบบรรจุภัณฑ์ใกล้หมด: ${lowStockAlertData.itemCode}`,
+              message: `${lowStockAlertData.description}\nคงเหลือ: ${lowStockAlertData.quantity.toLocaleString()} ${lowStockAlertData.unit} (จุดสั่งซื้อ: ${lowStockAlertData.minStock.toLocaleString()} ${lowStockAlertData.unit})\nกรุณาตรวจสอบและเตรียมสั่งซื้อเพิ่ม`,
+              link: `/inventory?search=${encodeURIComponent(lowStockAlertData.itemCode)}`,
+              isRead: false,
+            },
+          })
+        } catch (lowStockErr) {
+          console.error('Failed to create low_stock notification:', lowStockErr)
+        }
       }
 
       return res.json(result)

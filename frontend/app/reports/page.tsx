@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { fetchTransactions, StockTransaction } from '@/lib/auth'
-import { ArrowLeft, FileText, SlidersHorizontal, Filter, CheckCircle2, XCircle, Clock, Calendar, Search, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react'
+import { fetchTransactions, StockTransaction, exportTransactionsToExcel, downloadBlob, getUser, UserItem } from '@/lib/auth'
+import { ArrowLeft, FileText, SlidersHorizontal, Filter, CheckCircle2, XCircle, Clock, Calendar, Search, ArrowDownToLine, ArrowUpFromLine, Download, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function ReportsPage() {
@@ -17,6 +17,81 @@ export default function ReportsPage() {
   const [viewCategory, setViewCategory] = useState<'all' | 'adjust' | 'normal'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [submittedSearch, setSubmittedSearch] = useState('')
+  const [currentUser, setCurrentUser] = useState<UserItem | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const [exportSuccess, setExportSuccess] = useState('')
+  const [exportError, setExportError] = useState('')
+
+  const handleExportExcel = async () => {
+    if (exporting) return
+    setExportError('')
+    setExportSuccess('')
+
+    const trimmedStart = startDate.trim()
+    const trimmedEnd = endDate.trim()
+
+    if (trimmedStart && !trimmedEnd) {
+      setExportError('กรุณาระบุวันที่สิ้นสุดให้ครบถ้วน')
+      setTimeout(() => {
+        setExportError('')
+      }, 5000)
+      return
+    }
+
+    if (!trimmedStart && trimmedEnd) {
+      setExportError('กรุณาระบุวันที่เริ่มต้นให้ครบถ้วน')
+      setTimeout(() => {
+        setExportError('')
+      }, 5000)
+      return
+    }
+
+    if (trimmedStart && trimmedEnd) {
+      const start = new Date(trimmedStart)
+      const end = new Date(trimmedEnd)
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        setExportError('รูปแบบวันที่ไม่ถูกต้อง')
+        setTimeout(() => {
+          setExportError('')
+        }, 5000)
+        return
+      }
+      if (start > end) {
+        setExportError('วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด')
+        setTimeout(() => {
+          setExportError('')
+        }, 5000)
+        return
+      }
+    }
+
+    setExporting(true)
+
+    try {
+      const activeSearch = (submittedSearch.trim() || searchQuery.trim())
+      const result = await exportTransactionsToExcel({
+        startDate: trimmedStart || undefined,
+        endDate: trimmedEnd || undefined,
+        status: status.trim() || undefined,
+        search: activeSearch || undefined,
+        category: viewCategory !== 'all' ? viewCategory : undefined,
+      })
+
+      downloadBlob(result.blob, result.filename)
+      setExportSuccess('ส่งออกรายงาน Excel สำเร็จ')
+      setTimeout(() => {
+        setExportSuccess('')
+      }, 4000)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการส่งออก Excel'
+      setExportError(msg)
+      setTimeout(() => {
+        setExportError('')
+      }, 5000)
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const loadTransactions = async (
     nextStatus = status,
@@ -78,6 +153,9 @@ export default function ReportsPage() {
 
   useEffect(() => {
     let isMounted = true
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCurrentUser(getUser())
 
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
@@ -171,6 +249,8 @@ export default function ReportsPage() {
                 <input
                   type="date"
                   value={startDate}
+                  aria-label="วันที่เริ่มต้น (Start Date)"
+                  title="วันที่เริ่มต้น (Start Date)"
                   onChange={(e) => {
                     setStartDate(e.target.value)
                     loadTransactions(status, e.target.value, endDate, submittedSearch)
@@ -181,6 +261,8 @@ export default function ReportsPage() {
                 <input
                   type="date"
                   value={endDate}
+                  aria-label="วันที่สิ้นสุด (End Date)"
+                  title="วันที่สิ้นสุด (End Date)"
                   onChange={(e) => {
                     setEndDate(e.target.value)
                     loadTransactions(status, startDate, e.target.value, submittedSearch)
@@ -260,6 +342,29 @@ export default function ReportsPage() {
                 ค้นหา
               </button>
             </form>
+
+            {currentUser?.role === 'supervisor' && (
+              <button
+                type="button"
+                onClick={handleExportExcel}
+                disabled={exporting}
+                aria-label="ส่งออก Excel"
+                title="ส่งออกรายงานธุรกรรมเป็นไฟล์ Excel"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm shrink-0 cursor-pointer w-full sm:w-auto"
+              >
+                {exporting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                    <span>กำลังส่งออก...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 shrink-0" />
+                    <span>ส่งออก Excel</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
 
@@ -298,6 +403,28 @@ export default function ReportsPage() {
           >
             <XCircle className="w-5 h-5 text-red-500" />
             {error}
+          </motion.div>
+        )}
+
+        {exportSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800 font-medium shadow-sm flex items-center gap-3"
+          >
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span>{exportSuccess}</span>
+          </motion.div>
+        )}
+
+        {exportError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-rose-800 font-medium shadow-sm flex items-center gap-3"
+          >
+            <XCircle className="w-5 h-5 text-rose-500 shrink-0" />
+            <span>{exportError}</span>
           </motion.div>
         )}
 

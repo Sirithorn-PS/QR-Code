@@ -447,4 +447,82 @@ export function deleteUser(id: number) {
   })
 }
 
+export interface ExportTransactionsFilter {
+  startDate?: string
+  endDate?: string
+  status?: string
+  search?: string
+  category?: string
+}
 
+export interface ExportExcelResult {
+  blob: Blob
+  filename: string
+}
+
+export async function exportTransactionsToExcel(
+  filter: ExportTransactionsFilter = {}
+): Promise<ExportExcelResult> {
+  const token = getToken()
+  const params = new URLSearchParams()
+
+  if (filter.startDate?.trim()) params.append('startDate', filter.startDate.trim())
+  if (filter.endDate?.trim()) params.append('endDate', filter.endDate.trim())
+  if (filter.status?.trim()) params.append('status', filter.status.trim())
+  if (filter.search?.trim()) params.append('search', filter.search.trim())
+  if (filter.category?.trim() && filter.category.trim() !== 'all') {
+    params.append('category', filter.category.trim())
+  }
+
+  const queryString = params.toString() ? `?${params.toString()}` : ''
+  const url = `${API_BASE_URL}/reports/export-excel${queryString}`
+
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method: 'GET',
+      cache: 'no-store',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+  } catch {
+    throw new Error('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ Backend ได้ กรุณาตรวจสอบการเปิดใช้งานระบบ')
+  }
+
+  if (!response.ok) {
+    if (response.status === 401 && typeof window !== 'undefined') {
+      const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/register'
+      if (!isAuthPage) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        window.location.href = '/login'
+      }
+    }
+    const errorData = await response.json().catch(() => ({ error: 'ส่งออกรายงานไม่สำเร็จ' }))
+    throw new Error(errorData.error || `Export failed with status ${response.status}`)
+  }
+
+  const blob = await response.blob()
+
+  let filename = 'WPK_MMS_Transaction_Report.xlsx'
+  const disposition = response.headers.get('Content-Disposition') || ''
+  const match = disposition.match(/filename="?([^";]+)"?/i)
+  if (match && match[1]) {
+    filename = match[1]
+  }
+
+  return { blob, filename }
+}
+
+export function downloadBlob(blob: Blob, filename: string): void {
+  if (typeof window === 'undefined') return
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}

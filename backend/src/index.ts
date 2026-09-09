@@ -9,9 +9,10 @@ if (process.env.DIRECT_URL) {
 }
 
 import express, { NextFunction, Request, Response } from 'express'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import * as xlsx from 'xlsx'
 
 const app = express()
 
@@ -104,6 +105,16 @@ function formatLotNumber(date: Date, id: number): string {
   const mm = String(date.getMonth() + 1).padStart(2, '0')
   const dd = String(date.getDate()).padStart(2, '0')
   return `LOT-${yyyy}${mm}${dd}-${String(id).padStart(4, '0')}`
+}
+
+function formatDateTime(date: Date): string {
+  const yyyy = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
+  const hh = String(date.getHours()).padStart(2, '0')
+  const min = String(date.getMinutes()).padStart(2, '0')
+  const ss = String(date.getSeconds()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`
 }
 
 function signToken(user: { id: number; username: string; role: string }) {
@@ -1200,6 +1211,193 @@ app.get('/transactions', authenticate, async (req: AuthenticatedRequest, res: Re
     return res.status(500).json({ error: 'ไม่สามารถดึงประวัติการทำรายการได้ชั่วคราว' })
   }
 })
+
+app.get(
+  '/reports/export-excel',
+  authenticate,
+  requireRole('supervisor'),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const status = normalizeText(req.query.status)
+      const startDate = normalizeText(req.query.startDate)
+      const endDate = normalizeText(req.query.endDate)
+      const search = normalizeText(req.query.search)
+      const category = normalizeText(req.query.category)
+
+      if (status && !['pending', 'confirmed', 'rejected'].includes(status)) {
+        return res.status(400).json({ error: 'สถานะไม่ถูกต้อง (ต้องเป็น pending, confirmed, หรือ rejected)' })
+      }
+
+      if (category && !['all', 'adjust', 'normal'].includes(category)) {
+        return res.status(400).json({ error: 'หมวดหมู่ไม่ถูกต้อง (ต้องเป็น all, adjust, หรือ normal)' })
+      }
+
+      const whereClause: Prisma.TransactionWhereInput = {}
+
+      if (startDate || endDate) {
+        if (!startDate || !endDate) {
+          return res.status(400).json({ error: 'กรุณาระบุทั้งวันที่เริ่มต้นและวันที่สิ้นสุดให้ครบถ้วน' })
+        }
+        const start = new Date(startDate)
+        const end = new Date(endDate)
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+          return res.status(400).json({ error: 'รูปแบบวันที่ไม่ถูกต้อง (ต้องเป็น YYYY-MM-DD)' })
+        }
+        if (start > end) {
+          return res.status(400).json({ error: 'วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด' })
+        }
+        start.setHours(0, 0, 0, 0)
+        end.setHours(23, 59, 59, 999)
+        whereClause.createdAt = {
+          gte: start,
+          lte: end,
+        }
+      }
+
+      if (status) {
+        whereClause.status = status
+      }
+
+      if (search) {
+        whereClause.product = {
+          itemCode: search,
+        }
+      }
+
+      if (category === 'adjust') {
+        whereClause.note = { contains: 'ปรับปรุงสต็อก' }
+      } else if (category === 'normal') {
+        whereClause.OR = [
+          { note: null },
+          { NOT: { note: { contains: 'ปรับปรุงสต็อก' } } },
+        ]
+      }
+
+      const transactions = await prisma.transaction.findMany({
+        where: Object.keys(whereClause).length > 0 ? whereClause : undefined,
+        include: {
+          product: true,
+          lot: true,
+          allocations: {
+            include: { productLot: true },
+            orderBy: { id: 'asc' },
+          },
+          createdBy: {
+            select: { id: true, username: true, fullName: true, role: true },
+          },
+          approvedBy: {
+            select: { id: true, username: true, fullName: true, role: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5000,
+      })
+
+      if (transactions.length === 0) {
+        return res.status(404).json({ error: 'ไม่พบข้อมูลสำหรับส่งออกตามเงื่อนไขที่ระบุ' })
+      }
+
+      const rows = transactions.map((tx, index) => {
+        const snapshot = typeof tx.itemSnapshot === 'object' && tx.itemSnapshot !== null
+          ? (tx.itemSnapshot as Record<string, unknown>)
+          : {}
+
+        const itemCode = tx.product?.itemCode || (typeof snapshot.itemCode === 'string' ? snapshot.itemCode : '-')
+        const description = tx.product?.description || (typeof snapshot.name === 'string' ? snapshot.name : (typeof snapshot.description === 'string' ? snapshot.description : '-'))
+        const unit = tx.product?.unit || (typeof snapshot.unit === 'string' ? snapshot.unit : 'ชิ้น')
+        const warehouse = tx.product?.warehouse || (typeof snapshot.warehouse === 'string' ? snapshot.warehouse : '-')
+        const location = tx.product?.location || (typeof snapshot.location === 'string' ? snapshot.location : '-')
+
+        let lotDetails = '-'
+        if (tx.status === 'confirmed') {
+          if (tx.type === 'receive' && tx.lot) {
+            const supplierPart = tx.lot.supplierLot ? ` (Supplier: ${tx.lot.supplierLot})` : ''
+            lotDetails = `${tx.lot.lotNumber}${supplierPart} [${tx.lot.receivedQuantity.toLocaleString()} ${unit}]`
+          } else if (tx.type === 'issue' && tx.allocations.length > 0) {
+            lotDetails = tx.allocations
+              .map(alloc => `${alloc.productLot.lotNumber} (${alloc.quantity.toLocaleString()} ${unit})`)
+              .join(', ')
+          }
+        }
+
+        let statusText = tx.status
+        if (tx.status === 'confirmed') statusText = 'ยืนยันแล้ว (Confirmed)'
+        else if (tx.status === 'rejected') statusText = 'ปฏิเสธแล้ว (Rejected)'
+        else if (tx.status === 'pending') statusText = 'รอการยืนยัน (Pending)'
+
+        let processedDate = '-'
+        if (tx.confirmedAt) {
+          processedDate = formatDateTime(new Date(tx.confirmedAt))
+        } else if (tx.rejectedAt) {
+          processedDate = formatDateTime(new Date(tx.rejectedAt))
+        }
+
+        return {
+          'ลำดับ': index + 1,
+          'รหัสธุรกรรม': `TX-${String(tx.id).padStart(5, '0')}`,
+          'วันที่และเวลา': formatDateTime(new Date(tx.createdAt)),
+          'รหัสสินค้า': itemCode,
+          'ชื่อสินค้า': description,
+          'ประเภทรายการ': tx.type === 'receive' ? 'รับเข้า (Receive)' : 'เบิกออก (Issue)',
+          'จำนวน': tx.quantity,
+          'หน่วยนับ': unit,
+          'คลังสินค้า': warehouse,
+          'ตำแหน่งจัดเก็บ': location,
+          'สถานะ': statusText,
+          'ผู้ดำเนินการ': tx.createdBy?.fullName || tx.createdBy?.username || '-',
+          'ผู้อนุมัติ/ปฏิเสธ': tx.approvedBy?.fullName || tx.approvedBy?.username || '-',
+          'วันที่อนุมัติ/ปฏิเสธ': processedDate,
+          'หมายเหตุ': tx.note || '-',
+          'รายละเอียด Lot (FIFO)': lotDetails,
+        }
+      })
+
+      const worksheet = xlsx.utils.json_to_sheet(rows)
+      worksheet['!cols'] = [
+        { wch: 8 },
+        { wch: 16 },
+        { wch: 22 },
+        { wch: 18 },
+        { wch: 35 },
+        { wch: 20 },
+        { wch: 14 },
+        { wch: 12 },
+        { wch: 14 },
+        { wch: 16 },
+        { wch: 24 },
+        { wch: 24 },
+        { wch: 24 },
+        { wch: 22 },
+        { wch: 30 },
+        { wch: 40 },
+      ]
+
+      const workbook = xlsx.utils.book_new()
+      xlsx.utils.book_append_sheet(workbook, worksheet, 'Transactions')
+      const buffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' })
+
+      let filename = ''
+      if (startDate && endDate) {
+        filename = `WPK_MMS_Transaction_Report_${startDate}_to_${endDate}.xlsx`
+      } else {
+        const now = new Date()
+        const yyyymmdd = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
+        filename = `WPK_MMS_Transaction_Report_All_${yyyymmdd}.xlsx`
+      }
+
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      )
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+      res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition')
+      return res.status(200).send(buffer)
+    } catch (error) {
+      console.error('Error exporting transactions to excel:', error)
+      return res.status(500).json({ error: 'ไม่สามารถส่งออกรายงาน Excel ได้ เกิดข้อผิดพลาดที่เซิร์ฟเวอร์' })
+    }
+  }
+)
 
 app.post(
   '/transactions',

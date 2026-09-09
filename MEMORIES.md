@@ -1,6 +1,150 @@
 # บันทึกการทำงาน (Memories)
 
 ## 9 ก.ย. 2026
+- **เพิ่มระบบตรวจสอบสต็อกคงเหลือแบบทันทีในหน้าสแกน (STEP 4.19 — Inline Stock Validation on Scan Page) (เสร็จสมบูรณ์ 100%)**:
+  - **Client-side Inline Stock Validation ([frontend/app/scan/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/scan/page.tsx))**:
+    - เพิ่มการคำนวณ `isStockExceeded` แบบไดนามิกเมื่อผู้ใช้เลือกประเภทรายการ "เบิกออก (Issue)" (`scanMode === 'issue'`) และระบุจำนวนเบิกมากกว่าสต็อกคงเหลือของสินค้า (`numQty > currentStock`)
+    - แสดงข้อความเตือน Inline Warning ใต้ช่องกรอกจำนวนอย่างชัดเจนและเข้าใจง่าย:
+      - หัวข้อเตือน: `⚠️ จำนวนเบิกเกินสต็อกคงเหลือ`
+      - ข้อมูลเปรียบเทียบ: สต็อกคงเหลือปัจจุบัน (`{currentStock} {unit}`) และจำนวนที่ต้องการเบิก (`{quantity} {unit}`)
+      - คำแนะนำ: `กรุณาระบุจำนวนไม่เกินสต็อกคงเหลือ`
+    - ไฮไลต์กรอบช่องกรอกจำนวนด้วยสีแดงอ่อนเมื่อเกิดข้อผิดพลาด เพื่อให้สังเกตเห็นได้ง่าย
+    - ปิดการใช้งานปุ่มส่งรายการ (`disabled={loading || isStockExceeded}`) พร้อมสไตล์ `cursor-not-allowed` ทันที ป้องกันการสร้าง Transaction, ไม่เรียก API ไปยัง Backend, และไม่ส่งผลกระทบต่อ FIFO หรือ Lot ใด ๆ
+    - เมื่อผู้ใช้แก้ไขจำนวนสินค้าให้กลับมาเท่ากับหรือน้อยกว่าสต็อกคงเหลือ (`Quantity <= Current Stock`) ข้อความเตือนจะหายไปทันทีและปุ่มส่งรายการจะกลับมาใช้งานได้ตามปกติ
+    - รายการรับเข้า (Receive / `scanMode === 'receive'`): ไม่ใช้การจำกัดจำนวนสต็อกคงเหลือนี้ เนื่องจากเป็นการเพิ่มยอดสต็อกเข้าคลัง ผู้ใช้งานสามารถระบุจำนวนที่ต้องการรับเข้าได้ตามปกติ
+    - กรณีจำนวนว่าง หรือจำนวนเป็น 0: ยังคงใช้ Validation เดิมของระบบ โดยแสดงข้อความ "กรุณาระบุจำนวนสินค้าให้ถูกต้อง (ต้องมากกว่า 0)"
+    - เพิ่ม Guard สองชั้นใน `submitTransaction` เพื่อป้องกันกรณี Submit ฟอร์มผ่านคีย์บอร์ด (Enter) ขณะที่จำนวนเบิกเกินสต็อก
+  - **Backend Guard & FIFO Integrity**:
+    - Backend Stock Guard ใน `POST /transactions/:id/confirm` ยังคงทำงานเป็นด่านรักษาความปลอดภัยหลักตามเดิม
+    - ไม่มีการแก้ไข Backend Code, Database Schema, Prisma, หรือ Migration ใด ๆ ทั้งสิ้น
+    - ลำดับการตัด Lot แบบ FIFO ยังคงทำงานถูกต้องเหมือนเดิมทุกประการ
+  - **Automated Tests & Regression Verification ([frontend/__tests__/unit/scan-stock-validation.test.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/__tests__/unit/scan-stock-validation.test.tsx))**:
+    - เพิ่มชุดทดสอบ Unit/Component Tests ครอบคลุม 7 กรณีสำคัญ:
+      1. Issue + Quantity < Stock: ผ่าน ไม่มีข้อความเตือน ปุ่ม Submit ใช้งานได้ และเรียก API สำเร็จ
+      2. Issue + Quantity = Stock: ผ่าน ยอมรับการเบิกเต็มจำนวนสต็อก ปุ่ม Submit ใช้งานได้
+      3. Issue + Quantity > Stock: แสดง Inline Warning ครบถ้วน, ปุ่ม Submit ถูก Disable, ไม่มีการเรียก API
+      4. Receive + Quantity > Stock: ผ่าน ไม่มีข้อความเตือน และส่งคำขอรับเข้าได้ตามปกติ
+      5. Quantity = 0: ใช้ Validation เดิมของระบบ แสดงข้อความเตือนและไม่เรียก API
+      6. Quantity ว่าง: ใช้ Validation เดิมของระบบ แสดงข้อความเตือนและไม่เรียก API
+      7. ปรับจำนวนจากเกินสต็อก (60) กลับมาเป็นค่าที่ถูกต้อง (25): ข้อความเตือนหายไปทันที และปุ่ม Submit กลับมาใช้งานได้
+    - Frontend Unit Tests (`npm test`): 77/77 ผ่านทั้งหมด (7/7 test files)
+    - Backend Vitest (`npx vitest run`): 72/72 ผ่านทั้งหมด (3/3 test files)
+    - TypeScript Type Check (`npx tsc --noEmit`): 0 errors
+    - Next.js Production Build (`npm run build`): สำเร็จสมบูรณ์ 100% (12/12 static pages)
+    - ESLint Check (`npx eslint app/scan/page.tsx`): 0 errors
+    - Git Diff Check (`git diff --check`): ผ่าน 100%
+
+- **ตรวจสอบความสมบูรณ์ขั้นสุดท้ายและ Date Range Verification ของ Excel Export (STEP 4.17.6 — Final Documentation + Excel Export Date Range Verification) (เสร็จสมบูรณ์ 100%)**:
+  - **Date Range & Filter Verification ([frontend/app/reports/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/reports/page.tsx))**:
+    - เพิ่มการตรวจสอบความถูกต้องของ Date Range ฝั่ง Client ใน `handleExportExcel` ก่อนส่ง Request:
+      1. กรณีเลือก Start Date แต่ไม่เลือก End Date: แจ้งเตือน "กรุณาระบุวันที่สิ้นสุดให้ครบถ้วน"
+      2. กรณีเลือก End Date แต่ไม่เลือก Start Date: แจ้งเตือน "กรุณาระบุวันที่เริ่มต้นให้ครบถ้วน"
+      3. กรณี Start Date > End Date: แจ้งเตือน "วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด"
+      4. กรณีเลือกวันเดียวกัน (Start Date == End Date): ส่งออกข้อมูลของวันนั้นได้อย่างถูกต้องสมบูรณ์
+      5. กรณีช่วงวันที่ปกติ (Start Date < End Date): ส่งออกข้อมูลเฉพาะภายในช่วงวันที่ที่เลือก
+    - เพิ่ม `aria-label` และ `title` กำกับช่องระบุวันที่เริ่มต้นและวันที่สิ้นสุด ("วันที่เริ่มต้น (Start Date)", "วันที่สิ้นสุด (End Date)") ใน Custom Date Input
+    - ตรวจสอบ Date Boundary: ฝั่ง Backend กำหนดเวลาตั้งแต่ 00:00:00.000 ของวันที่เริ่มต้น จนถึง 23:59:59.999 ของวันที่สิ้นสุด ทำให้รายการในวันสุดท้ายของช่วงเวลาไม่ตกหล่น
+    - รองรับการทำงานร่วมกันของทุกตัวกรองพร้อมกัน: Date Range + Status + Search (ItemCode) + Category
+    - ยืนยันการ Query ข้อมูลจริงจากฐานข้อมูลตาม Filter โดยไม่จำกัดเพียง 200 รายการของหน้าจอ และจำกัด Safety Cap สูงสุด 5,000 รายการ
+    - ยืนยันโครงสร้างไฟล์ Excel 16 คอลัมน์, ชนิดข้อมูลตัวเลข Quantity คำนวณได้จริง, FIFO Lot Details บันทึกในคอลัมน์ที่ 16 ไม่เกิด Double Counting (1 Transaction = 1 Row)
+    - ยืนยันสิทธิ์เฉพาะ Supervisor เท่านั้น (Staff และ Admin ไม่เห็นปุ่มและถูกปฏิเสธด้วย 403)
+  - **Automated Tests & Regression Verification ([frontend/__tests__/unit/reports-export.test.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/__tests__/unit/reports-export.test.tsx))**:
+    - เพิ่ม Unit Test ครอบคลุม 4 กรณีสำคัญสำหรับ Date Range:
+      1. แจ้งเตือนเมื่อเลือก Start Date แต่ไม่มี End Date
+      2. แจ้งเตือนเมื่อเลือก End Date แต่ไม่มี Start Date
+      3. แจ้งเตือนเมื่อ Start Date > End Date
+      4. ส่งออกสำเร็จเมื่อเลือกวันเดียวกัน (Same day)
+    - Frontend Unit Tests (`npm test -- run`): 70/70 ผ่านทั้งหมด (6/6 test files)
+    - Backend Tests (`npx vitest run`): 72/72 ผ่านทั้งหมด (3/3 test files) รวมถึง `export-excel.test.ts` (13/13)
+    - E2E Playwright Tests: 3/3 ผ่านทั้งหมด
+    - TypeScript Check (`npx tsc --noEmit`): 0 errors ทั้ง Frontend และ Backend
+    - Production Build (`npm run build`): สำเร็จสมบูรณ์ 100% (12/12 static pages)
+    - ESLint Check (`npx eslint app/reports/page.tsx lib/auth.ts __tests__/unit/reports-export.test.tsx`): 0 errors
+    - Git Diff Check (`git diff --check`): ผ่าน 100% ไม่มีปัญหา Whitespace
+    - ความปลอดภัยของระบบ: ไม่มีการแก้ไข Backend, ฐานข้อมูล, Schema, หรือติดตั้ง Package ใหม่ใด ๆ
+
+- **เชื่อมต่อ Export Excel UI เข้ากับหน้ารายงาน (STEP 4.17.4 — Export Excel UI Integration) (เสร็จสมบูรณ์ 100%)**:
+  - **เชื่อมต่อปุ่ม "ส่งออก Excel" ในหน้ารายงาน ([frontend/app/reports/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/reports/page.tsx))**:
+    - เพิ่มปุ่ม "ส่งออก Excel" ใน Action Area ด้านบนขวา ถัดจากฟอร์มค้นหา (`Search form`) สอดคล้องกับ Layout และ Design System เดิมของ WPK MMS อย่างลงตัว
+    - กำหนดสิทธิ์การมองเห็น (Role Visibility): แสดงปุ่มให้เฉพาะผู้ใช้ที่มีบทบาท **Supervisor** (`currentUser?.role === 'supervisor'`) เท่านั้น สำหรับ **Staff** และ **Admin** จะไม่แสดงปุ่มนี้บน UI
+    - เชื่อมโยงการทำงานกับ `exportTransactionsToExcel()` และ `downloadBlob()` จาก `frontend/lib/auth.ts` (สร้างใน STEP 4.17.3) โดยไม่สร้าง Request ใหม่
+    - ส่งตัวกรองปัจจุบันจาก State ของหน้ารายงานไปยัง API Helper โดยตรง ได้แก่ `startDate`, `endDate`, `status`, `search` (ดึงจากคำค้นหาที่ใช้งานอยู่), และ `category` (`all`, `adjust`, `normal`)
+    - จัดการสถานะการทำงาน (Loading State): แสดงข้อความ "กำลังส่งออก..." พร้อมไอคอน `<Loader2 className="animate-spin" />` และปิดการใช้งานปุ่ม (`disabled={exporting}`) เพื่อป้องกันการกดปุ่มซ้ำ
+    - จัดการข้อเสนอแนะเมื่อสำเร็จ (Success Feedback): เมื่อดาวน์โหลดไฟล์ Blob สำเร็จ จะแสดงแบนเนอร์สีเขียว "ส่งออกรายงาน Excel สำเร็จ" พร้อมไอคอน `<CheckCircle2 />` และเคลียร์ข้อความอัตโนมัติภายใน 4 วินาที
+    - จัดการข้อผิดพลาด (Error Handling): รองรับข้อผิดพลาดจาก Backend เช่น 400, 401, 403, 404 ("ไม่พบข้อมูลสำหรับส่งออกตามเงื่อนไขที่ระบุ") และข้อผิดพลาดเครือข่าย โดยแสดงแบนเนอร์สีแดงแจ้งเตือนอย่างชัดเจน ไม่ค้าง Loading และปุ่มกลับมาใช้งานได้ตามปกติ
+    - รักษาโครงสร้างเดิมของหน้ารายงาน 100%: ไม่แก้ไข Logic การโหลดข้อมูล (`loadTransactions`, `fetchTransactions`), ตารางแสดงผล, Pagination, หรือตัวกรองเดิมใด ๆ
+  - **Automated Tests & Regression Verification ([frontend/__tests__/unit/reports-export.test.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/__tests__/unit/reports-export.test.tsx))**:
+    - เพิ่ม Unit Test ครอบคลุม 8 ข้อสำคัญ:
+      1. ตรวจสอบ Supervisor เห็นปุ่ม "ส่งออก Excel"
+      2. ตรวจสอบ Staff ไม่เห็นปุ่ม "ส่งออก Excel"
+      3. ตรวจสอบ Admin ไม่เห็นปุ่ม "ส่งออก Excel"
+      4. ตรวจสอบการกดปุ่มแล้วเรียก `exportTransactionsToExcel()` พร้อมส่ง Filter ปัจจุบันถูกต้อง และเรียก `downloadBlob()` เมื่อสำเร็จ
+      5. ตรวจสอบ Loading State, Disabled State และการป้องกัน Double Click ขณะกำลังส่งออก
+      6. ตรวจสอบกรณี 404 (ไม่พบข้อมูล) แสดงข้อความภาษาไทยและรีเซ็ตสถานะปุ่ม
+      7. ตรวจสอบกรณี 403 (ไม่มีสิทธิ์) แสดงข้อความผิดพลาดและรีเซ็ตสถานะปุ่ม
+      8. ตรวจสอบการแสดงผลตารางรายการธุรกรรมเดิมว่ายังคงทำงานได้อย่างสมบูรณ์
+    - ผลทดสอบ Frontend Unit Tests (`npm test -- run`): 66/66 ผ่านทั้งหมด (6/6 test files)
+    - ผลทดสอบ Backend Vitest (`npx vitest run`): 72/72 ผ่านทั้งหมด (3/3 test files)
+    - ผลการตรวจสอบ TypeScript (`npx tsc --noEmit`): 0 errors ทั้ง Frontend และ Backend
+    - Next.js Production Build (`npm run build`): สำเร็จสมบูรณ์ 100% (12/12 static pages)
+    - ESLint Check (`npx eslint app/reports/page.tsx lib/auth.ts __tests__/unit/reports-export.test.tsx`): 0 errors
+    - ความปลอดภัยของระบบ: ไม่มีการแก้ไข Backend, ฐานข้อมูล, Schema, หรือติดตั้ง Package ใหม่ใด ๆ
+
+- **พัฒนา Frontend Excel Export API Client Helper (STEP 4.17.3 — Frontend Excel Export API Client Helper) (เสร็จสมบูรณ์ 100%)**:
+  - **สร้าง Frontend API Client Helper ([frontend/lib/auth.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/lib/auth.ts))**:
+    - เพิ่มฟังก์ชัน `exportTransactionsToExcel(filter: ExportTransactionsFilter): Promise<ExportExcelResult>` สำหรับเชื่อมต่อกับ `GET /reports/export-excel`
+    - รองรับตัวกรองชุดเดียวกับหน้ารายงาน: `startDate`, `endDate`, `status` (`pending`, `confirmed`, `rejected`), `search` (รหัสชิ้นส่วนสินค้า), และ `category` (`all`, `adjust`, `normal`)
+    - สร้าง Query String โดยละเว้นพารามิเตอร์ที่ว่างเปล่าและละเว้น `category=all` อย่างถูกต้อง
+    - แนบ Bearer Token อัตโนมัติจาก `getToken()` ตาม Architecture เดิมของระบบ
+    - อ่าน Response ที่สำเร็จเป็น `Blob` (`response.blob()`) โดยไม่แปลงเป็น JSON หรือ Text
+    - สกัดชื่อไฟล์ที่ Backend กำหนดจาก Header `Content-Disposition` (เช่น `WPK_MMS_Transaction_Report_2026-08-01_to_2026-08-31.xlsx`) พร้อม Fallback ชื่อไฟล์มาตรฐาน
+    - จัดการ Error ทุกกรณี (400, 401, 403, 404, 500) โดยแปลงเป็น Error Message ภาษาไทยที่ชัดเจน และจัดการ Clear Session / Redirect เมื่อเจอ 401
+    - เพิ่มฟังก์ชันตัวช่วย `downloadBlob(blob: Blob, filename: string): void` สำหรับดาวน์โหลดไฟล์ผ่าน Native Browser API (`createObjectURL` และ `revokeObjectURL`) เพื่อไม่ให้เกิด Memory Leak
+    - ยืนยันว่า **ยังไม่ได้สร้างปุ่ม Export Excel** และ **ไม่ได้แก้ไขหน้า Reports UI หรือพฤติกรรมการโหลดข้อมูลเดิม** ในขั้นตอนนี้
+  - **Automated Tests & Regression Verification ([frontend/__tests__/unit/auth.test.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/__tests__/unit/auth.test.ts))**:
+    - เพิ่ม Unit Test ครอบคลุม 8 กรณีสำหรับ `exportTransactionsToExcel` และ `downloadBlob`:
+      1. ตรวจสอบการส่ง Query Parameters, Authorization Header และการรับ Blob พร้อมชื่อไฟล์
+      2. ตรวจสอบการละเว้นพารามิเตอร์ที่ว่างเปล่าและ `category=all`
+      3. ตรวจสอบการจัดการ Error 400 Bad Request
+      4. ตรวจสอบการจัดการ Error 403 Forbidden
+      5. ตรวจสอบการจัดการ Error 404 No Data
+      6. ตรวจสอบการจัดการ Error 500 Internal Server Error
+      7. ตรวจสอบการจัดการข้อผิดพลาดเมื่อไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้
+      8. ตรวจสอบการทำงานของ `downloadBlob` (DOM anchor click และ revokeObjectURL)
+    - Frontend Vitest: 58/58 PASS (100%)
+    - TypeScript Type Check (`npx tsc --noEmit`): 0 errors ทั้ง Frontend และ Backend
+    - Next.js Production Build (`npm run build`): สำเร็จสมบูรณ์ (12/12 static pages)
+    - Backend API & Database: ไม่มีการแตะต้องหรือแก้ไขใด ๆ ทั้งสิ้น
+
+- **พัฒนา Backend Excel Export API สำหรับหน้ารายงาน (STEP 4.17.2 — Backend Excel Export API Implementation) (เสร็จสมบูรณ์ 100%)**:
+  - **สร้าง Endpoint ส่งออกไฟล์ Excel ([backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts))**:
+    - เพิ่ม `GET /reports/export-excel` พร้อมระบบความปลอดภัย `authenticate` และ `requireRole('supervisor')`
+    - จำกัดสิทธิ์เฉพาะบทบาท **Supervisor** เท่านั้น ส่วนบทบาท **Staff** และ **Admin** จะได้รับ `403 Forbidden` และผู้ที่ไม่มี Token จะได้รับ `401 Unauthorized`
+    - รองรับตัวกรองชุดเดียวกับหน้ารายงานปัจจุบัน: `startDate`, `endDate`, `status` (`pending`, `confirmed`, `rejected`), `search` (รหัสสินค้า), และ `category` (`all`, `adjust`, `normal`)
+    - ดึงข้อมูลจากฐานข้อมูลโดยตรง ไม่ผูกกับข้อจำกัด 200 รายการของหน้าจอ และกำหนด Safety Cap สูงสุด 5,000 รายการ (`take: 5000`)
+    - สร้างโครงสร้างไฟล์ `.xlsx` ตามมาตรฐาน: 1 Transaction ต่อ 1 แถว พร้อมรวบรวมข้อมูล Lot FIFO ในคอลัมน์ "รายละเอียด Lot (FIFO)" เพื่อป้องกัน Double Counting ยอดรวม Quantity
+    - นำ Package `xlsx` ที่มีอยู่แล้วใน Backend มา Reuse โดยไม่ต้องติดตั้ง Package ใหม่ใด ๆ
+    - รองรับการตั้งชื่อไฟล์อัตโนมัติตามช่วงเวลาที่เลือก และส่งออกด้วย Content-Type `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+    - จัดการกรณีไม่พบข้อมูลด้วย `404 Not Found` (`{ error: 'ไม่พบข้อมูลสำหรับส่งออกตามเงื่อนไขที่ระบุ' }`) และตรวจสอบความถูกต้องของ Filter ด้วย `400 Bad Request`
+  - **Automated Tests & Regression Verification ([backend/__tests__/export-excel.test.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/__tests__/export-excel.test.ts))**:
+    - เพิ่มชุดทดสอบ Integration Test ครอบคลุม 13 ข้อ:
+      1. ตรวจสอบ Unauthenticated Request ได้รับ 401 Unauthorized
+      2. ตรวจสอบ Invalid Token ได้รับ 401 Unauthorized
+      3. ตรวจสอบ Staff ได้รับ 403 Forbidden
+      4. ตรวจสอบ Admin ได้รับ 403 Forbidden
+      5. ตรวจสอบ Invalid Status ได้รับ 400 Bad Request
+      6. ตรวจสอบ Invalid Category ได้รับ 400 Bad Request
+      7. ตรวจสอบ Missing EndDate เมื่อมี StartDate ได้รับ 400 Bad Request
+      8. ตรวจสอบ Invalid Date Format ได้รับ 400 Bad Request
+      9. ตรวจสอบ StartDate > EndDate ได้รับ 400 Bad Request
+      10. ตรวจสอบ Filter ไม่พบข้อมูลได้รับ 404 Not Found
+      11. ตรวจสอบ Supervisor ส่งออกไฟล์ Excel สำเร็จ ได้รับ Buffer `.xlsx` และข้อมูลคอลัมน์ครบ 16 คอลัมน์ พร้อมรองรับภาษาไทย
+      12. ตรวจสอบ Filter Date Range และชื่อไฟล์ที่ถูกต้อง
+      13. ตรวจสอบ Filter Category (`adjust` vs `normal`) กรองตรงตามเงื่อนไข Note
+    - Backend Vitest: 13/13 PASS (export-excel.test.ts) และ 39/39 PASS (api.test.ts) รวมผ่าน 100%
+    - TypeScript Type Check: 0 errors ทั้งฝั่ง Backend (`npx tsc --noEmit`)
+    - Database Integrity: ข้อมูลทั้งหมดในฐานข้อมูลคงเดิม 100% ไม่มีการเปลี่ยน Schema หรือแก้ไขข้อมูลจริง
+
 - **กำหนด Default Status Filter เป็น "ทั้งหมด" สำหรับ Staff (STEP 4.16.3 — Staff Default Transaction Filter) (เสร็จสมบูรณ์ 100%)**:
   - **Staff Default Filter ([frontend/app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/transactions/page.tsx))**:
     - ปรับปรุงให้เมื่อผู้ใช้มีบทบาทเป็น `warehouse_staff` เปิดเข้าสู่หน้า `/transactions` ("รายการของฉัน") เป็นครั้งแรก ระบบจะกำหนดตัวกรองสถานะเริ่มต้น (`statusFilter`) เป็น **"ทั้งหมด" (`all`)** โดยอัตโนมัติ เพื่อให้พนักงานสามารถเห็นประวัติการรับเข้า/เบิกออกของตนเองครบถ้วนทันที

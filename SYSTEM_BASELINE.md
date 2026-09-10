@@ -2,7 +2,7 @@
 **Packaging Material Warehouse Management System (WPK MMS)**  
 **Version:** 1.0.0-baseline  
 **Status:** Completed & Accepted (Post-Security Hardening)  
-**Git Baseline:** `417d271b104db09b0c2ba63e501d17ebd622914b` (Branch: `main`)  
+**Git Baseline:** `43fa3b005c9190318ce3b3973f6f246e845bf08a` (Branch: `main`)
 **Date:** September 10, 2026  
 
 ---
@@ -220,7 +220,7 @@ QR-Code/
 
 ## 20. Git System Baseline Confirmation
 - **Branch:** `main`
-- **Current HEAD Commit:** `417d271b104db09b0c2ba63e501d17ebd622914b`
+- **Current HEAD Commit:** `43fa3b005c9190318ce3b3973f6f246e845bf08a`
 - **Synchronized with:** `origin/main`
-- **Commit Subject:** `security: harden authentication fallback and cors`
+- **Commit Subject:** `chore: finalize system baseline and stock ui`
 - **Working Tree Status:** Clean (ก่อนเริ่มและหลังจัดทำเอกสาร)

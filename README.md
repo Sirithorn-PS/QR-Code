@@ -1,12 +1,13 @@
-# QR-Code — ระบบสแกน QR สำหรับรับ/จ่ายสินค้า
+# WPK MMS — Packaging Material Warehouse Management System
 
-ระบบจัดการสต็อกด้วย QR Code สำหรับคลังสินค้า ENEOS
-ลดความผิดพลาดจากการบันทึกด้วยมือ พร้อมระบบอนุมัติรายการ
+ระบบบริหารจัดการคลังสินค้าบรรจุภัณฑ์
+WPK MMS (Packaging Material Warehouse Management System) is a web-based system for managing packaging material warehouse operations.
+ลดความผิดพลาดจากการบันทึกด้วยมือ พร้อมระบบตัดสต็อกตามหลัก FIFO และระบบอนุมัติรายการ
 
 ## โครงสร้างโปรเจกต์
 
 ```
-QR-Code/
+WPK-MMS/
 ├── backend/           → Express + Prisma API (TypeScript)
 │   ├── prisma/        → Database schema & migrations
 │   └── src/           → Source code (routes, middleware)
@@ -20,11 +21,13 @@ QR-Code/
 ├── AGENTS.md          → กฎสำหรับ AI Agents
 ├── CONTEXT.md         → บริบทและ spec ของระบบ
 ├── AUTH_SETUP.md      → เอกสาร Authentication
+├── DEMO_CHECKLIST.md  → เช็กลิสต์ขั้นตอนการนำเสนอและสาธิตระบบ
 └── SYSTEM_BASELINE.md → เอกสารสรุปสถานะระบบและสถาปัตยกรรมฉบับสมบูรณ์ (Baseline)
 ```
 
 ## เอกสารระบบ (System Documentation)
 - [SYSTEM_BASELINE.md](SYSTEM_BASELINE.md) — เอกสารสรุปสถานะระบบขั้นสุดท้าย สถาปัตยกรรม ฟีเจอร์ สิทธิ์ 3 Roles, FIFO, Security, และผลการทดสอบทั้งหมด
+- [DEMO_CHECKLIST.md](DEMO_CHECKLIST.md) — เช็กลิสต์ขั้นตอนการนำเสนอและสาธิตระบบ (Demo Guide & Script)
 - [CONTEXT.md](CONTEXT.md) — บริบทและข้อกำหนดระบบคลังสินค้า
 - [AGENTS.md](AGENTS.md) — ข้อกำหนดและกฎการพัฒนาของโปรเจกต์
 

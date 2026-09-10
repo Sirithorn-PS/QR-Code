@@ -1,6 +1,51 @@
 # บันทึกการทำงาน (Memories)
 
 ## 10 ก.ย. 2026
+- **ปรับปรุง UI/UX Card "สต็อกขั้นต่ำ" ในหน้าสต็อกสินค้า (Inventory Page) (เสร็จสมบูรณ์ 100%)**:
+  - **ปรับข้อความหลักและรูปแบบการแสดงผล ([frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/inventory/page.tsx))**:
+    - เปลี่ยน Label จาก `"จุดสั่งซื้อ (MIN)"` เป็น `"สต็อกขั้นต่ำ"` เพื่อสื่อความหมายอย่างตรงไปตรงมา ป้องกันความเข้าใจผิดว่าเป็นการสั่งซื้อหรือพื้นที่จัดเก็บ
+    - กรณีที่กำหนดค่า Minimum Stock (เช่น `5 Cap200L`): แสดงตัวเลข `5` เด่นชัด พร้อมหน่วยนับ และคำอธิบายย่อย `"เกณฑ์สำหรับแจ้งเตือนสต็อกใกล้หมด"`
+    - กรณีที่ยังไม่ได้กำหนดค่า (`minStock === null || minStock === undefined`): แสดงตัวเลข `—` และสถานะ `"ยังไม่ได้กำหนด"` แทน `"-"` และ `"ไม่ระบุ"` ในโทนสีนุ่มนวล ไม่ดูเหมือนข้อผิดพลาดของระบบ
+    - กรณีสินค้าเข้าสู่สภาวะสต็อกต่ำ (`quantity <= minStock && status === 'active'`): แสดงแถบกำกับ `"สต็อกขั้นต่ำ"` ควบคู่กับ Badge สีแดง `"• ใกล้หมด"` แบบกระพริบอย่างชัดเจน
+    - รักษาการแบ่งแยกความหมายจาก `"📍 คลังจัดเก็บ: WPK (-)"` ไว้อย่างชัดเจน ไม่สับสนปนเปกัน
+  - **การรักษาความถูกต้องของระบบ (Zero Business Logic Changes)**:
+    - ดึงข้อมูลจาก Data Field เดิม (`item.minStock`, `item.quantity`, `item.unit`, `item.status`) ไม่มีการแก้ไข Database Schema, API หรือ Logic
+    - ไม่มีผลกระทบต่อ Stock Calculation, FIFO Engine, Low Stock Notification, Transaction หรือ Role & Permission ใด ๆ
+  - **Automated Verification & Browser UI**:
+    - TypeScript Type Check (`tsc --noEmit`): 0 errors
+    - Frontend Unit Tests (`npm test`): 80/80 passed (100%)
+    - Browser Verification: ตรวจสอบทั้ง Desktop (1280x800) และ Mobile/Responsive พบการจัดวาง Layout สวยงาม สอดคล้องกับ Card อื่น ๆ ในหน้าจอ
+
+- **จัดทำและตรวจสอบเอกสารสรุปสถานะระบบขั้นสุดท้าย (STEP 4.34 — Final Documentation & System Baseline) (เสร็จสมบูรณ์ 100%)**:
+  - **จัดทำเอกสาร Master Baseline ([SYSTEM_BASELINE.md](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/SYSTEM_BASELINE.md))**:
+    - สรุปสถานะและสถาปัตยกรรมระบบขั้นสุดท้ายครอบคลุม 20 หมวดหมู่ตามข้อกำหนดจริงของระบบ หลังผ่านการ Hardening ใน STEP 4.32 และ Full System Regression ใน STEP 4.33
+    - **บทบาทและขอบเขตสิทธิ์ (Role & Permission Boundary)**:
+      - `admin`: จัดการบัญชีผู้ใช้ (สร้าง, ปรับสถานะ, รีเซ็ตรหัสผ่าน) ไม่มีสิทธิ์อนุมัติ/ปฏิเสธธุรกรรมคลัง
+      - `supervisor`: ตรวจสอบและอนุมัติ/ปฏิเสธธุรกรรมรับ-จ่าย, ดูสต็อก/Lot FIFO, สิทธิ์เข้าถึงภาพรวมคลังสินค้าทั้งหมด (Warehouse-wide scope), ดูรายงานและส่งออกไฟล์ Excel
+      - `warehouse_staff`: สแกน QR รับเข้า/เบิกออก, แดชบอร์ดแบบ Hybrid แบ่งเป็นสถิติการทำงานของตนเอง (Personal Activity) และภาพรวมคลังสินค้า (Warehouse Overview) ที่จำเป็นต่อการปฏิบัติงาน โดยข้อมูลธุรกรรมถูกจำกัดสิทธิ์ (Data Isolation) ไม่สามารถเห็นธุรกรรมของพนักงานคนอื่น
+    - **การจัดการสต็อกและกระบวนการ FIFO**:
+      - บันทึกการรับเข้า (`receive`) สร้าง Lot ใหม่พร้อมระบุ `receivedDate`
+      - การเบิกจ่าย (`issue`) ตัดสต็อกตามลำดับ FIFO (`ProductLot` ที่เก่าที่สุดก่อน) พร้อมบันทึกรายละเอียดการกระจายลงใน `TransactionLot`
+      - มีระบบ Inline Validation และ Submit Guard ป้องกันการกรอกจำนวนเบิกเกินสต็อกคงเหลือตั้งแต่หน้าสแกน
+      - ระบบ Low Stock Notification แจ้งเตือน Supervisor อัตโนมัติเมื่อ Packaging คงเหลือ `<= minStock` พร้อมกลไกป้องกันการแจ้งเตือนซ้ำซ้อน
+    - **Security & Authentication Summary**:
+      - บันทึกการถอด Hardcoded / Fast-path Fallback Login และ `fallbackUsersCache` ออกอย่างสมบูรณ์
+      - บันทึกการบังคับใช้ Strict CORS Whitelist แบบ Exact Match ตัดช่องโหว่ Substring Matching
+      - ห้ามใส่ Secret, Credential, Database URL หรือรหัสผ่านจริงลงในเอกสาร
+    - **Requirement & Feature Status Matrix (19 รายการ)**:
+      - สรุปสถานะ PASS ครบทุก Core Features, ระบุ GAP-001 เป็น `PENDING` (รอไฟล์ PDF Work Instruction จากผู้ใช้), GAP-003 เป็น `TECHNICAL DEBT` (ปิดรับสมัครสาธารณะแล้วโดยตั้งใจ), และบันทึก Batch Scanning / Cycle Count / PDF Export เป็น `FUTURE ENHANCEMENT`
+    - **Known Findings / Technical Debt**:
+      - ระบุ GAP-001 (รอไฟล์ PDF จริง), React 19 ESLint setState-in-effect ใน `users/page.tsx` และ `Navigation.tsx` (INFO / Technical Debt ที่ไม่กระทบ Production Build), และ Legacy Pending User Endpoints (Technical Debt)
+    - **Production Deployment Notes & Git Baseline**:
+      - สรุปรายการ Environment Variables ที่จำเป็นต้องตั้งค่าก่อนขึ้น Production
+      - บันทึก Git Baseline: Branch `main`, Commit `417d271b104db09b0c2ba63e501d17ebd622914b`, Synchronized with `origin/main`
+  - **ปรับปรุงเอกสารภาพรวมโครงการ ([README.md](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/README.md))**:
+    - แก้ไขชื่อโฟลเดอร์จาก `QRcodeWebapp/` เป็น `frontend/` ให้ตรงกับโครงสร้างจริงของ Repository
+    - เพิ่มลิงก์อ้างอิงไปยัง [SYSTEM_BASELINE.md](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/SYSTEM_BASELINE.md)
+  - **การปฏิบัติตามขอบเขตงานอย่างเคร่งครัด (Strict Boundary & Safety)**:
+    - ไม่มีการแก้ไข Source Code, Database Schema, API Logic, Authentication Logic หรือ UI ใด ๆ ทั้งสิ้น (`SOURCE CODE CHANGED: NO`, `DATABASE CHANGED: NO`, `UI CHANGED: NO`)
+    - ยึดตามกฎ NO COMMIT / NO PUSH ใน STEP 4.34 เพื่อรอการตรวจสอบจากผู้ใช้ก่อนดำเนินการในขั้นตอนถัดไป
+
 - **Security Hardening: ถอด Login Fallback & บังคับใช้ Strict CORS (STEP 4.32) (เสร็จสมบูรณ์ 100%)**:
   - **ถอด Hardcoded Fast-path Fallback Login ([backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts))**:
     - ลบเงื่อนไขตรวจสอบรหัสผ่านแบบ hardcode สำหรับบัญชีเริ่มต้น (`admin / admin123`, `supervisor / super1234`, `staff / staff123`) ใน `POST /auth/login`

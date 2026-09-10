@@ -1249,30 +1249,51 @@ export default function InventoryPage() {
                               {item.unit}
                             </span>
                           </div>
-                          <div className={`min-w-[130px] px-4 py-3 rounded-2xl border flex flex-col items-center justify-center text-center shadow-2xs transition-all ${
-                            item.minStock !== null && item.minStock !== undefined && item.quantity <= item.minStock && item.status === 'active'
-                              ? 'bg-red-50/80 border-red-200 text-red-900'
-                              : 'bg-slate-50 border-slate-200 text-slate-700'
-                          }`}>
-                            <div className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-center">
-                              {item.minStock !== null && item.minStock !== undefined && item.quantity <= item.minStock && item.status === 'active' ? (
-                                <span className="inline-flex items-center gap-1 text-[#BE1111] font-black">
+                          {/* Card: สต็อกขั้นต่ำ (Minimum Stock Alert Threshold) */}
+                          <div
+                            className={`min-w-[140px] px-3.5 py-3 rounded-2xl border flex flex-col items-center justify-center text-center shadow-2xs transition-all ${
+                              item.minStock !== null && item.minStock !== undefined && item.quantity <= item.minStock && item.status === 'active'
+                                ? 'bg-red-50/80 border-red-200 text-red-900'
+                                : 'bg-slate-50 border-slate-200 text-slate-700'
+                            }`}
+                          >
+                            <div className="flex items-center justify-center gap-1 text-[10px] sm:text-[11px] font-bold tracking-wider text-center">
+                              <span className={item.minStock !== null && item.minStock !== undefined && item.quantity <= item.minStock && item.status === 'active' ? 'text-red-800' : 'text-slate-500'}>
+                                สต็อกขั้นต่ำ
+                              </span>
+                              {item.minStock !== null && item.minStock !== undefined && item.quantity <= item.minStock && item.status === 'active' && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black bg-red-100 text-[#BE1111]">
                                   <span className="w-1.5 h-1.5 rounded-full bg-[#BE1111] animate-pulse" />
                                   ใกล้หมด
                                 </span>
-                              ) : (
-                                <span className="text-slate-500">จุดสั่งซื้อ (MIN)</span>
                               )}
                             </div>
-                            <div className={`text-2xl sm:text-3xl font-black leading-tight text-center mt-0.5 ${
-                              item.minStock !== null && item.minStock !== undefined && item.quantity <= item.minStock && item.status === 'active'
-                                ? 'text-[#BE1111]'
-                                : 'text-gray-900'
-                            }`}>
-                              {item.minStock !== null && item.minStock !== undefined ? item.minStock.toLocaleString() : '-'}
+                            <div
+                              className={`text-2xl sm:text-3xl font-black leading-tight text-center mt-0.5 ${
+                                item.minStock !== null && item.minStock !== undefined && item.quantity <= item.minStock && item.status === 'active'
+                                  ? 'text-[#BE1111]'
+                                  : item.minStock !== null && item.minStock !== undefined
+                                  ? 'text-gray-900'
+                                  : 'text-slate-300 font-bold'
+                              }`}
+                            >
+                              {item.minStock !== null && item.minStock !== undefined ? item.minStock.toLocaleString() : '—'}
                             </div>
-                            <span className="text-xs font-bold text-gray-500 text-center leading-none mt-0.5">
-                              {item.minStock !== null && item.minStock !== undefined ? item.unit : 'ไม่ระบุ'}
+                            <span className="text-xs font-bold text-center leading-none mt-0.5">
+                              {item.minStock !== null && item.minStock !== undefined ? (
+                                <span className="text-gray-500">{item.unit}</span>
+                              ) : (
+                                <span className="text-slate-400 font-medium text-[11px]">ยังไม่ได้กำหนด</span>
+                              )}
+                            </span>
+                            <span
+                              className={`text-[9px] sm:text-[10px] leading-tight text-center mt-1.5 font-medium ${
+                                item.minStock !== null && item.minStock !== undefined && item.quantity <= item.minStock && item.status === 'active'
+                                  ? 'text-red-600/80'
+                                  : 'text-slate-400'
+                              }`}
+                            >
+                              เกณฑ์สำหรับแจ้งเตือนสต็อกใกล้หมด
                             </span>
                           </div>
                           <div className="flex flex-col gap-2 shrink-0 min-w-[165px]">

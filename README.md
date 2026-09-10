@@ -1,6 +1,6 @@
 # QR-Code — ระบบสแกน QR สำหรับรับ/จ่ายสินค้า
 
-ระบบจัดการสต็อกด้วย QR Code สำหรับคลังสินค้า ENEOS  
+ระบบจัดการสต็อกด้วย QR Code สำหรับคลังสินค้า ENEOS
 ลดความผิดพลาดจากการบันทึกด้วยมือ พร้อมระบบอนุมัติรายการ
 
 ## โครงสร้างโปรเจกต์
@@ -10,7 +10,7 @@ QR-Code/
 ├── backend/           → Express + Prisma API (TypeScript)
 │   ├── prisma/        → Database schema & migrations
 │   └── src/           → Source code (routes, middleware)
-├── QRcodeWebapp/      → Next.js frontend (App Router + Tailwind)
+├── frontend/          → Next.js frontend (App Router + Tailwind)
 │   ├── app/           → Pages & layouts
 │   └── lib/           → Shared utilities (auth, API helpers)
 ├── scripts/           → Utility scripts & data files
@@ -19,8 +19,14 @@ QR-Code/
 │   └── data/          → Excel data files
 ├── AGENTS.md          → กฎสำหรับ AI Agents
 ├── CONTEXT.md         → บริบทและ spec ของระบบ
-└── AUTH_SETUP.md      → เอกสาร Authentication
+├── AUTH_SETUP.md      → เอกสาร Authentication
+└── SYSTEM_BASELINE.md → เอกสารสรุปสถานะระบบและสถาปัตยกรรมฉบับสมบูรณ์ (Baseline)
 ```
+
+## เอกสารระบบ (System Documentation)
+- [SYSTEM_BASELINE.md](SYSTEM_BASELINE.md) — เอกสารสรุปสถานะระบบขั้นสุดท้าย สถาปัตยกรรม ฟีเจอร์ สิทธิ์ 3 Roles, FIFO, Security, และผลการทดสอบทั้งหมด
+- [CONTEXT.md](CONTEXT.md) — บริบทและข้อกำหนดระบบคลังสินค้า
+- [AGENTS.md](AGENTS.md) — ข้อกำหนดและกฎการพัฒนาของโปรเจกต์
 
 ## เทคโนโลยี
 
@@ -44,7 +50,7 @@ npm install
 cd backend && npm install
 
 # Frontend
-cd QRcodeWebapp && npm install
+cd frontend && npm install
 ```
 
 ### 2. ตั้งค่า Environment

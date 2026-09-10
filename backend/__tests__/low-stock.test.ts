@@ -569,9 +569,9 @@ describe('Low Stock Notification & Min Stock Management Tests', () => {
   it('20. Notification Creation Failure: stock update should still succeed even if notification fails', async () => {
     // Mock prisma.notification.create to throw an error temporarily
     const originalCreate = prisma.notification.create
-    prisma.notification.create = async () => {
+    prisma.notification.create = (async () => {
       throw new Error('Simulated Notification DB failure')
-    }
+    }) as unknown as typeof prisma.notification.create
 
     try {
       // Re-enable minStock = 10, stock = 20

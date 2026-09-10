@@ -1,5 +1,14 @@
 # บันทึกการทำงาน (Memories)
 
+## 10 ก.ย. 2026
+- **แก้ไขปัญหา TypeScript Error ใน low-stock.test.ts และจัดการ CSS Warning ใน globals.css**:
+  - **แก้ไข TypeScript Type Mismatch ใน [`backend/__tests__/low-stock.test.ts`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/__tests__/low-stock.test.ts)**:
+    - แก้ไขข้อผิดพลาด `TS2322` ที่บรรทัด 572 ใน Test 20 (`Notification Creation Failure: stock update should still succeed even if notification fails`)
+    - ทำการระบุ Type ด้วย `as unknown as typeof prisma.notification.create` เพื่อให้ตรงกับ Method Signature ของ Prisma Client โดยไม่ละเมิดกฎการห้ามใช้ `any`
+    - ตรวจสอบผ่านคำสั่ง `npx tsc --noEmit --skipLibCheck --esModuleInterop __tests__/low-stock.test.ts` ผลลัพธ์ 0 errors ผ่าน 100%
+  - **จัดการ CSS Warning ใน Editor ([`.vscode/settings.json`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/.vscode/settings.json))**:
+    - เพิ่มการตั้งค่า `"css.lint.unknownAtRules": "ignore"` เพื่อให้ Editor ไม่แจ้งเตือน Warning กับคำสั่ง `@theme` ของ Tailwind CSS v4 ใน [`frontend/app/globals.css`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/globals.css) ทำให้แท็บ Problems สะอาดสมบูรณ์
+
 ## 9 ก.ย. 2026
 - **ปรับปรุงหน้า Dashboard สำหรับ Staff: Personal Activity + Warehouse Overview (STEP 4.25) (เสร็จสมบูรณ์ 100%)**:
   - **ปรับปรุงการแบ่งกลุ่มและสื่อความหมายบน Dashboard ([frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx))**:

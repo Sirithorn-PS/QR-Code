@@ -26,7 +26,10 @@ const prisma =
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
 const corsOriginEnv = process.env.CORS_ORIGIN || 'http://localhost:3000'
-const allowedOrigins = corsOriginEnv.split(',').map(o => o.trim().replace(/\/+$/, ''))
+const allowedOrigins = corsOriginEnv
+  .split(',')
+  .map(o => o.trim().replace(/\/+$/, ''))
+  .filter(Boolean)
 const isProduction = process.env.NODE_ENV === 'production'
 const JWT_SECRET = process.env.JWT_SECRET
 
@@ -38,21 +41,17 @@ const jwtSecret = JWT_SECRET || 'development-only-secret'
 
 app.use((req, res, next) => {
   const origin = req.headers.origin
-  const cleanOrigin = origin?.replace(/\/+$/, '')
-  
-  if (origin) {
-    if (allowedOrigins.includes('*') || allowedOrigins.includes(cleanOrigin || '') || cleanOrigin?.includes('vercel.app') || cleanOrigin?.includes('localhost')) {
+  const cleanOrigin = origin ? origin.trim().replace(/\/+$/, '') : ''
+
+  if (origin && cleanOrigin) {
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(cleanOrigin)) {
       res.header('Access-Control-Allow-Origin', origin)
-    } else {
-      res.header('Access-Control-Allow-Origin', allowedOrigins[0] || 'http://localhost:3000')
+      res.header('Access-Control-Allow-Credentials', 'true')
     }
-  } else {
-    res.header('Access-Control-Allow-Origin', allowedOrigins[0] || 'http://localhost:3000')
   }
-  
+
   res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS')
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept')
-  res.header('Access-Control-Allow-Credentials', 'true')
   if (req.method === 'OPTIONS') {
     return res.sendStatus(204)
   }
@@ -202,8 +201,6 @@ function productSnapshot(product: {
   }
 }
 
-const fallbackUsersCache = new Map<string, Record<string, unknown>>()
-
 app.post('/auth/register', async (req: Request<{}, {}, RegisterBody>, res: Response) => {
   return res.status(403).json({
     error: 'ระบบปิดรับการสมัครสมาชิกสาธารณะแล้ว กรุณาติดต่อแอดมินระบบ (System Admin) เพื่อสร้างบัญชีการใช้งาน',
@@ -280,98 +277,7 @@ app.post('/auth/login', async (req: Request<{}, {}, LoginBody>, res: Response) =
       return res.status(400).json({ error: 'Missing username or password' })
     }
 
-    // Fast-path for default Master Data users
-    if (username === 'admin' && password === 'admin123') {
-      try {
-        const dbAdmin = await prisma.user.findFirst({
-          where: { username: { equals: 'admin', mode: 'insensitive' } },
-        })
-        if (dbAdmin && (await bcrypt.compare(password, dbAdmin.password))) {
-          if (dbAdmin.status === 'disabled' || dbAdmin.status === 'rejected') {
-            return res.status(403).json({ error: 'บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อแอดมินระบบ (System Admin)' })
-          }
-          return res.json({
-            token: signToken(dbAdmin),
-            user: toPublicUser(dbAdmin),
-          })
-        }
-      } catch (dbErr) {
-        console.error('Failed to query admin from database, falling back to User 6:', dbErr)
-      }
-      const defaultAdmin = { id: 6, username: 'admin', password: '', fullName: 'แอดมินระบบ (System Admin)', role: 'admin', status: 'approved', createdAt: new Date() }
-      return res.json({
-        token: signToken(defaultAdmin),
-        user: toPublicUser(defaultAdmin),
-      })
-    }
-    if (username === 'supervisor' && password === 'super1234') {
-      try {
-        const dbSupervisor = await prisma.user.findFirst({
-          where: { username: { equals: 'supervisor', mode: 'insensitive' } },
-        })
-        if (dbSupervisor && (await bcrypt.compare(password, dbSupervisor.password))) {
-          if (dbSupervisor.status === 'disabled' || dbSupervisor.status === 'rejected') {
-            return res.status(403).json({ error: 'บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อแอดมินระบบ (System Admin)' })
-          }
-          return res.json({
-            token: signToken(dbSupervisor),
-            user: toPublicUser(dbSupervisor),
-          })
-        }
-      } catch (dbErr) {
-        console.error('Failed to query supervisor from database, falling back to User 10:', dbErr)
-      }
-      const defaultSupervisor = { id: 10, username: 'supervisor', password: '', fullName: 'ผู้ควบคุมดูแลระบบ (Supervisor)', role: 'supervisor', status: 'approved', createdAt: new Date() }
-      return res.json({
-        token: signToken(defaultSupervisor),
-        user: toPublicUser(defaultSupervisor),
-      })
-    }
-    if (username === 'staff' && password === 'staff123') {
-      try {
-        const dbStaff = await prisma.user.findFirst({
-          where: { username: { equals: 'staff', mode: 'insensitive' } },
-        })
-        if (dbStaff && (await bcrypt.compare(password, dbStaff.password))) {
-          if (dbStaff.status === 'disabled' || dbStaff.status === 'rejected') {
-            return res.status(403).json({ error: 'บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อแอดมินระบบ (System Admin)' })
-          }
-          return res.json({
-            token: signToken(dbStaff),
-            user: toPublicUser(dbStaff),
-          })
-        }
-      } catch (dbErr) {
-        console.error('Failed to query staff from database, falling back to User 7:', dbErr)
-      }
-      const defaultStaff = { id: 7, username: 'staff', password: '', fullName: 'พนักงานทั่วไป (Staff)', role: 'warehouse_staff', status: 'approved', createdAt: new Date() }
-      return res.json({
-        token: signToken(defaultStaff),
-        user: toPublicUser(defaultStaff),
-      })
-    }
-
-    // Check memory cache from recent registration first
-    if (fallbackUsersCache.has(username)) {
-      const cachedUser = fallbackUsersCache.get(username)
-      if (!cachedUser || cachedUser.password !== password) {
-        return res.status(401).json({ error: 'รหัสผ่านไม่ถูกต้อง' })
-      }
-      const validUser = {
-        id: Number(cachedUser.id || 1),
-        username: String(cachedUser.username || username),
-        fullName: String(cachedUser.fullName || ''),
-        role: String(cachedUser.role || 'warehouse_staff'),
-        status: String(cachedUser.status || 'approved'),
-        employeeId: cachedUser.employeeId ? String(cachedUser.employeeId) : null,
-      }
-      return res.json({
-        token: signToken(validUser),
-        user: toPublicUser(validUser),
-      })
-    }
-
-    // Try database lookup for custom registered users
+    // Database lookup for user authentication
     let user = null
     try {
       user = await prisma.user.findFirst({
@@ -2074,10 +1980,6 @@ app.post('/users', authenticate, requireRole('admin'), async (req: Authenticated
       return res.status(400).json({ error: 'บทบาท (Role) ไม่ถูกต้อง' })
     }
 
-    if (fallbackUsersCache.has(username) || ['admin', 'supervisor', 'staff'].includes(username)) {
-      return res.status(409).json({ error: 'ชื่อผู้ใช้นี้ถูกใช้งานแล้วในระบบ' })
-    }
-
     try {
       const existingUser = await prisma.user.findUnique({ where: { username } })
       if (existingUser) {
@@ -2111,23 +2013,8 @@ app.post('/users', authenticate, requireRole('admin'), async (req: Authenticated
         user,
       })
     } catch (dbError) {
-      console.warn('Database unreachable, saving user to memory cache mode:', username)
-      const fallbackUser = {
-        id: Math.floor(Math.random() * 1000) + 100,
-        username,
-        password,
-        fullName,
-        employeeId: employeeId || null,
-        role,
-        status: 'approved',
-        createdAt: new Date(),
-      }
-      fallbackUsersCache.set(username, fallbackUser)
-      return res.status(201).json({
-        success: true,
-        message: `สร้างบัญชีผู้ใช้งาน ${fullName} (${role}) สำเร็จ (Memory Mode)`,
-        user: toPublicUser(fallbackUser),
-      })
+      console.error('Database query failed during user creation:', dbError)
+      return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการสร้างบัญชีผู้ใช้งาน' })
     }
   } catch (error) {
     console.error('Error creating user by Admin:', error)

@@ -1,6 +1,26 @@
 # บันทึกการทำงาน (Memories)
 
 ## 10 ก.ย. 2026
+- **Security Hardening: ถอด Login Fallback & บังคับใช้ Strict CORS (STEP 4.32) (เสร็จสมบูรณ์ 100%)**:
+  - **ถอด Hardcoded Fast-path Fallback Login ([backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts))**:
+    - ลบเงื่อนไขตรวจสอบรหัสผ่านแบบ hardcode สำหรับบัญชีเริ่มต้น (`admin / admin123`, `supervisor / super1234`, `staff / staff123`) ใน `POST /auth/login`
+    - ลบ Mock User Objects (ID 6, 10, 7) ที่เคยถูกนำมาออก JWT Token อัตโนมัติเมื่อฐานข้อมูลเกิดข้อผิดพลาด
+    - ปรับกระบวนการ Login ให้ค้นหาผู้ใช้งานจากฐานข้อมูลจริง (`prisma.user.findFirst`) และตรวจสอบ Hash รหัสผ่านด้วย `bcrypt.compare` เท่านั้น
+    - หากเกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล ระบบจะส่งคืน HTTP 500 อย่างถูกต้องโดยไม่ออก Token หรือจำลองตัวตนใด ๆ
+  - **ถอด In-Memory `fallbackUsersCache` ([backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts))**:
+    - ลบการประกาศ `fallbackUsersCache` ที่เคยใช้เก็บข้อมูลผู้ใช้งานและ Plaintext Password ในหน่วยความจำ
+    - ถอดการตรวจสอบ `fallbackUsersCache` ใน `POST /auth/login` และ `POST /users`
+    - หาก Admin สร้างผู้ใช้แล้ว Database เกิดข้อผิดพลาด ระบบจะส่งคืน HTTP 500 เพื่อความปลอดภัย ไม่สร้างบัญชีแบบ Memory Mode
+  - **บังคับใช้ Strict Origin Matching สำหรับ CORS ([backend/src/index.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts))**:
+    - ยกเลิกการตรวจสอบแบบ Substring `cleanOrigin?.includes('vercel.app')` และ `cleanOrigin?.includes('localhost')` ที่เปิดช่องโหว่ให้โดเมนแปลกปลอมเข้าถึง API
+    - เปลี่ยนเป็นการตรวจสอบ Exact Match กับ Whitelist ที่ระบุใน `process.env.CORS_ORIGIN` (รองรับ Comma-separated domains พร้อมตัด trailing slash)
+    - หาก Origin ไม่ตรงกับ Whitelist จะไม่ส่ง Header `Access-Control-Allow-Origin` กลับไป
+  - **Automated Tests & Regression Verification ([backend/__tests__/api.test.ts](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/__tests__/api.test.ts))**:
+    - เพิ่มชุดทดสอบ Security Hardening 7 รายการ: การปฏิเสธรหัสผ่านผิด (401), ผู้ใช้ที่ไม่มีอยู่ (401), การรับมือข้อผิดพลาด DB โดยไม่ออก Token (500), การอนุญาต Exact Allowed Origin, การปฏิเสธ Unauthorized Origin, การปฏิเสธ Fake vercel.app Origin, และการปฏิเสธ Fake localhost Origin
+    - ผลการรันชุดทดสอบ Vitest ใน Backend: 79 / 79 tests PASS (100%)
+    - ผลการรันชุดทดสอบ Vitest ใน Frontend: 80 / 80 tests PASS (100%)
+    - TypeScript Type Check: 0 errors ทั้ง Backend และ Frontend
+
 - **แก้ไขปัญหา TypeScript Error ใน low-stock.test.ts และจัดการ CSS Warning ใน globals.css**:
   - **แก้ไข TypeScript Type Mismatch ใน [`backend/__tests__/low-stock.test.ts`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/__tests__/low-stock.test.ts)**:
     - แก้ไขข้อผิดพลาด `TS2322` ที่บรรทัด 572 ใน Test 20 (`Notification Creation Failure: stock update should still succeed even if notification fails`)

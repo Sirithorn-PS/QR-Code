@@ -591,4 +591,65 @@ describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
       expect(rejectRes.status).toBe(403)
     })
   })
+
+  describe('3. Security Hardening & Strict CORS Tests (STEP 4.32)', () => {
+    it('Wrong Password fails with 401 and does not issue token', async () => {
+      const res = await request(app).post('/auth/login').send({ username: 'admin', password: 'wrongpassword' })
+      expect(res.status).toBe(401)
+      expect(res.body.token).toBeUndefined()
+      expect(res.body.error).toBe('รหัสผ่านไม่ถูกต้อง')
+    })
+
+    it('Non-existent username fails with 401 and does not issue token', async () => {
+      const res = await request(app).post('/auth/login').send({ username: 'non_existent_user_999', password: 'anyPassword' })
+      expect(res.status).toBe(401)
+      expect(res.body.token).toBeUndefined()
+    })
+
+    it('Database error during login fails with 500 without mock user fallback or JWT issuance', async () => {
+      const originalFindFirst = prisma.user.findFirst
+      prisma.user.findFirst = (async () => {
+        throw new Error('Simulated DB connection failure')
+      }) as unknown as typeof prisma.user.findFirst
+
+      try {
+        const res = await request(app).post('/auth/login').send({ username: 'admin', password: 'admin123' })
+        expect(res.status).toBe(500)
+        expect(res.body.token).toBeUndefined()
+        expect(res.body.user).toBeUndefined()
+        expect(res.body.error).toContain('เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล')
+      } finally {
+        prisma.user.findFirst = originalFindFirst
+      }
+    })
+
+    it('CORS: Exact allowed origin receives Access-Control-Allow-Origin header and credentials', async () => {
+      const res = await request(app)
+        .get('/health')
+        .set('Origin', 'http://localhost:3000')
+      expect(res.headers['access-control-allow-origin']).toBe('http://localhost:3000')
+      expect(res.headers['access-control-allow-credentials']).toBe('true')
+    })
+
+    it('CORS: Unauthorized origin does not receive Access-Control-Allow-Origin header', async () => {
+      const res = await request(app)
+        .get('/health')
+        .set('Origin', 'https://evil-attacker.com')
+      expect(res.headers['access-control-allow-origin']).toBeUndefined()
+    })
+
+    it('CORS: Fake vercel.app origin does not receive Access-Control-Allow-Origin header', async () => {
+      const res = await request(app)
+        .get('/health')
+        .set('Origin', 'https://malicious-vercel.app')
+      expect(res.headers['access-control-allow-origin']).toBeUndefined()
+    })
+
+    it('CORS: Fake localhost origin does not receive Access-Control-Allow-Origin header', async () => {
+      const res = await request(app)
+        .get('/health')
+        .set('Origin', 'http://localhost.attacker.com')
+      expect(res.headers['access-control-allow-origin']).toBeUndefined()
+    })
+  })
 })

@@ -493,6 +493,7 @@ describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
     let adminToken: string
     let staffToken: string
     let supervisorToken: string
+    let fixtureStaffTxId: number
 
     beforeAll(async () => {
       const aRes = await request(app).post('/auth/login').send({ username: 'admin', password: 'admin123' })
@@ -501,6 +502,25 @@ describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
       staffToken = sRes.body.token
       const supRes = await request(app).post('/auth/login').send({ username: 'supervisor', password: 'super1234' })
       supervisorToken = supRes.body.token
+
+      // Create an isolated temporary transaction fixture for Staff ID 7
+      // so Staff data isolation can be reliably verified without relying on permanent DB records
+      const createRes = await request(app)
+        .post('/transactions')
+        .set('Authorization', `Bearer ${staffToken}`)
+        .send({
+          itemCode: '60230073A600E',
+          type: 'receive',
+          quantity: 1,
+        })
+      fixtureStaffTxId = createRes.body.id
+    })
+
+    afterAll(async () => {
+      if (fixtureStaffTxId) {
+        await prisma.notification.deleteMany({ where: { transactionId: fixtureStaffTxId } })
+        await prisma.transaction.deleteMany({ where: { id: fixtureStaffTxId } })
+      }
     })
 
     it('Staff sees only their own transactions in GET /transactions', async () => {
@@ -514,6 +534,7 @@ describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
       for (const tx of res.body) {
         expect(tx.createdById).toBe(7)
       }
+      expect(res.body.some((t: { id: number }) => t.id === fixtureStaffTxId)).toBe(true)
     })
 
     it('Staff cannot bypass createdById filter using query parameters', async () => {
@@ -556,9 +577,11 @@ describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
         .set('Authorization', `Bearer ${supervisorToken}`)
 
       expect(res.status).toBe(200)
-      expect(res.body.length).toBeGreaterThanOrEqual(16)
+      expect(Array.isArray(res.body)).toBe(true)
+      expect(res.body.length).toBeGreaterThan(0)
       const creators = new Set(res.body.map((t: { createdById: number }) => t.createdById))
       expect(creators.size).toBeGreaterThan(1)
+      expect(creators.has(7)).toBe(true)
     })
 
     it('Admin maintains existing behavior without createdById restriction', async () => {
@@ -567,15 +590,39 @@ describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
 
       expect(res.status).toBe(200)
-      expect(res.body.length).toBeGreaterThanOrEqual(16)
+      expect(Array.isArray(res.body)).toBe(true)
+      expect(res.body.length).toBeGreaterThan(0)
+      const creators = new Set(res.body.map((t: { createdById: number }) => t.createdById))
+      expect(creators.size).toBeGreaterThan(1)
+      expect(creators.has(7)).toBe(true)
     })
 
     it('POST /transactions records createdById strictly from JWT token', async () => {
-      const staffTx = await prisma.transaction.findFirst({
-        where: { createdById: 7 },
-      })
-      expect(staffTx).toBeDefined()
-      expect(staffTx?.createdById).toBe(7)
+      // Staff sends a transaction attempt with spoofed createdById: 999
+      const res = await request(app)
+        .post('/transactions')
+        .set('Authorization', `Bearer ${staffToken}`)
+        .send({
+          itemCode: '60230073A600E',
+          type: 'receive',
+          quantity: 1,
+          createdById: 999,
+        })
+
+      expect(res.status).toBe(201)
+      expect(res.body).toHaveProperty('id')
+      const createdId = res.body.id
+
+      try {
+        const txRecord = await prisma.transaction.findUnique({
+          where: { id: createdId },
+        })
+        expect(txRecord).toBeDefined()
+        expect(txRecord?.createdById).toBe(7)
+      } finally {
+        await prisma.notification.deleteMany({ where: { transactionId: createdId } })
+        await prisma.transaction.deleteMany({ where: { id: createdId } })
+      }
     })
 
     it('Staff cannot confirm or reject transactions (403 Forbidden)', async () => {

@@ -207,6 +207,7 @@ export function Navigation({ children }: { children: React.ReactNode }) {
       return [
         { href: '/', icon: Home, label: 'หน้าหลัก' },
         { href: '/users', icon: UserCheck, label: 'จัดการผู้ใช้งาน' },
+        { href: '/dashboard', icon: LayoutDashboard, label: 'แดชบอร์ด' },
       ]
     }
     return [

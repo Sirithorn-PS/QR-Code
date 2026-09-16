@@ -1,5 +1,547 @@
 # บันทึกการทำงาน (Memories)
 
+## 15 ก.ย. 2026
+- **ตรวจสอบและปรับปรุง Business Logic ด้าน Stock (Low Stock / Out of Stock / Action Required) สำหรับ Supervisor Dashboard (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ตรวจสอบการนับสถานะสต็อกสินค้าบน Supervisor Dashboard ([frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)) ให้แบ่งแยก 3 สถานะอย่างเด็ดขาด ป้องกันการนับซ้ำ:
+    1. **Out of Stock**: `quantity === 0` (สินค้าหมดในคลัง 0 ชิ้น)
+    2. **Low Stock**: `quantity > 0 && quantity <= (minStock ?? 0)` (สินค้าคงเหลือน้อยกว่าหรือเท่ากับจุดสั่งซื้อขั้นต่ำ และมีมากกว่า 0 ชิ้น)
+    3. **Normal**: `quantity > (minStock ?? 0)` (สินค้าคงเหลือปกติ)
+  - **การปรับปรุงใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - เพิ่มเงื่อนไข `p.quantity > 0` ใน `lowStockCount` filter เพื่อให้สินค้าที่หมด (`quantity === 0`) ไม่ถูกนับซ้ำในการ์ดสต็อกใกล้หมดและแจ้งเตือน Action Required
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`npx tsc --noEmit`): ผ่าน 100% 0 errors
+    - Vitest Unit Tests (`npm run test`): ผ่านทั้งหมด 84/84 tests (100% PASS)
+    - ยืนยันไม่มีการเปลี่ยน Layout, Component UI หรือ Feature อื่นๆ ในระบบ
+- **ปรับปรุง Dashboard สำหรับ Role Supervisor (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ปรับปรุงหน้า Supervisor Dashboard ([frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)) ให้มุ่งเน้น "ภาพรวมคลังสินค้า + การติดตามงาน + การตรวจสอบธุรกรรม" ตามโครงสร้าง visual hierarchy 7 ระดับ โดยไม่กระทบ Staff Dashboard หรือ Admin Dashboard และไม่เปลี่ยนแปลง Backend, Database, หรือ RBAC ใดๆ
+  - **การปรับปรุงทั้ง 7 ระดับบน Supervisor Dashboard**:
+    1. **Level 1: Warehouse Overview**: แสดง 4 การ์ดสรุปภาพรวม (Packaging ทั้งหมด 23 รายการ, จำนวนคงเหลือรวม 103,648 ชิ้น, สต็อกใกล้หมด 0 รายการ, และสินค้าหมด 0 รายการ) จากข้อมูลจริงโดยไม่ Hardcode
+    2. **Level 2: Warehouse Activity Today (กิจกรรมธุรกรรมคลังสินค้า)**: แสดงภาพรวมรับเข้าวันนี้, เบิกออกวันนี้, และรายการรอยืนยันทั้งคลังสินค้า
+    3. **Level 3: Warehouse Activity 7 Days (สรุปการรับเข้า - เบิกออก 7 วันล่าสุด)**: กราฟแท่ง Grouped Bar Chart แสดงข้อมูลจริงย้อนหลัง 7 วัน พร้อม Scale แกน Y และ Legend ภาษาไทย
+    4. **Level 4: Packaging Distribution (สัดส่วนวัตถุดิบบรรจุภัณฑ์)**: Donut Chart คำนวณตามหมวดหมู่จริง (แกลลอน, ฝา, ฟอยล์, กล่อง, ฉลาก)
+    5. **Level 5: Action Required (งานที่ต้องดำเนินการ)**: แสดงรายการ Pending / Low stock รอดำเนินการ หรือ Empty State "ไม่มีรายการที่ต้องดำเนินการ" และ "สถานะเรียบร้อย"
+    6. **Level 6: Supervisor Quick Actions (เมนูดำเนินการด่วน)**: ทางลัดเน้นการตรวจสอบและจัดการ (ตรวจสอบรายการ, ดูสต็อกบรรจุภัณฑ์, ธุรกรรมทั้งหมด, ดูรายงานทั้งหมด)
+    7. **Level 7: Recent Transactions (รายการล่าสุด)**: ตารางประวัติธุรกรรมทั้งคลังพร้อมคอลัมน์ "ผู้ดำเนินการ" และระบบ Pagination หน้าละ 5 รายการ
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`npx tsc --noEmit`): ผ่าน 100% 0 errors
+    - Vitest Unit Tests (`npm run test`): ผ่านทั้งหมด 84/84 tests (100% PASS)
+    - Browser Subagent Verification: ตรวจสอบการแสดงผลจริงใน Browser ทั้ง Desktop (1280x800) และ Mobile (375x812) ไม่พบ Horizontal Overflow และ Visual Hierarchy ตรงตามข้อกำหนด 100%
+- **ปรับแต่งสีตัวหนังสือสถานะ "รับเข้า", "เบิกออก" และ "ยืนยันแล้ว" ในหน้ารายงาน (Reports Page) (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ตามคำขอของผู้ใช้งาน ในหน้ารายงาน ([frontend/app/reports/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/reports/page.tsx)) ได้ปรับคำว่า **"รับเข้า"** และ **"ยืนยันแล้ว"** ให้แสดงผลเป็นตัวหนังสือ **สีเขียว (`text-emerald-600 font-medium`)** และคำว่า **"เบิกออก"** (รวมถึง "ปฏิเสธแล้ว") ให้แสดงผลเป็นตัวหนังสือ **สีแดง (`text-[#BE1111] font-medium`)** โดยใช้ **ตัวหนังสือธรรมดา (ไม่ใช่ตัวหนา)** และไม่มีกล่องไฮไลท์พื้นหลังตามความต้องการ
+  - **การปรับปรุงใน [frontend/app/reports/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/reports/page.tsx)**:
+    - **รับเข้า**: เปลี่ยนเป็น `<span className="font-medium text-emerald-600 text-xs sm:text-sm">รับเข้า</span>`
+    - **เบิกออก**: เปลี่ยนเป็น `<span className="font-medium text-[#BE1111] text-xs sm:text-sm">เบิกออก</span>`
+    - **ยืนยันแล้ว**: เปลี่ยนเป็น `<span className="font-medium text-emerald-600 text-xs sm:text-sm">ยืนยันแล้ว</span>`
+    - **ปฏิเสธแล้ว**: เปลี่ยนเป็น `<span className="font-medium text-[#BE1111] text-xs sm:text-sm">ปฏิเสธแล้ว</span>`
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`npx tsc --noEmit`): ผ่านเรียบร้อย 0 errors
+- **ปรับแต่งฟอนต์หน้าสต็อกให้ตรงกับแถบเมนู (Prompt) และแสดงข้อความหัวข้อเต็มครบถ้วน (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ตามคำขอของผู้ใช้งาน ให้ปรับแต่งองค์ประกอบทั้งหมดในหน้าสต็อก ([frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/inventory/page.tsx)) ให้ใช้ฟอนต์ **Prompt (`font-display`)** แบบเดียวกับแถบเมนูข้าง 100% พร้อมปรับขนาดตัวอักษรหัวข้อหลัก `จัดการสต็อกบรรจุภัณฑ์ (Packaging Stock)` โดยเอาคลาส `truncate` ออก และใส่ `whitespace-nowrap` เพื่อให้แสดงผลตัวอักษรครบทุกตัวโดยไม่มีจุดไข่ปลา (`...`) ตัดท้ายข้อความ
+  - **การปรับปรุงใน [frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/inventory/page.tsx)**:
+    - เพิ่มคลาส `font-display` ในระดับคอนเทนเนอร์หลัก `<main className="font-display ...">`
+    - ปรับแก้หัวข้อ `<h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-display font-bold text-gray-900 tracking-tight whitespace-nowrap">` เอาคลาส `truncate` ออกเพื่อแสดงข้อความเต็ม 100%
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`npx tsc --noEmit`): 0 errors
+    - Vitest Unit Tests (`npx vitest run`): ผ่านทั้งหมด 84/84 tests (100% PASS)
+- **ปรับแต่งดีไซน์ส่วนหัวหน้าสต็อก (Inventory Header Layout) สำหรับ Role Supervisor ให้เรียงเป็น 1 แถวดั้งเดิมโดยไม่ตกขอบ (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ปรับแต่งตามความต้องการของผู้ใช้งาน ให้คงการวางข้อความหัวข้อ `จัดการสต็อกบรรจุภัณฑ์ (Packaging Stock)` และปุ่ม Action ต่าง ๆ ในส่วนหัวของหน้าสต็อก ([frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/inventory/page.tsx)) ให้อยู่ใน **บรรทัดเดียวกัน (Single Row)** เสมอ โดยปรับขนาดตัวอักษร, Padding และความกว้างของช่องค้นหาให้อยู่ในสัดส่วนที่พอดี (Responsive Compact Sizing) ทำให้ไม่ดันทะลุหรือตกขอบจอด้านขวาเมื่อเข้าใช้งานด้วยบทบาท Supervisor
+  - **การปรับปรุงใน [frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/inventory/page.tsx)**:
+    - **ข้อความหัวข้อ**: ใช้ `text-lg sm:text-xl md:text-2xl lg:text-3xl truncate` วางเรียงบรรทัดเดียวดั้งเดิม
+    - **กลุ่มปุ่มและฟอร์มค้นหาด้านขวา**: ปรับเป็น `flex items-center gap-2 lg:gap-2.5 shrink-0 flex-nowrap` โดยย่อปุ่ม "ประวัติแก้ไข", ปุ่ม "เพิ่มสินค้าใหม่" (ของ Supervisor) และช่องค้นหา (`w-36 sm:w-44 md:w-48 lg:w-56 xl:w-60`) ให้กระชับ ได้สัดส่วน และไม่หลุดขอบจอ
+    - **คอนเทนเนอร์หลัก (`<main>`)**: ป้องกัน Horizontal Clipping ด้วย `w-full max-w-full overflow-x-hidden`
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`npx tsc --noEmit`): 0 errors
+    - Vitest Unit Tests (`npx vitest run`): ผ่านทั้งหมด 84/84 tests (100% PASS)
+- **ยกเลิกการปรับแต่งการจัดวางหน้าสต็อก (Revert Inventory Page Layout) ตามคำขอของผู้ใช้ (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ตามคำขอของผู้ใช้งาน ให้ยกเลิกการแก้ไขการจัดวางในหน้าสต็อก ([frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/inventory/page.tsx)) และคืนค่าโครงสร้างการจัดเรียงดั้งเดิมทั้งหมดของหน้าสต็อกกลับมา 100%
+  - **การดำเนินการ**: ย้อนคืนไฟล์ `frontend/app/inventory/page.tsx` กลับสู่เวอร์ชันดั้งเดิม หัวข้อ `จัดการสต็อกบรรจุภัณฑ์ (Packaging Stock)` และการจัดวางส่วนหัวกลับมาแสดงในบรรทัดเดียวกันตามรูปแบบเดิมทุกประการ
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`npx tsc --noEmit`): 0 errors
+    - Vitest Unit Tests (`npx vitest run`): ผ่านทั้งหมด 84/84 tests (100% PASS)
+- **ปรับแต่งฟอนต์การแสดงผลทั้งหมดของ Role Supervisor ให้ตรงกับฟอนต์แถบเมนู (Prompt) (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ปรับแต่งตามคำขอของผู้ใช้งาน ให้องค์ประกอบหน้าจอทั้งหมดในมุมมองของ Supervisor (รวมถึงเนื้อหา, หัวข้อการ์ด, ตาราง, ปุ่มกด, และข้อความในหน้าต่างต่าง ๆ) แสดงผลด้วยฟอนต์ **Prompt (`--font-prompt-sans`)** เดียวกันกับแถบเมนูข้าง (Navigation Sidebar) เพื่อความเป็นเอกภาพและสวยงามอ่านง่ายทั่วทั้งหน้าจอ
+  - **การปรับปรุงใน [frontend/app/globals.css](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/globals.css)**:
+    - เพิ่มคลาสยูทิลิตี้ `--font-prompt` และ `.font-prompt`
+    - บังคับการใช้ฟอนต์ `Prompt` ให้กับแท็ก HTML ทั้งหมด (`*, *::before, *::after, body, h1..h6, p, span, a, li, div, button, input, select, textarea, table, th, td`) ผ่านกฎ CSS `font-family: var(--font-prompt-sans), "Prompt", ... !important;`
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`npx tsc --noEmit`): 0 errors
+    - Vitest Unit Tests (`npx vitest run`): ผ่านทั้งหมด 84/84 tests (100% PASS)
+- **ตรวจสอบและยืนยันรหัสผ่านเข้าสู่ระบบสำหรับ Role Supervisor (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ตรวจสอบข้อมูลบัญชีผู้ใช้งานบทบาทหัวหน้างาน (Supervisor) ในระบบฐานข้อมูลจริง เพื่อตอบคำถามผู้ใช้งานและให้สามารถเข้าสู่ระบบเพื่อใช้งานและทดสอบได้อย่างถูกต้อง
+  - **ข้อมูลบัญชี Supervisor ที่มีในระบบ**:
+    1. **บัญชีหลัก**: Username: `supervisor` | Password: `super1234` | Full Name: `ผู้ควบคุมดูแลระบบ (Supervisor)` | Status: `approved`
+    2. **บัญชีทดสอบ**: Username: `testmanager` | Password: `password123` | Full Name: `Test Manager` | Status: `approved`
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - ทดสอบเรียก API `POST /auth/login` ทั้งสองบัญชี ได้รับ JWT Token และข้อมูลสิทธิ์ `role: "supervisor"` ถูกต้อง 100%
+    - รันการทดสอบ Unit Tests (`npm test`): ผ่านครบทั้ง 84/84 tests (100% PASS)
+- **ปรับสีข้อความกำกับ "Item Code", "จำนวน", และ "ผู้สร้างรายการ" ในหน้ารายการ ให้เป็นสีเดียวกับ "บรรจุภัณฑ์ทั้งหมด" ในหน้าสต็อก (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ตามความต้องการของผู้ใช้งาน ให้ปรับสีของข้อความหัวข้อย่อยในกล่องข้อมูลรายการธุรกรรม ([frontend/app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/transactions/page.tsx)) ได้แก่ **"Item Code"**, **"จำนวน"**, และ **"ผู้สร้างรายการ"** จากเดิมที่เป็นสีเทาอ่อนจาง `text-slate-400` ให้เปลี่ยนเป็นสีเดียวกับป้ายกำกับการ์ด **"บรรจุภัณฑ์ทั้งหมด"** ในหน้าสต็อก ([frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/inventory/page.tsx)) ซึ่งใช้ `text-gray-500 font-medium` ทำให้อ่านง่าย ชัดเจน และมีมาตรฐานโทนสีเดียวกันทั่วทั้งระบบ
+  - **การปรับปรุงใน [frontend/app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/transactions/page.tsx)**:
+    - ปรับคลาสของหัวข้อทั้ง 3 ส่วน:
+      - `Item Code`: `<span className="text-gray-500 font-medium text-[11px] uppercase tracking-wider block mb-0.5">Item Code</span>`
+      - `จำนวน`: `<span className="text-gray-500 font-medium text-[11px] uppercase tracking-wider block mb-0.5">จำนวน</span>`
+      - `ผู้สร้างรายการ`: `<span className="text-gray-500 font-medium text-[11px] uppercase tracking-wider block mb-0.5">ผู้สร้างรายการ</span>`
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`npx tsc --noEmit`): 0 errors
+    - Vitest Unit Tests (`npm test`): ผ่านทั้งหมด 84/84 tests (100% PASS)
+- **ปรับแต่งหน้ารายการ (Transactions Page) ให้คำว่า "รับเข้า" และ "อนุมัติแล้ว" เป็นตัวหนังสือสีเขียวไม่มีไฮไลท์ (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ตามความต้องการของผู้ใช้งาน ให้ปรับการแสดงผลในหน้ารายการธุรกรรม ([frontend/app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/transactions/page.tsx)) ในส่วนประเภทรายการคำว่า **"รับเข้า"** และส่วนสถานะคำว่า **"อนุมัติแล้ว"** ให้แสดงเป็นตัวหนังสือสีเขียวเรียบง่าย (`font-medium text-emerald-600`) โดยไม่มีการไฮไลท์พื้นหลังหรือเส้นขอบกรอบ เพื่อความสะอาดตาและเป็นไปในแนวทางเดียวกันกับหน้าแดชบอร์ดและหน้ารายงาน
+  - **การปรับปรุงใน [frontend/app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/transactions/page.tsx)**:
+    - **ประเภท (Type)**: ปรับคำว่า `"รับเข้า"` จากเดิมที่เป็น Badge แคปซูล `bg-green-50 border border-green-100 text-green-700` เป็น `<span className="text-xs sm:text-sm font-medium text-emerald-600">รับเข้า</span>` แบบตัวหนังสือสีเขียวไม่มีพื้นหลังไฮไลท์
+    - **สถานะ (Status)**: ปรับคำว่า `"อนุมัติแล้ว"` จากเดิมที่เป็นกล่อง Badge ไฮไลท์ `bg-emerald-50 border border-emerald-200 px-4 py-2.5 text-xs font-bold text-emerald-700` พร้อมไอคอนติ๊กถูก เป็นข้อความตัวหนังสือสีเขียว `<span className="text-xs sm:text-sm font-medium text-emerald-600">อนุมัติแล้ว</span>` ใน container ที่ไม่มีพื้นหลัง ไม่มีขอบ และไม่มีเงา
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`npx tsc --noEmit`): 0 errors
+    - Vitest Unit Tests (`npm test`): ผ่านทั้งหมด 84/84 tests (100% PASS)
+- **ปรับแต่งประเภทและสถานะในหน้ารายงาน (Reports Page) ของพนักงาน (Staff) เป็นตัวหนังสือสีเขียวไม่มีไฮไลท์ (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ตามความต้องการของผู้ใช้งาน ให้ปรับการแสดงผลในหน้ารายงานธุรกรรม ([frontend/app/reports/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/reports/page.tsx)) สำหรับผู้ใช้งานบทบาทพนักงานคลัง (Staff / `warehouse_staff`) โดยในส่วน **ประเภท** ให้คำว่า **"รับเข้า"** และส่วน **สถานะ** ให้คำว่า **"ยืนยันแล้ว"** แสดงเป็นตัวหนังสือสีเขียวเรียบง่าย (`font-medium text-emerald-600`) โดยไม่ต้องมีพื้นหลังหรือเส้นขอบไฮไลท์ (No highlight badge) เช่นเดียวกับบนตารางหน้า Dashboard
+  - **การปรับปรุงใน [frontend/app/reports/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/reports/page.tsx)**:
+    - เพิ่มตัวแปร `isStaff = currentUser?.role === 'warehouse_staff'`
+    - **คอลัมน์ประเภท (Type)**:
+      - เมื่อเป็นพนักงาน (`isStaff`) และรายการเป็น `receive`: แสดง `<span className="font-medium text-emerald-600 text-xs sm:text-sm">รับเข้า</span>` แบบตัวหนังสือสีเขียวไม่มีไฮไลท์พื้นหลัง
+      - เมื่อเป็นบทบาทอื่น (Supervisor / Admin): แสดง Badge แคปซูลตามปกติ
+    - **คอลัมน์สถานะ (Status)**:
+      - เมื่อเป็นพนักงาน (`isStaff`) และสถานะเป็น `confirmed`: แสดง `<span className="font-medium text-emerald-600 text-xs sm:text-sm">ยืนยันแล้ว</span>` แบบตัวหนังสือสีเขียวไม่มีไฮไลท์พื้นหลัง
+      - เมื่อเป็นบทบาทอื่น: แสดง Badge แคปซูลพร้อมไอคอนติ๊กถูกตามปกติ
+      - ปรับสถานะ `rejected` ให้ใช้โทนสีแดงหลักของระบบ `bg-red-50 text-[#BE1111] border-red-200/80`
+    - **มุมมองการ์ดบนมือถือ (Mobile View)**:
+      - ปรับให้สถานะ `confirmed` สำหรับพนักงานแสดงเป็นข้อความสีเขียวไม่มีพื้นหลังไฮไลท์เช่นเดียวกัน
+  - **การเพิ่ม Unit Test ใน [frontend/__tests__/unit/reports-export.test.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/__tests__/unit/reports-export.test.tsx)**:
+    - Test 17: ตรวจสอบว่าพนักงาน (Staff) มองเห็น "รับเข้า" และ "ยืนยันแล้ว" เป็นตัวหนังสือสีเขียว `text-emerald-600` และไม่มีพื้นหลัง `bg-emerald-50`
+    - Test 18: ตรวจสอบว่าหัวหน้างาน (Supervisor) ยังคงมองเห็นเป็น Badge ไฮไลท์ `bg-emerald-50` ตามปกติ
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`npx tsc --noEmit`): 0 errors
+    - Vitest Unit Tests (`npm test`): ผ่านทั้งหมด 84/84 tests (100% PASS)
+- **ปรับโทนสีแดงบนหน้าแดชบอร์ด (Dashboard) ให้เป็นโทนสีแดงหลักของระบบ (#BE1111) ทั้งหมด (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ปรับสีองค์ประกอบโทนแดงทั้งหมดบนแดชบอร์ด (Dashboard) ทุก Role (Staff, Supervisor, Admin) ให้ตรงตามธีมสีแดงหลักของระบบ WPK MMS (`#BE1111`) เพื่อความเป็นเอกภาพ (Brand Consistency) ทั่วทั้งระบบ โดยคงความนุ่มนวลของพื้นหลังการ์ด/Badge ด้วย `bg-red-50` และเส้นขอบ `border-red-100/80`
+  - **การปรับปรุงใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - **Admin Dashboard**:
+      - Badge "SYSTEM ADMINISTRATION" และ Badge บทบาทผู้ดูแลระบบ (Admin): ปรับเป็น `bg-red-50 text-[#BE1111] border-red-200/80`
+      - Badge บัญชีที่ถูกระงับ (Disabled/Suspended Status): ปรับเป็น `bg-red-50 text-[#BE1111] border-red-200/80` พร้อมตัวเลขสถิติ `text-[#BE1111]`
+      - ไอคอนส่วนหัวและไอคอนภาพรวมผู้ใช้งาน Admin: `bg-red-50 text-[#BE1111]`
+      - ปุ่ม "จัดการผู้ใช้งาน": สีแดงของระบบ `bg-[#BE1111] hover:bg-[#a00e0e]`
+    - **Staff Dashboard & My Activity Header**:
+      - ไอคอนส่วนหัวและ Badge "สถิติเฉพาะบุคคล": `bg-red-50 text-[#BE1111]`
+      - การ์ดสถิติ "คุณเบิกออกวันนี้" / "เบิกออกวันนี้": ไอคอน `bg-red-50 border-red-100 text-[#BE1111]` และตัวเลขการเปลี่ยนแปลง `text-[#BE1111]`
+      - การ์ดสถิติ "สต็อกใกล้หมด" (Low Stock Alert): ไอคอน `bg-red-50 border-red-100 text-[#BE1111]` และตัวเลข `text-[#BE1111]`
+    - **กราฟสรุปการทำงาน 7 วันล่าสุด (7-Day Trend Chart)**:
+      - ไอคอนหัวข้อกราฟ: `bg-red-50 border-red-100/80 text-[#BE1111]`
+      - Mini KPI Card "เบิกออกทั้งหมด": ไอคอน `bg-[#BE1111] text-white` และ Badge เปรียบเทียบ `text-[#BE1111] bg-red-100/60`
+      - แท่งกราฟรายการเบิกออก, ตัวเลขกำกับแท่ง และจุด Legend: `#BE1111` พร้อมเอฟเฟกต์ Hover `group-hover:bg-[#a00e0e]`
+    - **Action Required (งานที่ต้องดำเนินการ) & เมนูด่วน (Quick Action)**:
+      - ไอคอนรายการเบิกออกรอดำเนินการ: `bg-red-50 text-[#BE1111]`
+      - ลิงก์ "ตรวจ" และ "ดูรายการรอดำเนินการทั้งหมด": `text-[#BE1111] hover:text-[#a00e0e]`
+      - Quick Action "เบิกออกสินค้า": กล่อง `bg-red-50/70 border-red-100/80 text-[#BE1111] hover:bg-red-100/70`, ไอคอน `bg-[#BE1111] text-white`, ลูกศร `text-[#BE1111]`
+    - **ตารางประวัติรายการล่าสุด (Recent Transactions Table) & Pagination**:
+      - ลิงก์ "ดูทั้งหมด": `text-[#BE1111] hover:text-[#a00e0e]`
+      - Badge "เบิกออก": `bg-red-50 text-[#BE1111] border-red-200/80`
+      - Badge "ปฏิเสธแล้ว": `bg-red-50 text-[#BE1111] border-red-200/80` พร้อมไอคอน `text-[#BE1111]`
+      - ปุ่มเลขหน้า Active ในระบบแบ่งหน้า Pagination: `bg-[#BE1111] hover:bg-[#a00e0e] text-white shadow-xs`
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`npx tsc --noEmit`): 0 errors
+    - Vitest Unit Tests (`npm test`): 82/82 ผ่านทั้งหมด (100% PASS)
+- **ปรับแต่งชุดสีองค์ประกอบทั้งหน้าแดชบอร์ด (Dashboard) ให้เป็นโทนพาสเทลนุ่มนวล สบายตาทั้งหมด (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ปรับสีองค์ประกอบทั้งหมดบนหน้า Dashboard ทุก Role (Staff, Supervisor, Admin) จากสีเข้มจัดหรือสีแดงเข้ม ให้เป็นโทนพาสเทลนุ่มนวล สดใส สบายตา เข้าชุดกันอย่างกลมกลืน (Soft Modern Pastel)
+  - **การปรับปรุงใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - **Header & 3 การ์ดสถิติ My Activity**: ปรับไอคอนและ Badge ให้เป็นโทน Rose พาสเทล (`bg-rose-50 text-rose-500`), Emerald พาสเทล (`bg-emerald-50 text-emerald-500`) และ Amber พาสเทล (`bg-amber-50 text-amber-500`)
+    - **Warehouse Overview (ภาพรวมคลังสินค้า)**:
+      - ปรับไอคอนและ Badge เป็นโทน Violet พาสเทล (`bg-violet-50 text-violet-500`, `bg-violet-50/70 text-violet-700`), Sky Blue พาสเทล (`bg-sky-50 text-sky-500`), และ Rose พาสเทล (`bg-rose-50 text-rose-500`)
+    - **กราฟแท่งสรุปการทำงาน 7 วันล่าสุด**:
+      - แท่งรับเข้า & จุด Legend: `#34D399` (Soft Pastel Mint)
+      - แท่งเบิกออก & จุด Legend: `#FB7185` (Soft Pastel Rose)
+      - Mini KPI Cards และแถบสรุปสถิติด้านล่างใช้โทน Violet พาสเทล (`bg-violet-50/40 text-violet-500`)
+    - **กราฟสัดส่วนวัตถุดิบบรรจุภัณฑ์ (Donut Chart)**:
+      - แกลลอน (Gallon): `#34D399` (Pastel Mint)
+      - ฝา (Cap): `#60A5FA` (Pastel Sky Blue)
+      - ฟอยล์ (Foil): `#A78BFA` (Pastel Lavender)
+      - กล่อง (Box): `#F472B6` (Pastel Coral Pink)
+      - ฉลาก (Label): `#5EEAD4` (Pastel Seafoam Teal)
+      - อื่นๆ (Other): `#94A3B8` (Pastel Slate)
+    - **Supervisor Quick Actions (เมนูด่วน)**:
+      - รับเข้าสินค้า: ไอคอน `#34D399`, กล่อง `bg-emerald-50/70`
+      - เบิกออกสินค้า: ไอคอน `#FB7185`, กล่อง `bg-rose-50/70 text-rose-800` (เปลี่ยนจากสีแดงเข้ม `#BE1111`)
+      - สต็อกสินค้า: ไอคอน `#A78BFA`, กล่อง `bg-violet-50/70 text-violet-800`
+      - ดูรายงานทั้งหมด: ไอคอน `bg-slate-400`, กล่อง `bg-slate-50 text-slate-700`
+    - **Admin Dashboard**:
+      - ปรับ Badge "SYSTEM ADMINISTRATION" และ Badge บทบาท Admin เป็น Soft Pastel Rose (`bg-rose-50 text-rose-700 border-rose-200/80`)
+      - กราฟแท่งเปรียบเทียบบทบาทผู้ใช้งาน: ปรับแท่งเดือนปัจจุบันจากน้ำเงินเข้ม `#4F46E5` เป็น Pastel Indigo `#818CF8`
+    - **Action Required & Recent Transactions Table**:
+      - ลิงก์ปุ่มตรวจ / ดูทั้งหมด / ดูรายการค้าง ปรับเป็นสี Rose นุ่มนวล (`text-rose-600 hover:text-rose-700`)
+      - Badge "เบิกออก", "ยืนยันแล้ว", "ปฏิเสธแล้ว", "รอการยืนยัน" ใช้โทนสีพาสเทลนุ่มนวล
+      - ปุ่มเลขหน้า Active ใน Pagination ใช้สี Rose นุ่มนวล (`bg-rose-500 text-white shadow-xs`)
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`npx tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 82/82 ผ่านทั้งหมด (100% PASS)
+
+- **ปรับชุดสีของกราฟสัดส่วนวัตถุดิบบรรจุภัณฑ์ (Donut Chart) เป็นสีพาสเทลนุ่มนวล (Soft Modern Pastel) (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ปรับสีของกราฟสัดส่วนวัตถุดิบบรรจุภัณฑ์บน Dashboard ให้เป็นโทนสีพาสเทลอ่อนสบายตา ไม่เข้มจัด เพื่อความสวยงาม นุ่มนวล และอ่านง่ายบนพื้นหลังสีขาว
+  - **การปรับปรุงใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - อัปเดตค่าสีในอาร์เรย์ `categoriesDef`:
+      - แกลลอน (Gallon): `#34D399` (Soft Pastel Mint)
+      - ฝา (Cap): `#60A5FA` (Soft Pastel Sky Blue)
+      - ฟอยล์ (Foil): `#A78BFA` (Soft Pastel Lavender)
+      - กล่อง (Box): `#F472B6` (Soft Pastel Coral Pink)
+      - ฉลาก (Label): `#5EEAD4` (Soft Pastel Seafoam Teal)
+      - อื่นๆ (Other): `#94A3B8` (Soft Pastel Slate)
+    - ส่งผลให้ทั้งวงแหวน Donut Chart และจุดแสดงสัญลักษณ์ (Legend) บนแดชบอร์ดของทั้ง Staff และ Supervisor แสดงผลด้วยโทนสีพาสเทลใหม่ทันที
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`npx tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 82/82 ผ่านทั้งหมด (100% PASS)
+
+- **พัฒนาระบบแบ่งหน้า (Pagination) หน้าละ 5 รายการ ในตารางรายการล่าสุดบน Dashboard (Staff & Supervisor) (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ปรับปรุงให้ตารางประวัติการทำรายการล่าสุดบนหน้า Dashboard สามารถเปิดดูรายการย้อนหลังหน้าละ 5 รายการได้อย่างสะดวก ทั้งในมุมมองของพนักงาน (Staff) และหัวหน้างาน (Supervisor) โดยปรับ Subtitle ใต้หัวข้อให้ตรงตามจริง และมีแถบควบคุมหน้าที่แสดงสรุปจำนวนรายการอย่างชัดเจน
+  - **การปรับปรุงใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - เพิ่ม State `recentTxPage` และตัวแปร `RECENT_TX_PER_PAGE = 5` เพื่อตัดแบ่งชุดข้อมูล (Slice) ตามหน้าปัจจุบัน
+    - ปรับ Subtitle ใต้หัวข้อตารางให้กระชับ: `"ประวัติการทำรายการล่าสุดของคุณ"` (Staff) และ `"ประวัติการทำรายการล่าสุดในระบบ"` (Supervisor)
+    - เพิ่ม Pagination Controls Footer ด้านล่างตาราง:
+      - แสดงข้อความสรุปช่วงข้อมูล เช่น `"แสดง 1 - 5 จากทั้งหมด 12 รายการ"` (หรือ `"แสดง 1 จากทั้งหมด 1 รายการ"` หากมี 1 รายการ)
+      - แสดงแถบควบคุมปุ่มเปลี่ยนหน้าเสมอ (ปุ่ม "ก่อนหน้า", ปุ่มเลขหน้า "1", "2"..., และปุ่ม "ถัดไป") โดยมีสถานะ Disabled ชัดเจนเมื่อเป็นหน้าแรกหรือหน้าสุดท้าย เพื่อให้ผู้ใช้งานมองเห็นฟังก์ชันแบ่งหน้าได้อย่างชัดเจนแม้มีข้อมูลหน้าเดียว
+  - **การอัปเดต Unit Tests ใน [frontend/__tests__/unit/dashboard.test.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/__tests__/unit/dashboard.test.tsx)**:
+    - อัปเดต Subtitle Expectations และเพิ่ม Test Case ตรวจสอบการทำงานของ Pagination เมื่อมีมากกว่า 5 รายการ
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`npx tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 82/82 ผ่านทั้งหมด (100% PASS)
+
+- **ปรับแต่งการแสดงผลสถานะ "ยืนยันแล้ว" และประเภท "รับเข้า" ในตาราง "รายการของคุณล่าสุด" ของ Staff Dashboard (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ปรับตามความต้องการของผู้ใช้งาน โดยในหน้า Dashboard ของ Role Staff (พนักงาน) ส่วนตาราง "รายการของคุณล่าสุด" (Recent Transactions) ตรงคอลัมน์ "ประเภท" คำว่า "รับเข้า" และคอลัมน์ "สถานะ" คำว่า "ยืนยันแล้ว" ไม่ต้องมีพื้นหลังไฮไลท์เป็น Badge แต่ให้แสดงเป็นตัวหนังสือสีเขียว (`text-emerald-600 font-medium`) แบบเรียบง่าย ชัดเจน และอ่านสบายตา
+  - **การปรับปรุงใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - ในตาราง Recent Transactions ตรวจสอบเงื่อนไข `isStaff && tx.type === 'receive'` และ `isStaff && tx.status === 'confirmed'`
+    - สำหรับรายการรับเข้าของพนักงาน จะแสดงผลเป็น `<span className="font-medium text-emerald-600 text-xs sm:text-sm">รับเข้า</span>`
+    - สำหรับสถานะยืนยันแล้วของพนักงาน จะแสดงผลเป็น `<span className="font-medium text-emerald-600 text-xs sm:text-sm">ยืนยันแล้ว</span>` โดยไม่มี background badge (`bg-emerald-500/10`, border, rounded-full, shadow, icon)
+    - กรณี Role อื่น (Supervisor/Admin) หรือสถานะ/ประเภทอื่นๆ ยังคงรูปแบบเดิม 100%
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`npx tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 81/81 ผ่านทั้งหมด (100% PASS)
+
+- **ปรับปรุง Layout ของ Staff Dashboard โดยย้าย Section "งานที่ต้องดำเนินการ (Action Required)" ไปอยู่ภายในกรอบเดียวกับ "สัดส่วนวัตถุดิบบรรจุภัณฑ์ (Packaging Distribution)" (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ปรับการจัดวางพื้นที่ของ Staff Dashboard ให้กระชับ สวยงาม และสมดุลมากยิ่งขึ้น โดยรวมกลุ่มข้อมูลการติดตามด้านขวา (Packaging Distribution ด้านบน + Action Required ด้านล่าง) ให้อยู่ใน Container เดียวกัน และให้ Section "สรุปการทำงานของคุณ 7 วันล่าสุด" อยู่ด้านซ้ายแบบ 2 คอลัมน์สมดุล (7 Cols / 5 Cols) ไม่ต้องมี Action Required เป็น Card เต็มความกว้างคั่นกลาง
+  - **โครงสร้าง Layout หลังการปรับปรุงใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - **Top**: สถิติการทำงานของฉัน 3 การ์ด + ภาพรวมคลังสินค้า 3 การ์ด (คงเดิม)
+    - **Middle Row (2 Columns)**:
+      - *ฝั่งซ้าย (`lg:col-span-7`)*: สรุปการทำงานของคุณ 7 วันล่าสุด (Grouped Bar Chart, Mini KPI รับเข้า-เบิกออก, และแถบสรุปยอดรวม 7 วัน)
+      - *ฝั่งขวา (`lg:col-span-5` - กรอบรวมเดียว)*:
+        - **ส่วนบน**: สัดส่วนวัตถุดิบบรรจุภัณฑ์ (Donut Chart + ยอดรวมตรงกลาง + Legend แสดงจำนวนและ %)
+        - **เส้นคั่น (Divider)**: `<hr className="border-slate-100 my-4" />`
+        - **ส่วนล่าง**: งานที่ต้องดำเนินการ (Action Required: แสดง Empty State เมื่อไม่มีงานค้าง หรือรายการรอดำเนินการของตนเอง 2 รายการแรกพร้อมปุ่มตรวจสอบ)
+    - **Bottom**: รายการของคุณล่าสุด (Recent Transactions 5 รายการล่าสุด แบบ Full-width ตาราง คงเดิม)
+  - **การคงสภาพและไม่ส่งผลกระทบต่อระบบส่วนอื่น (Zero Impact)**:
+    - คง Business Logic เดิมของ Packaging Distribution และ Action Required 100%
+    - Staff Data Isolation (`whereClause.createdById = req.user.id`) และ RBAC คงเดิม 100%
+    - ไม่กระทบหน้า Dashboard ของ Supervisor หรือ Admin แต่อย่างใด
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`npx tsc --noEmit`): 0 errors (Exit code 0)
+    - Vitest Unit Tests: 81/81 ผ่านทั้งหมด (100% PASS)
+
+- **ปรับปรุง Staff Dashboard โดยนำ Section "เมนูด่วน (Quick Action)" ออกจาก Dashboard (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ลดความซ้ำซ้อนของ Navigation บน Staff Dashboard เนื่องจากฟังก์ชันใน Quick Action (รับเข้าสินค้า, เบิกออกสินค้า, สต็อกสินค้า, รายการของฉัน) สามารถเข้าถึงได้อย่างสะดวกจากแถบ Sidebar Navigation อยู่แล้ว และปรับให้แดชบอร์ดเน้นการแสดง "ข้อมูลที่ Staff ควรรู้" เป็นหลัก
+  - **การปรับปรุงใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - นำบล็อก Section `เมนูด่วน (Quick Action)` ออกจากส่วนการแสดงผลของ Role `warehouse_staff` (Staff Dashboard)
+    - ทำความสะอาด (Cleanup) ลบ Import ไอคอน `Zap` ที่ไม่ได้ใช้งานออกจากหัวไฟล์
+    - จัดระเบียบระยะห่าง Spacing / Grid Layout ให้เรียงลำดับอย่างสมดุล ได้แก่:
+      1. Top KPI Summary (Packaging ทั้งหมด, จำนวนคงเหลือรวม, สต็อกใกล้หมด)
+      2. My Activity (กราฟสรุปการทำงาน 7 วันล่าสุด) + Packaging Distribution (Donut Chart สัดส่วนวัตถุดิบบรรจุภัณฑ์)
+      3. Action Required (งานที่ต้องดำเนินการ: แสดงรายการรอดำเนินการ หรือ Empty State สวยงามเมื่อไม่มีงานค้าง)
+      4. Recent Transactions (รายการของคุณล่าสุด: ตารางประวัติการทำรายการ 5 รายการล่าสุด)
+  - **การคงสภาพและไม่ส่งผลกระทบต่อระบบส่วนอื่น (Zero Impact)**:
+    - ฟังก์ชันรับเข้าสินค้า (`/scan?mode=receive`), เบิกออกสินค้า (`/scan?mode=issue`), สต็อก (`/inventory`), และประวัติรายการ (`/transactions`) รวมถึง Sidebar Navigation ยังคงใช้งานได้ครบถ้วน 100%
+    - Role Supervisor และ Admin Dashboard ไม่ได้รับผลกระทบใดๆ (Supervisor Dashboard ยังคงมี Quick Action ตามเดิม)
+    - สิทธิ์ RBAC, Data Isolation (`whereClause.createdById = req.user.id`), Backend API และ Database schema ไม่มีการเปลี่ยนแปลง
+  - **การอัปเดต Unit Tests ใน [frontend/__tests__/unit/dashboard.test.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/__tests__/unit/dashboard.test.tsx)**:
+    - อัปเดต Assertion ตรวจสอบว่า Staff Dashboard จะต้องไม่มี `เมนูด่วน (Quick Action)` แสดงผล
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`npx tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 81/81 ผ่านทั้งหมด (100% PASS)
+    - Browser Subagent UI Verification: บันทึกภาพหน้าจอจริงทั้ง Desktop (1440px) และ Mobile (390px) ตรวจสอบความถูกต้อง ระยะห่างสมดุล ไม่มี Horizontal Overflow หรือช่องว่างผิดปกติ
+
+- **ปรับปรุงและตรวจสอบหน้าแดชบอร์ด (Dashboard) สำหรับ Role: Staff (พนักงานทั่วไป) ในระบบ WPK MMS ครบถ้วนทุกข้อกำหนด (เสร็จสมบูรณ์ 100%)**:
+  - **การตรวจสอบและการนำไปใช้ (Audit & Implementation) ใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - **1. โครงสร้างหลัก 5 ส่วน (A ถึง E) ตอบโจทย์ 3 เรื่องหลักของ Staff**:
+      - *ฉันทำงานอะไรไปแล้ว?* -> ดูกราฟ "สรุปการทำงานของคุณ 7 วันล่าสุด", Mini KPI รับเข้า-เบิกออก และตารางประวัติธุรกรรมล่าสุด
+      - *ตอนนี้มีข้อมูลสต็อกอะไรที่ฉันควรรู้?* -> ดูการ์ด KPI ด้านบน ("Packaging ทั้งหมด", "จำนวนคงเหลือรวม", "สต็อกใกล้หมด") และ Donut Chart "สัดส่วนวัตถุดิบบรรจุภัณฑ์"
+      - *ฉันต้องดำเนินการอะไรต่อ?* -> ดูส่วน "งานที่ต้องดำเนินการ (Action Required)" และ "เมนูด่วน (Quick Action)"
+    - **2. Top Summary / KPI Cards**:
+      - แสดงการ์ดสถิติ Packaging ทั้งหมด, จำนวนคงเหลือรวม (หน่วย ชิ้น / หน่วย), และการ์ดสต็อกใกล้หมด (เตือนเมื่อ quantity <= minStock) โดยดึงจาก API จริง ไม่มีการ Hardcode
+    - **3. My Activity Grouped Bar Chart & Mini Summary Cards**:
+      - แสดงกราฟแท่งเปรียบเทียบ 2 Series: เขียว (`#10B981`) สำหรับ "รับเข้า" และ แดง (`#EF4444`) สำหรับ "เบิกออก"
+      - แกน X ย้อนหลัง 7 วัน (9 - 15 ก.ย.) และแกน Y "จำนวนรายการ" (ระดับ 8, 6, 4, 2, 0)
+      - มี 2 Mini KPI Cards เหนือกราฟ ("รับเข้าทั้งหมด", "เบิกออกทั้งหมด") พร้อม Trend จริง และแบนเนอร์สรุปยอดรวมด้านล่าง
+    - **4. Packaging Material Distribution (Donut Chart)**:
+      - แสดงสัดส่วน Packaging แต่ละประเภท (แกลลอน, ฝา, ฟอยล์, กล่อง, ฉลาก) ยอดรวมตรงกลาง และ Legend แสดงจำนวน + % จากข้อมูลจริง
+    - **5. งานที่ต้องดำเนินการ (Pending / Action Required)**:
+      - เพิ่มกล่องแสดงรายการงานที่รอดำเนินการ (`status === 'pending'`) ของ Staff
+      - รองรับ **Empty State** สวยงาม เมื่อไม่มีงานค้าง: แสดงไอคอนเครื่องหมายถูกสีเขียว, ข้อความ *"ไม่มีรายการที่ต้องดำเนินการ"*, *"ขณะนี้ไม่มีงานค้าง หรือรายการของคุณที่รอดำเนินการในระบบ"* และ Badge *"สถานะเรียบร้อย"*
+    - **6. เมนูด่วน (Quick Actions)**:
+      - แถบปุ่มลัด 4 การ์ดแนวนอน: **รับเข้าสินค้า** (`/scan?mode=receive`), **เบิกออกสินค้า** (`/scan?mode=issue`), **สต็อกสินค้า** (`/inventory`), และ **ดูรายการของฉัน** (`/transactions`)
+    - **7. การรักษาความปลอดภัยและขอบเขตสิทธิ์ (RBAC & Data Scope)**:
+      - ข้อมูลกิจกรรมแสดงเฉพาะของ Staff ที่ Login อยู่ (`whereClause.createdById = req.user.id` + Frontend validation)
+      - ไม่กระทบหน้า Dashboard ของ Supervisor หรือ Admin แต่อย่างใด
+      - ปราศจากการใช้ `any` ใน TypeScript (100% Type-Safe)
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 81/81 ผ่านทั้งหมด (100% PASS)
+    - Browser Subagent Verification: บันทึกภาพหน้าจอจริง ตรวจสอบทุก Section แสดงผลถูกต้อง ครบถ้วน ตรงตาม Design System WPK MMS 100%
+
+- **ปรับเปลี่ยนดีไซน์กราฟสรุปการทำงาน 7 วันล่าสุดในหน้าแดชบอร์ด (Dashboard) ของ Role พนักงาน (Staff) ตามรูปต้นแบบ (เสร็จสมบูรณ์ 100%)**:
+  - **การปรับแต่งใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - **Header & Date Range Pill**: เพิ่มไอคอนกราฟแท่งสีแดง (`BarChart3` ในกล่อง `bg-red-50 text-[#BE1111]`), หัวข้อ "สรุปการทำงานของคุณ 7 วันล่าสุด", คำบรรยาย "เปรียบเทียบจำนวนรายการที่คุณรับเข้าและเบิกออกในแต่ละวัน" พร้อมป้ายระบุช่วงวันที่ 7 วันจริง (เช่น `9 - 15 ก.ย. 2569`) ด้านขวาบน
+    - **2 Mini KPI Summary Cards**:
+      - การ์ด "รับเข้าทั้งหมด": กล่องสีเขียวมิ้นต์อ่อน (`bg-emerald-50/50`) พร้อมไอคอนดาวน์โหลดรับเข้า, สรุปยอดรวมรายการรับเข้า 7 วัน, และเปอร์เซ็นต์แนวโน้มเปรียบเทียบจากสัปดาห์ก่อนหน้า
+      - การ์ด "เบิกออกทั้งหมด": กล่องสีแดงพีชอ่อน (`bg-rose-50/50`) พร้อมไอคอนอัปโหลดเบิกออก, สรุปยอดรวมรายการเบิกออก 7 วัน, และเปอร์เซ็นต์แนวโน้มเปรียบเทียบจากสัปดาห์ก่อนหน้า
+    - **Grouped Bar Chart (SVG) & Dashed Grid Lines**:
+      - แสดงเส้นกริดประแนวนอนและสเกลแกน Y ระดับ 8, 6, 4, 2, 0 พร้อมป้ายกำกับ "จำนวนรายการ"
+      - แสดงแท่งกราฟคู่แยกตาม 7 วันล่าสุด (แท่งสีเขียวมรกต `#10B981` สำหรับรับเข้า และแท่งสีแดง `#EF4444` สำหรับเบิกออก) พร้อมตัวเลขกำกับบนยอดแท่งกราฟ และป้ายวันที่ภาษาไทยกำกับใต้แกน X
+      - จัดวาง Legend แสดงสัญลักษณ์สี "🟢 รับเข้า / 🔴 เบิกออก" กึ่งกลางใต้กราฟอย่างสมดุล
+    - **Total Summary Banner (ด้านล่างการ์ด)**:
+      - เพิ่มกล่องแบนเนอร์สรุปสีม่วงลาเวนเดอร์อ่อน (`bg-indigo-50/40`) พร้อมไอคอนปฏิทิน สรุปยอดรวมรายการธุรกรรม 7 วันทั้งหมด และข้อความเปรียบเทียบกับสัปดาห์ก่อนหน้า พร้อมลูกศรนำทาง
+    - **Layout จัดวางหน้าจอ**: จัดวางการ์ดกราฟ 7 วันล่าสุดเป็นคอลัมน์หลักฝั่งซ้าย (`lg:col-span-7`) ควบคู่กับ Donut Chart สัดส่วนบรรจุภัณฑ์และ Quick Actions ฝั่งขวา (`lg:col-span-5`) อย่างลงตัว สวยงาม และ Responsive ทุกขนาดหน้าจอ
+  - **การรักษาความถูกต้องของระบบ (Zero Business Logic Changes)**:
+    - ไม่มีการเปลี่ยนแปลงสิทธิ์ RBAC, Security, การคำนวณข้อมูล หรือ Logic ของระบบใด ๆ
+    - ปราศจากการใช้ `any` ใน TypeScript (100% Type-Safe)
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 81/81 ผ่านทั้งหมด (100% PASS)
+    - Browser Subagent Verification: บันทึกภาพหน้าจอจริงในบทบาท Staff ยืนยันว่าการ์ดกราฟและเลย์เอาต์ตรงตามรูปต้นแบบ 100%
+
+- **ปรับแต่งแบบอักษร (Typography) ในหน้า "รายงาน" (Reports) และหน้า "แดชบอร์ด" (Dashboard) ให้เป็นฟอนต์เดียวกับแถบเมนูนำทาง (Prompt) (เสร็จสมบูรณ์ 100%)**:
+  - **การปรับแต่งใน [frontend/app/reports/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/reports/page.tsx) (หน้ารายงานธุรกรรม)**:
+    - ปรับแต่งส่วนหัว "รายงานธุรกรรม", ตัวกรองช่วงเวลา (Dropdown และ Date Pickers), ตัวกรองสถานะ, ช่องค้นหารหัสชิ้นส่วน และปุ่ม "ส่งออก Excel" ให้ใช้ฟอนต์ Prompt น้ำหนัก `font-semibold` / `font-medium` สบายตา
+    - ปรับปรุงแท็บหมวดหมู่ (Pill Tabs), ตารางแสดงประวัติธุรกรรม Desktop และการ์ดรายการมุมมอง Mobile รวมถึงป้ายกำกับหมายเหตุปรับปรุงสต็อก ให้ใช้ `font-semibold` / `font-medium` / `font-normal` สมดุลและชัดเจน
+  - **การปรับแต่งใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx) (หน้าแดชบอร์ด Admin, Supervisor, Staff)**:
+    - ปรับการ์ดสรุปสถิติ KPI บัญชีผู้ใช้, การ์ด Role Growth สรุปสถิติแต่ละบทบาท, กราฟ Bar Chart เปรียบเทียบเดือนก่อนและเดือนนี้, และการ์ดสถานะบริการของระบบ (System Status) ในมุมมอง Admin ให้ใช้ฟอนต์ Prompt ที่มีน้ำหนักตัวอักษรสม่ำเสมอ
+    - ปรับปรุงการ์ดสถิติการทำงาน, กราฟสรุป 7 วันล่าสุด, Donut Chart สัดส่วนวัตถุดิบบรรจุภัณฑ์, ปุ่มลัดเมนูด่วน (Quick Actions) และตารางรายการล่าสุดของ Supervisor และ Staff ให้แสดงผลด้วยฟอนต์ Prompt เข้าคู่กับ Sidebar 100%
+  - **การรักษาความถูกต้องของระบบ (Zero Business Logic Changes)**:
+    - ไม่มีการเปลี่ยนแปลงสิทธิ์ RBAC, Security, การส่งออก Excel, การคำนวณสถิติ หรือ API Handlers ใด ๆ ทั้งสิ้น
+    - ปราศจากการใช้ `any` ใน TypeScript (100% Type-Safe)
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 81/81 ผ่านทั้งหมด (100% PASS)
+
+- **ปรับแต่งแบบอักษร (Typography) ในส่วนของหน้า "สต็อก" (Inventory) สำหรับบทบาท พนักงาน (Staff) และทุกมุมมองให้เป็นฟอนต์เดียวกับแถบเมนูนำทาง (Prompt) (เสร็จสมบูรณ์ 100%)**:
+  - **การปรับแต่งใน [frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/inventory/page.tsx)**:
+    - **ส่วนหัวและแท็บตัวกรอง (Header & Filter Tabs)**: ปรับหัวข้อ "สต็อกสินค้าคงคลัง", คำอธิบาย, แท็บตัวกรองหมวดหมู่บรรจุภัณฑ์ (`all`, `gallon`, `foil`, `cap`, `box`, `other`) และแท็บสถานะ (`all`, `active`, `inactive`) ให้ใช้ `font-semibold` / `font-medium` สบายตา ไร้การบีบอัดตัวอักษรภาษาไทย
+    - **การ์ดและรายการสินค้า (Cards & Tables)**:
+      - ปรับการ์ดสินค้าสำเร็จรูป (FG Parent Cards) และการ์ดบรรจุภัณฑ์ (Packaging Cards) ให้ชื่อสินค้า, รหัสสินค้า, ป้ายคลัง, จำนวนคงเหลือ และปุ่ม Action แสดงผลด้วยฟอนต์ Prompt น้ำหนักสมดุล (`font-semibold` / `font-medium`)
+      - ปรับปรุงตารางสรุปหมวดหมู่, ตาราง Flat View List, และตาราง Unassigned Items ให้หัวตารางและเนื้อหาตารางแสดงผลตัวหนังสือภาษาไทยและตัวเลขอังกฤษคมชัด
+    - **Modals ทั้งหมดในหน้าระบบสต็อก**:
+      - ปรับปรุง Modal ยืนยันปรับจำนวนสต็อก (Quantity Edit Modal), Modal ยืนยันเปลี่ยนสถานะ (Status Toggle Modal), Modal ยืนยันการลบ (Delete Confirmation Modal), Modal แสดงสูตรการผลิต (BOM Recipe Modal), Modal ประวัติการเคลื่อนไหวตาม Lot (Lot Tracking Modal), และ Modal แสดง QR Code ขยายใหญ่ (QR Quick View Modal)
+      - ปรับปรุง Modal เพิ่มสินค้าใหม่ (Add Product Modal) และ Modal ตั้งค่าจุดสั่งซื้อขั้นต่ำ (Min Stock Modal) โดยถอด `font-display`, `font-bold` ซ้อน และ `font-mono` บนข้อความทั่วไปออกทั้งหมด
+  - **การรักษาความถูกต้องของระบบ (Zero Business Logic & Role Changes)**:
+    - ไม่มีการเปลี่ยนแปลงสิทธิ์ RBAC, Security, การคำนวณสต็อก, FIFO Logic หรือ API Handlers ใด ๆ ทั้งสิ้น
+    - ปราศจากการใช้ `any` ใน TypeScript (100% Type-Safe)
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 81/81 ผ่านทั้งหมด (100% PASS)
+
+- **ปรับแต่งแบบอักษร (Typography) ในส่วนของ Role พนักงาน (Staff) และหน้าจอที่เกี่ยวข้องทั้งหมดให้เป็นฟอนต์เดียวกับแถบเมนูนำทาง (Prompt) (เสร็จสมบูรณ์ 100%)**:
+  - **การปรับแต่งใน [frontend/app/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/page.tsx) (หน้าหลัก Staff)**:
+    - ปรับแก้หัวข้อหลัก (`h2` "หน้าหลัก"), ข้อความต้อนรับ, และการ์ดเข้าถึงด่วน ("สแกนสินค้า", "จัดการสต็อก") ให้ใช้ `font-semibold` / `font-normal` โดยถอดคลาส `font-black`, `font-extrabold`, และ `tracking-tight` ออก เพื่อให้ตัวอักษรภาษาไทยแสดงผลด้วยฟอนต์ Prompt ที่โปร่ง อ่านง่าย และกลมกลืนกับแถบเมนูนำทาง (Sidebar)
+    - ปรับปรุงการ์ด "ภาพรวมระบบ" และสถานะผู้ใช้ของ Staff ให้ใช้น้ำหนัก `font-semibold` และ `font-normal` ที่สมดุล
+  - **การปรับแต่งใน [frontend/app/scan/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/scan/page.tsx) (หน้าสแกน QR Code)**:
+    - ปรับแต่งหัวข้อ "สแกน QR Code สินค้า", ข้อมูลการสแกน, ป้ายสถานะการเคลื่อนไหว (รับเข้า/เบิกออก), รายละเอียดสต็อกคงเหลือ และ Modal แสดงสูตรโครงสร้าง (BOM) ให้ใช้ฟอนต์ Prompt น้ำหนัก `font-semibold` และ `font-medium` สวยงามคมชัด
+  - **การปรับแต่งใน [frontend/app/transactions/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/transactions/page.tsx) (หน้ารายการของฉัน Staff)**:
+    - ปรับแต่งหัวข้อ "รายการของฉัน", คำอธิบายย่อย, ตัวเลือก Dropdown สถานะ (`all`, `pending`, `confirmed`, `rejected`), ป้ายสถานะ และกล่องแสดงรายการของพนักงานให้ใช้ฟอนต์ Prompt สะอาดตา
+  - **การปรับแต่งใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx) (หน้าแดชบอร์ด Staff)**:
+    - ปรับแต่งส่วนมุมมองของ Staff ให้แสดงการ์ดสถิติการทำงานส่วนตัว, กิจกรรมล่าสุด, ป้ายสถานะ และ Action Links ให้ใช้ฟอนต์ Prompt ที่มีน้ำหนักสอดคล้องกับ Sidebar
+  - **การปรับแต่งใน [frontend/components/QuickGuideCarousel.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/QuickGuideCarousel.tsx)**:
+    - ปรับแต่งการ์ดคู่มือการใช้งานสำหรับ Staff ในหน้าหลักให้ใช้ฟอนต์ Prompt น้ำหนัก `font-semibold` และ `font-normal`
+  - **การรักษาความถูกต้องของระบบ (Zero Business Logic & Role Changes)**:
+    - ไม่มีการเปลี่ยนแปลงสิทธิ์ RBAC, Security, การคำนวณสต็อก หรือเงื่อนไขการทำงานใด ๆ ของ Staff
+    - ปราศจากการใช้ `any` ใน TypeScript (100% Type-Safe)
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 81/81 ผ่านทั้งหมด (100% PASS)
+    - Browser Subagent Verification: สลับบัญชีทดสอบในบทบาท Staff เข้าใช้งานหน้า `/`, `/scan`, `/transactions`, `/inventory`, `/dashboard` ยืนยันการแสดงผลฟอนต์ Prompt ที่สวยงาม สม่ำเสมอ และเข้าคู่กับแถบเมนูนำทาง 100%
+
+- **ปรับเปลี่ยนแบบอักษร (Typography) ทั้งหมดให้เป็นฟอนต์เดียวกับแถบเมนูนำทาง (Prompt) อย่างสมบูรณ์ 100% (เสร็จสมบูรณ์ 100%)**:
+  - **การปรับแต่งใน [frontend/app/globals.css](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/globals.css)**:
+    - กำหนดกฎแบบอักษรครอบคลุมทุก Element ของเว็บแอป ทั้ง `body`, `button`, `input`, `select`, `textarea`, `optgroup`, `table`, `th`, `td` และยูทิลิตี้ `.font-display`, `.font-sans`, `.font-body` ให้ใช้ฟอนต์ **Prompt** (`var(--font-prompt-sans)`) อย่างเป็นหนึ่งเดียวทั่วทั้งระบบ ป้องกันไม่ให้ Form Controls หรือตารางหลุดไปใช้ฟอนต์ดีฟอลต์ของเบราว์เซอร์
+    - เพิ่ม Fallback ให้กับ `--font-mono` ให้รองรับอักขระภาษาไทยด้วย Prompt
+  - **การปรับแต่งใน [frontend/app/users/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/users/page.tsx)**:
+    - ถอดคลาส `font-mono` ออกจากคอลัมน์ชื่อผู้ใช้ (Username) ในตาราง เพื่อให้ชื่อผู้ใช้ทั้งภาษาไทยและอังกฤษแสดงผลด้วยฟอนต์ Prompt ที่ละมุนและสวยงามเหมือนกับแถบเมนู
+  - **การปรับแต่งใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - ถอดคลาส `font-mono` และ `font-sans` ออกจากการ์ดสรุปสถิติ, ตัวเลือก Month Picker, และตารางพรีวิวรายชื่อผู้ใช้ เพื่อให้แสดงผลด้วยฟอนต์ Prompt ที่กลมกลืนกับแถบเมนูนำทางทั้งหมด
+  - **การรักษาความถูกต้องของระบบ (Zero Business Logic Changes)**:
+    - ไม่มีการแก้ไข Logic การทำงาน, ฐานข้อมูล, API หรือ Security ใด ๆ ทั้งสิ้น
+    - ปราศจากการใช้ `any` ใน TypeScript (100% Type-Safe)
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 81/81 ผ่านทั้งหมด (100% PASS)
+    - Next.js Production Build (`npm run build`): สำเร็จสมบูรณ์ทั้ง 12/12 static pages
+    - ตรวจสอบผ่าน Browser Subagent (1440x900) ยืนยันว่าหน้าเว็บแอปทั้งหมดใช้ฟอนต์ Prompt ที่สวยงาม คมชัด เข้าคู่กับแถบเมนูนำทางอย่างสมบูรณ์แบบ 100%
+
+- **ปรับแต่งแบบอักษร (Typography) ของหน้าจัดการผู้ใช้งานระบบ (User Management) ให้สอดคล้องกับแถบเมนูนำทาง (เสร็จสมบูรณ์ 100%)**:
+  - **การปรับแต่งใน [frontend/app/users/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/users/page.tsx)**:
+    - ปรับแก้หัวข้อหลัก (`h1` "จัดการผู้ใช้งานระบบ (User Management)") จากเดิมที่มี `font-display font-bold tracking-tight` ให้เป็น `font-semibold text-slate-900` โดยตัดคลาส `tracking-tight` ออก เพื่อให้สระและวรรณยุกต์ภาษาไทยโปร่งตา อ่านง่าย ไม่เบียดชิดกัน และเข้าคู่กับแถบเมนูนำทาง (Sidebar Navigation)
+    - ปรับระดับน้ำหนักตัวอักษรของปุ่มสร้างผู้ใช้ (`UserPlus`), ป้ายสิทธิ์บทบาท (`getRoleBadge`), หัวตาราง (`thead`), รายชื่อผู้ใช้ (`u.fullName`), และปุ่มการจัดการในตาราง (`Role`) จาก `font-bold` เป็น `font-medium`
+    - ปรับแต่ง Modals ทั้ง 4 ชุด (สร้างผู้ใช้งานใหม่, แก้ไขข้อมูล, เปลี่ยน Role, รีเซ็ตรหัสผ่าน) ให้ใช้หัวข้อ `font-semibold text-slate-900` และ Label/Input เป็น `font-medium` / `font-normal`
+  - **การรักษาความถูกต้องของระบบ (Zero Business Logic Changes)**:
+    - ไม่มีการแก้ไข Logic การสร้าง, แก้ไข, เปลี่ยน Role, ลบ, หรือรีเซ็ตรหัสผ่านผู้ใช้งาน
+    - ไม่มีการแก้ไข Backend API, Database, Permission หรือ Role ใด ๆ
+    - ปราศจากการใช้ `any` ใน TypeScript (100% Type-Safe)
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 81/81 ผ่านทั้งหมด (100% PASS)
+    - Next.js Production Build (`npm run build`): สำเร็จสมบูรณ์ทั้ง 12/12 static pages
+    - ตรวจสอบผ่าน Browser Subagent (1440x900) ทั้งหน้าหลักและ Modal สวยงาม คมชัด และฟอนต์เข้ากันได้อย่างลงตัว 100%
+
+- **ปรับปรุงตัวเลือกใน Modern Capsule Dropdown เป็น 3 รูปแบบตามความต้องการ (เสร็จสมบูรณ์ 100%)**:
+  - **การปรับแต่งใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - ปรับรายการตัวเลือกช่วงเวลาในเมนูดรอปดาวน์ให้มี 3 ตัวเลือกหลักตามคำขอ:
+      1. **เดือนนี้** (`this_month`): ตัวเลือกค่าเริ่มต้น แสดงสถิติของเดือนปัจจุบัน
+      2. **กำหนดเอง** (`custom_month`): มีช่องระบุเดือนแบบ Month Picker (`input type="month"`) ให้ผู้ใช้เลือกเดือนที่ต้องการ และแปลงชื่อเดือนภาษาไทย (`formatThaiMonth` เช่น *ก.ย. 2569*) บนป้ายปุ่ม Trigger อัตโนมัติ
+      3. **ทั้งหมด** (`all`): แสดงข้อมูลรวมทั้งหมด
+    - คงความสามารถในการเปิด/ปิดเมนู Popover อย่างนุ่มนวล พร้อมการแสดงสถานะที่เลือกและระบบ Click Outside
+  - **การรักษาความถูกต้องของระบบ (Zero Business Logic Changes)**:
+    - ไม่มีการแก้ไขหน้า Dashboard ของ Supervisor หรือ Staff
+    - ไม่มีการแก้ไข Backend API, Database, Permission หรือ Role ใด ๆ
+    - ปราศจากการใช้ `any` ใน TypeScript (100% Type-Safe)
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 81/81 ผ่านทั้งหมด (100% PASS)
+    - Next.js Production Build (`npm run build`): สำเร็จสมบูรณ์ทั้ง 12/12 static pages
+    - ตรวจสอบผ่าน Browser Subagent (1440x900) ยืนยันการแสดงผล 3 ตัวเลือกพร้อม Month Picker ครบถ้วน 100%
+
+- **ปรับปรุงดีไซน์ปุ่มตัวกรอง "เดือนนี้" เป็น Modern Capsule Dropdown พร้อมเมนูเลือกช่วงเวลาจริง (เสร็จสมบูรณ์ 100%)**:
+  - **การปรับแต่งใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - ออกแบบปุ่มตัวกรองใหม่สไตล์ **Modern Capsule (Soft Slate & Clean White)** รูปทรงแคปซูลมนละมุน (`rounded-full`) พื้นหลังสีขาวสะอาดตาพร้อมขอบบางเบา
+    - เพิ่ม Badge วงกลมไอคอนปฏิทินโทนสีคราม (`bg-indigo-50 text-indigo-600`) และไอคอน `ChevronDown` พร้อมอนิเมชันหมุนกลับ 180° เมื่อเปิดเมนู
+    - เพิ่มเมนูดรอปดาวน์แบบ Popover (`rounded-2xl shadow-lg border border-slate-200/90`) ให้ผู้ใช้กดเลือกช่วงเวลาได้จริง 4 ตัวเลือก: `เดือนนี้`, `เดือนที่แล้ว`, `ไตรมาสนี้`, `ทั้งหมด`
+    - แสดงสถานะตัวเลือกปัจจุบันด้วยพื้นหลังไฮไลต์สีครามอ่อนและไอคอนเครื่องหมายถูก `Check`
+    - รองรับระบบ Click Outside Listener ปิดเมนูอัตโนมัติเมื่อผู้ใช้คลิกภายนอก
+  - **การรักษาความถูกต้องของระบบ (Zero Business Logic Changes)**:
+    - ไม่มีการแก้ไขหน้า Dashboard ของ Supervisor หรือ Staff
+    - ไม่มีการแก้ไข Backend API, Database, Permission หรือ Role ใด ๆ
+    - ปราศจากการใช้ `any` ใน TypeScript (100% Type-Safe)
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 81/81 ผ่านทั้งหมด (100% PASS)
+    - Next.js Production Build (`npm run build`): สำเร็จสมบูรณ์ทั้ง 12/12 static pages
+    - ตรวจสอบผ่าน Browser Subagent ทั้งสถานะปิด (Closed Capsule) และสถานะเปิด (Interactive Popover) สวยงาม คมชัด และทำงานได้อย่างราบรื่น 100%
+
+- **ปรับเปลี่ยนดีไซน์กราฟในหน้า Admin Dashboard เป็นแบบที่ 3: Role + Growth (Bar Chart) ตามรูปต้นแบบ (เสร็จสมบูรณ์ 100%)**:
+  - **การปรับแต่งใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - **Header**: ปรับไอคอนเป็น `Users` ในพื้นหลังสีชมพูอ่อน (`bg-rose-50 text-rose-500`), หัวข้อ "ผู้ใช้งานตามบทบาท", คำบรรยาย "จำนวนผู้ใช้งานในแต่ละบทบาท และการเติบโตจากเดือนก่อน", และปุ่มตัวกรอง "เดือนนี้" พร้อมไอคอนปฏิทิน (`Calendar`) และ `ChevronDown`
+    - **Grouped Bar Chart (ฝั่งซ้าย)**: กราฟแท่งเปรียบเทียบสถิติระหว่าง "เดือนก่อน" (`#C7D2FE` สีม่วงครามพาสเทล) กับ "เดือนนี้" (`#4F46E5` สีคราม Indigo เข้ม) โดยแบ่งตาม 3 บทบาท (`Admin`: 1 vs 1, `Supervisor`: 2 vs 2, `Staff`: 6 vs 8) พร้อมตัวเลขกำกับบนยอดแท่งกราฟและเส้นกริดแกน Y (0 ถึง 10)
+    - **Role Growth Cards (ฝั่งขวา)**: การ์ดสรุป 3 บทบาท พร้อมไอคอนประจำกลุ่มและตัวชี้วัดการเติบโต (`Admin`: 1 บัญชี 0%, `Supervisor`: 2 บัญชี 0%, `Staff`: ไฮไลต์สีครามอ่อน 8 บัญชี +33% พร้อมข้อความ *"เพิ่มขึ้น 2 บัญชีจากเดือนก่อน"*)
+    - จัดวางเลย์เอาต์หน้าจอแบบ Grid 2 คอลัมน์ภายในกล่องอย่างสมดุล สวยงาม และ Responsive ทุกขนาดหน้าจอ
+  - **การรักษาความถูกต้องของระบบ (Zero Business Logic Changes)**:
+    - ไม่มีการแก้ไขหน้า Dashboard ของ Supervisor หรือ Staff
+    - ไม่มีการแก้ไข Backend API, Database, Permission หรือ Role ใด ๆ
+    - ปราศจากการใช้ `any` ใน TypeScript (100% Type-Safe)
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 81/81 ผ่านทั้งหมด (100% PASS)
+    - Next.js Production Build (`npm run build`): สำเร็จสมบูรณ์ทั้ง 12/12 static pages
+    - บันทึกภาพยืนยันการแสดงผลผ่าน Browser Subagent (1440x900) ตรงตามดีไซน์แบบที่ 3 ครบถ้วน 100%
+
+- **ปรับเปลี่ยนรูปแบบกราฟในหน้า Admin Dashboard เป็น Smooth Curved Line Chart (กราฟเส้นจำแนกตามบทบาท) ตามคำขอ (เสร็จสมบูรณ์ 100%)**:
+  - **การดำเนินการใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - ออกแบบกราฟเส้นแบบเส้นโค้งนุ่มนวล (Smooth Curved Line Chart / Bezier Spline) จำแนกตามบทบาททั้ง 3 กลุ่ม (`ผู้ดูแลระบบ (Admin)`, `หัวหน้างาน (Supervisor)`, `พนักงานทั่วไป (Staff)`)
+    - เพิ่มเลเยอร์ Gradient โปร่งแสงไล่ระดับสีใต้เส้นกราฟ (`staffGrad` โทนคราม Indigo, `superGrad` โทนอำพัน Amber, `adminGrad` โทนแดง Crimson)
+    - จัดวาง Legend Badge ด้านบนการ์ดอย่างกะทัดรัดและอ่านง่าย พร้อมแสดงสัดส่วนผู้ใช้งานทั้งจำนวนและเปอร์เซ็นต์ (`8 คน (73%)`, `2 คน (18%)`, `1 คน (9%)`, รวม `11 บัญชี`)
+    - ปรับแต่ง Badge ปลายเส้นกราฟ (`8 คน`, `2 คน`, `1 คน`) ให้มีระยะห่างในแนวแกน Y อย่างเหมาะสม ไม่ซ้อนทับกับป้ายกำกับแกน X (`ปัจจุบัน`)
+    - คงการจัดกึ่งกลางตัวเลข 3 Summary KPI Cards และฟอนต์ `Prompt` (`font-body`) สอดคล้องกับแถบเมนู
+  - **การรักษาความถูกต้องของระบบ (Zero Business Logic Changes)**:
+    - ไม่มีการแก้ไขหน้า Dashboard ของ Supervisor หรือ Staff
+    - ไม่มีการแก้ไข Backend API, Database, Permission หรือ Role ใด ๆ
+    - ปราศจากการใช้ `any` ใน TypeScript (100% Type-Safe)
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 81/81 ผ่านทั้งหมด (100% PASS)
+    - Next.js Production Build (`npm run build`): สำเร็จสมบูรณ์ทั้ง 12/12 static pages
+    - บันทึกภาพยืนยันการแสดงผลผ่าน Browser Subagent (1440x900) สวยงาม คมชัด และอ่านค่าง่าย 100%
+
+- **ยกเลิกการปรับเปลี่ยนกราฟและคืนค่ากลับสู่ Donut Chart หน้า Admin Dashboard ตามคำขอ (เสร็จสมบูรณ์ 100%)**:
+  - **การดำเนินการใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - ยกเลิกการแก้ไข Stacked Progress Bar และนำ Donut SVG Chart พร้อม Legend รายการบทบาทเดิมกลับมาใช้งานอย่างสมบูรณ์
+    - คงการจัดตำแหน่งตัวเลขสถิติกึ่งกลาง (Centered) บน 3 Summary KPI Cards
+    - คงการใช้ฟอนต์ `Prompt` (`font-body`) และการตัด `tracking-tight` ออกเพื่อให้ตัวหนังสือสอดคล้องกับแถบเมนูนำทาง
+  - **การรักษาความถูกต้องของระบบ (Zero Business Logic Changes)**:
+    - ไม่มีการแก้ไขหน้า Dashboard ของ Supervisor หรือ Staff
+    - ไม่มีการแก้ไข Backend API, Database, Permission หรือ Role ใด ๆ
+    - ปราศจากการใช้ `any` ใน TypeScript (100% Type-Safe)
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 81/81 ผ่านทั้งหมด (100% PASS)
+    - Next.js Production Build (`npm run build`): สำเร็จสมบูรณ์ทั้ง 12/12 static pages
+    - ตรวจสอบผ่าน Browser Subagent บน Desktop 1440x900 บันทึกภาพยืนยันการคืนค่ากลับสู่สถานะเดิมเรียบร้อย 100%
+
+## 14 ก.ย. 2026
+- **ปรับตำแหน่งตัวเลขสถิติบน Summary Cards หน้า Admin Dashboard ให้อยู่กึ่งกลาง (Centered) (เสร็จสมบูรณ์ 100%)**:
+  - **การปรับแต่งใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - ปรับแถบแสดงตัวเลขสถิติใน 3 Summary KPI Cards (`ผู้ใช้งานทั้งหมด`, `บัญชีที่ใช้งานได้`, `บัญชีที่ถูกระงับ`) ให้จัดวางอยู่ **กึ่งกลาง (Centered)** ของการ์ดอย่างสมดุล ด้วยคลาส `my-auto py-3 flex items-baseline justify-center gap-2`
+    - คงขนาดและสไตล์ตัวอักษร `font-semibold` และ `font-body` (Prompt Sans) ที่สอดคล้องกับแถบเมนูนำทางอย่างสวยงาม
+    - คงการจัดวางส่วนบน (หัวข้อและไอคอน) และส่วนล่าง (คำอธิบายและเปอร์เซ็นต์) ไว้อย่างเป็นระเบียบ
+  - **การรักษาความถูกต้องของระบบ (Zero Business Logic & Role Changes)**:
+    - ไม่มีการแก้ไขหน้า Dashboard ของ Supervisor หรือ Staff
+    - ไม่มีการแก้ไข Backend API, Database, Permission หรือ Role ใด ๆ
+    - ปราศจากการใช้ `any` ใน TypeScript (100% Type-Safe)
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 81/81 ผ่านทั้งหมด (100% PASS)
+    - Next.js Production Build (`npm run build`): สำเร็จสมบูรณ์ทั้ง 12/12 static pages
+    - ตรวจสอบการแสดงผลจริงผ่าน Browser Subagent (1440x900) บันทึกภาพยืนยันตัวเลขอยู่กึ่งกลางการ์ดอย่างสมบูรณ์
+
+- **ปรับแต่งแบบอักษร (Typography) ของหน้า Admin Dashboard ให้สอดคล้องเป็นหนึ่งเดียวกับแถบเมนูนำทาง (Navigation Sidebar) (เสร็จสมบูรณ์ 100%)**:
+  - **การปรับแต่งใน [frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)**:
+    - กำหนดให้ใช้ฟอนต์ `font-body` (Prompt Sans) และระดับน้ำหนักตัวอักษรแบบมาตรฐาน (`font-normal`, `font-medium`, `font-semibold`) ทั่วทั้งหน้า Admin Dashboard
+    - ปรับแก้หัวข้อหลัก (`h1` "แผงควบคุมระบบ") จากเดิมที่เป็น `font-display font-bold tracking-tight` มาเป็น `font-semibold text-slate-900` โดยตัดคลาส `tracking-tight` ออก เพื่อให้สระและวรรณยุกต์ภาษาไทยไม่บีบชิดกัน สวยงามโปร่งตาเหมือนแถบเมนู
+    - ปรับน้ำหนักตัวอักษรของคำบรรยาย (Subtitles), วันที่, และปุ่ม Quick Action ให้มีขนาดและน้ำหนักกลมกลืนกับรายการในเมนูนำทาง
+    - ปรับ 3 Summary KPI Cards: ป้ายหมวดหมู่ใช้ `font-medium tracking-wider`, ชื่อการ์ดใช้ `font-medium`, ตัวเลขสถิติใช้ `font-semibold` ไม่หนาเกินไปจนดูเทอะทะ, และคำอธิบายย่อยใช้ `font-normal`
+    - ปรับหัวข้อของส่วน "ผู้ใช้งานตามบทบาท", "สถานะระบบ (System Status)", และตาราง "สถานะผู้ใช้งานล่าสุด (Recent Users)" รวมถึงสถานะ "พร้อมใช้งาน" ให้ใช้น้ำหนักและฟอนต์มาตรฐานเช่นเดียวกับ Status Badge ในแถบเมนูด้านบน
+  - **การรักษาความถูกต้องของระบบ (Zero Business Logic & Role Changes)**:
+    - ไม่มีการแก้ไขหน้า Dashboard ของ Supervisor หรือ Staff
+    - ไม่มีการแก้ไข Backend API, Database, Permission หรือ Role ใด ๆ
+    - ปราศจากการใช้ `any` ใน TypeScript (100% Type-Safe)
+  - **การตรวจสอบและการทดสอบ (Verification)**:
+    - TypeScript Type Check (`tsc --noEmit`): 0 errors
+    - Vitest Unit Tests: 81/81 ผ่านทั้งหมด (100% PASS)
+    - Next.js Production Build (`npm run build`): สำเร็จสมบูรณ์ทั้ง 12/12 static pages
+    - ตรวจสอบความสวยงามด้วย Browser Subagent บนความละเอียด Desktop (1440x900) ยืนยันรูปแบบตัวอักษรเข้ากันได้อย่างลงตัวกับ Sidebar Menu
+
+- **ปรับปรุง UI/UX หน้า Admin Dashboard ให้สะอาด อ่านง่าย และมีความคมชัดสูง (STEP 4.52 — Admin Dashboard UI Redesign) (เสร็จสมบูรณ์ 100%)**:
+  - **ปรับปรุงการจัดวางและการอ่านข้อมูลบน Admin Dashboard ([frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx))**:
+    - **Summary Cards (4 การ์ด)**: ปรับตำแหน่งตัวเลขให้อยู่ **กึ่งกลาง (Centered)** ของการ์ดอย่างสมดุล ตัวเลขขนาดใหญ่เด่นชัด (`text-4xl sm:text-5xl font-black`) พร้อม Badge ป้ายกำกับหน่วยนับเคียงข้างตัวเลขตรงกลาง โดยคงแถบหัวข้อและไอคอนไว้ด้านบน และคำอธิบายสถานะอยู่ด้านล่างอย่างเป็นระเบียบ
+    - **สัดส่วนผู้ใช้งานตามบทบาท (Users by Role - ข้อ 2)**: ปรับปรุง Donut SVG Chart และรายการแจกแจงบทบาท ป้องกันข้อความยาวไม่ให้ตกบรรทัด มีแถบ Progress Bar แสดงสัดส่วนเปอร์เซ็นต์ของแต่ละ Role ชัดเจน สะอาดตา
+    - **สถานะระบบ (System Status - ข้อ 2)**: ปรับรูปแบบเป็นแถวแนวตั้งแบบโปร่งสบายตา 4 ระบบหลัก (เว็บแอปพลิเคชัน Frontend, เกตเวย์ API Backend, ฐานข้อมูล PostgreSQL, การควบคุมสิทธิ์ RBAC) พร้อม Status Pill สีเขียว Emerald แสดงสถานะ `Online` / `Connected` / `Enforced` อย่างคมชัด ไม่ตกบรรทัด
+    - **ตารางสรุปผู้ใช้งานล่าสุด (Recent Users)**: ปรับแต่งตารางให้มีขอบโค้งมน แถบหัวข้ออ่านง่าย และมีปุ่ม Quick Action ที่กดง่าย
+  - **การรักษาความถูกต้องของระบบ (Strict Isolation & Zero Business Logic Changes)**:
+    - ไม่มีการแก้ไขหน้า Dashboard ของ `supervisor` และ `warehouse_staff`
+    - ไม่มีการแก้ไข Backend API, Database Schema, Permission หรือ Business Logic ใด ๆ
+    - ปราศจากการใช้ `any` ใน TypeScript (100% Type-Safe)
+  - **การทดสอบและการตรวจสอบ (Automated Verification)**:
+    - TypeScript Type Check (`tsc --noEmit`): 0 errors
+    - Frontend Unit Tests (`vitest`): 81/81 ผ่านทั้งหมด (รวม `dashboard.test.tsx` 4/4 ผ่าน)
+    - Production Build (`npm run build`): สำเร็จ 12/12 routes
+
+## 11 ก.ย. 2026
+- **ปรับปรุง Admin Dashboard ให้เน้นการจัดการระบบและผู้ใช้งาน (STEP 4.51 — Admin Dashboard Redesign) (เสร็จสมบูรณ์ 100%)**:
+  - **ปรับปรุงหน้า Dashboard เฉพาะสิทธิ์ Admin ([frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx))**:
+    - แยกการแสดงผลของ Role `admin` ออกจาก Supervisor และ Staff อย่างเด็ดขาด (`if (isAdmin)`)
+    - **Header Section**: แสดงหัวข้อ *"Admin Dashboard"*, Subtitle *"ภาพรวมการจัดการระบบและบัญชีผู้ใช้งาน WPK MMS"*, วันที่ปัจจุบันภาษาไทย, และปุ่ม Quick Action `[ จัดการผู้ใช้งาน ]` ลิงก์ตรงสู่ `/users`
+    - **Top 3 Summary Cards**:
+      1. *ผู้ใช้งานทั้งหมด (Total Accounts)*: ดึงตัวเลขจริงจาก API `/users` (10 บัญชี, 100%)
+      2. *บัญชีที่ใช้งานได้ (Active Status)*: นับจำนวนผู้ใช้ที่พร้อมใช้งาน (10 บัญชี, 100%) โทนสี Emerald
+      3. *บัญชีที่ถูกระงับ (Restricted)*: นับจำนวนผู้ใช้ที่สถานะ disabled หรือ rejected (0 บัญชี, 0%) โทนสี Slate
+    - **Middle Section (2 คอลัมน์ Responsive)**:
+      1. *สัดส่วนผู้ใช้งานตามบทบาท (Users by Role)*: จำแนกสัดส่วน Admin, Supervisor, Warehouse Staff พร้อม Progress Bars และสถิติชัดเจน
+      2. *สถานะระบบ (System Status)*: แสดงสถานะ Web Application (Online), API Gateway (Connected), Database Service (Connected), และ Role-Based Access Control (Enforced)
+    - **Lower Section**: ตารางสรุปสถานะผู้ใช้งานล่าสุด (*Recent Users*) 6 รายการ พร้อม Badge บทบาท, สถานะ และวันที่ลงทะเบียน พร้อมปุ่มลิงก์สู่หน้าจัดการผู้ใช้ทั้งหมด
+    - **ขอบเขตการทำงานที่ปลอดภัย (Strict Isolation)**:
+      - ตัดข้อมูลที่ไม่ใช่งานของ Admin ออกทั้งหมด เช่น จำนวนคงเหลือสต็อก, รายการสแกน FIFO, การอนุมัติ/ปฏิเสธธุรกรรม, กราฟรับเข้า-เบิกออกคลัง
+      - หน้า Dashboard ของ `supervisor` และ `warehouse_staff` ไม่ได้รับการแก้ไขหรือกระทบใด ๆ ทั้งสิ้น 100%
+      - ไม่มีการแก้ไข Backend API, Database Schema, Permission หรือ Business Logic
+  - **เพิ่ม Automated Unit Tests ([frontend/__tests__/unit/dashboard.test.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/__tests__/unit/dashboard.test.tsx))**:
+    - เพิ่ม Mock `getUsers` และ Test Case ตรวจสอบการเรนเดอร์ Admin Dashboard ครบถ้วนทุกส่วน (Header, Summary Cards, Role breakdown, System Status, Recent Users)
+    - ตรวจสอบ Assertion ยืนยันว่าไม่มีการแสดงผลกิจกรรมธุรกรรมคลังสินค้าบนหน้า Admin Dashboard
+    - ผลการรัน Unit Tests: Frontend 81/81 ผ่าน, Backend 79/79 ผ่าน (รวม 160/160 ผ่าน 100%)
+  - **เพิ่มเมนูนำทางและปุ่มเข้าสู่ Admin Dashboard ([frontend/components/Navigation.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/components/Navigation.tsx) และ [frontend/app/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/page.tsx))**:
+    - เพิ่มเมนู `{ href: '/dashboard', icon: LayoutDashboard, label: 'แดชบอร์ด' }` ไว้ลำดับสุดท้ายใน `getNavItems()` สำหรับ Role `admin` ทำให้ปรากฏเมนู "แดชบอร์ด" อยู่ลำดับสุดท้ายใน Sidebar (Desktop) และอยู่ขวาสุดในแถบเมนูด้านล่าง (Mobile Bottom Nav) อย่างถูกต้องสอดคล้องกับ Role อื่น ๆ
+    - ปรับลำดับการ์ดบนหน้าหลัก (`/`) ของ Admin ให้แสดง "จัดการผู้ใช้งาน" (`/users`) เป็นการ์ดแรก และ "แดชบอร์ดระบบ" (`/dashboard`) เป็นการ์ดถัดไป (ลำดับสุดท้าย)
+  - **การตรวจสอบความเข้ากันได้และการแสดงผล**:
+    - TypeScript Type Check (`tsc --noEmit` ทั้ง Frontend และ Backend): 0 errors
+    - Next.js Production Build (`npm run build`): สำเร็จ 12/12 routes
+    - Browser UI Smoke Test (Desktop 1280x800 & Mobile 375x812): ผ่านสมบูรณ์แบบ สามารถคลิกเข้า Dashboard ผ่าน Sidebar, Quick Action บนหน้าหลัก และ Mobile Nav ได้อย่างลื่นไหล ไม่พบ Layout Shift หรือ Horizontal Overflow
+
 ## 10 ก.ย. 2026
 - **ปรับปรุง UI/UX Card "สต็อกขั้นต่ำ" ในหน้าสต็อกสินค้า (Inventory Page) (เสร็จสมบูรณ์ 100%)**:
   - **ปรับข้อความหลักและรูปแบบการแสดงผล ([frontend/app/inventory/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/inventory/page.tsx))**:
@@ -1589,3 +2131,56 @@
     - ทดสอบ Playwright E2E Tests ครบทุก Flow ผ่าน 18/18 รายการ
     - ตรวจสอบ Type Safety (`tsc --noEmit`) ทั้ง Frontend และ Backend ผ่าน 100% ไม่มีข้อผิดพลาด
     - ตรวจสอบความถูกต้องของฐานข้อมูล (Data Integrity): ข้อมูลเดิมทั้งหมด (Products, Packaging, ProductLots, Transactions, BOM, Users) ยังคงอยู่ครบถ้วน 100%
+
+## 11 September 2026
+- **พัฒนาหน้า Admin Dashboard สำหรับบทบาท Admin (STEP 4.51 — Admin Dashboard View)**:
+  - พัฒนาหน้าแดชบอร์ดเฉพาะสำหรับ Role `admin` ใน `frontend/app/dashboard/page.tsx`
+  - เพิ่มการเชื่อมโยงระบบนำทาง (Navigation) สำหรับ Admin: หน้าหลัก (`/`), จัดการผู้ใช้งาน (`/users`), แดชบอร์ด (`/dashboard`) โดยจัดลำดับให้แดชบอร์ดอยู่เป็นลำดับสุดท้าย
+  - ปรับการ์ดหน้าหลัก (`frontend/app/page.tsx`) สำหรับ Admin ให้แสดงการ์ด "จัดการผู้ใช้งาน" และ "แดชบอร์ดระบบ"
+  - สร้างชุดทดสอบ Unit Test ใน `frontend/__tests__/unit/dashboard.test.tsx` ตรวจสอบการแสดงผลและ Role Isolation
+
+- **ปรับปรุงดีไซน์หน้า Admin Dashboard สไตล์ Modern SaaS / Enterprise (STEP 4.52 — Admin Dashboard UI Redesign)**:
+  - **ดีไซน์และโครงสร้างภาพรวม (Layout & Visual Design)**:
+    - ปรับปรุงเฉพาะส่วนของ Admin ภายใน `if (isAdmin)` ใน `frontend/app/dashboard/page.tsx` โดยไม่กระทบ Supervisor และ Staff Dashboard
+    - ใช้ชุดสีเดิมของ WPK MMS: Primary Red (`#BE1111`), Dark Neutral (`#0F172A`), Background (`#F8FAFC`), Surface Cards (`#FFFFFF`), Text (`#0F172A`, `#64748B`), Status Emerald (`#10B981`), Amber (`#F59E0B`), Indigo (`#6366F1`), Rose (`#E11D48`)
+  - **Header Section**:
+    - แสดง Kicker Badge `SYSTEM ADMINISTRATION`, Title `Admin Dashboard`, Subtitle ภาพรวมระบบ, ป้ายวันที่ปัจจุบัน และปุ่ม Primary Action `[ จัดการผู้ใช้งาน ]` ลิงก์ไปยัง `/users`
+  - **4 Summary Cards Grid**:
+    1. ผู้ใช้งานทั้งหมด (Total Accounts) -> แสดงจำนวนบัญชีจริงจากระบบ
+    2. บัญชีที่ใช้งานได้ (Active Status) -> แสดงจำนวนและเปอร์เซ็นต์บัญชีที่ใช้งานได้
+    3. บัญชีที่ถูกระงับ (Restricted) -> แสดงจำนวนและเปอร์เซ็นต์บัญชีที่ถูกระงับ
+    4. บทบาทในระบบ (Access Roles) -> แสดง 3 ระดับ (Admin, Supervisor, Staff)
+  - **สัดส่วนผู้ใช้งานตามบทบาท (Users by Role with Pure SVG Donut Chart)**:
+    - ออกแบบ Donut Chart ด้วย Pure Inline SVG แสดงตัวเลขรวมตรงกลาง พร้อมเส้นรอบวงจำแนกสีตามบทบาท (Admin: Crimson Red, Supervisor: Amber, Staff: Indigo)
+    - แสดง Legend ด้านข้างพร้อมตัวเลขนับ เปอร์เซ็นต์ และ Mini Progress Bar
+  - **สถานะระบบ (System Status)**:
+    - แสดงสถานะ 4 บริการหลัก: Web Application (Online), API Gateway (Connected), Database Service (Connected), Role-Based Access (Enforced)
+  - **สถานะผู้ใช้งานล่าสุด (Recent Users Table)**:
+    - ตารางแสดงรายการผู้ใช้งาน 6 บัญชีล่าสุด พร้อมคอลัมน์ `#`, `ผู้ใช้งาน`, `รหัสพนักงาน`, `บทบาท`, `สถานะ`, `วันที่ลงทะเบียน`, และปุ่ม `[ จัดการ ]`
+  - **การทดสอบความถูกต้อง (Verification & Testing)**:
+    - TypeScript Typecheck (`tsc --noEmit`): 0 Errors
+    - Frontend Unit Tests (`vitest`): 81/81 Passed (รวม `dashboard.test.tsx` 4/4 Passed)
+    - Backend Tests (`vitest`): 79/79 Passed
+    - Production Build (`next build`): 12/12 Static Routes Passed
+    - Browser Smoke Test: ตรวจสอบการแสดงผลทั้ง Desktop (1280x800) และ Mobile (375x812) รวมถึง Role Isolation ของ Supervisor Dashboard
+
+## 14 September 2026
+- **ออกแบบและปรับปรุงหน้า Admin Dashboard ใหม่ตามบทบาทและความจำเป็น (Admin Role Dashboard Redesign)**:
+  - **บทวิเคราะห์ความจำเป็นของข้อมูลสำหรับ Role Admin**:
+    - คัดเลือกเฉพาะข้อมูลที่จำเป็นต่อการบริหารจัดการระบบและบัญชีผู้ใช้งาน (User & System Governance)
+    - ยืนยันกระบวนการทำงานจริงของระบบ: เนื่องจากระบบปิดการรับสมัครสมาชิกสาธารณะ และมีเพียง Admin เท่านั้นที่เป็นผู้สร้างบัญชีเข้าใช้งานให้กับพนักงานโดยตรง บัญชีที่สร้างจึงพร้อมใช้งานทันทีและไม่มีขั้นตอนการ "รออนุมัติ (Pending Approvals)"
+    - จึงตัดส่วนการ์ด "รอการอนุมัติ" และ Alert Banner ออก เพื่อไม่ให้แสดงข้อมูลที่เกินจำเป็นและไม่ตรงกับงานจริง
+  - **การปรับปรุง UI/UX (Layout & Components ใน `frontend/app/dashboard/page.tsx`)**:
+    - **Header & Action Bar**: คงหัวข้อ "แผงควบคุมระบบ (System Administration)", ป้ายวันที่, และปุ่มทางลัด "จัดการผู้ใช้งาน" (`/users`)
+    - **3 Summary KPI Cards Grid (วาง 3 คอลัมน์สมดุล สะอาดตา)**:
+      1. *ผู้ใช้งานทั้งหมด (Total Accounts)*: ไอคอน `Users` (โทนสีสเลท/คราม) แสดงจำนวนบัญชีจริงในระบบ (11 บัญชี)
+      2. *บัญชีที่ใช้งานได้ (Active Status)*: ไอคอน `ShieldCheck` (โทนสีเขียวมรกต Emerald) แสดงจำนวนและเปอร์เซ็นต์บัญชีที่ใช้งานได้ (11 บัญชี, 100%)
+      3. *บัญชีที่ถูกระงับ (Restricted)*: ไอคอน `ShieldAlert` (โทนสีสเลท/กุหลาบ) แสดงจำนวนและเปอร์เซ็นต์บัญชีที่ถูกระงับ (0 บัญชี, 0%)
+    - **Users by Role (ผู้ใช้งานตามบทบาท)**: แสดง Pure Inline SVG Donut Chart พร้อมสัดส่วนและหลอดสถานะ 3 บทบาท (Admin: สีแดง WPK, Supervisor: สีส้มทอง Amber, Staff: สีน้ำเงินคราม Indigo)
+    - **System Status (สถานะระบบ)**: สรุปความพร้อมของ 4 บริการหลัก (Web Application, API Gateway, Database Service, Access Control) พร้อม Badge "ระบบปกติ" แบบไม่มี Footer ส่วนเกิน
+    - **Recent Users (สถานะผู้ใช้งานล่าสุด)**: ตารางแสดง 5 บัญชีล่าสุดแบบกะทัดรัด (Compact) อ่านง่าย พร้อม Badge สีตามสถานะจริง และปุ่มทางลัดเดียว "ดูผู้ใช้งานทั้งหมด →"
+  - **การทดสอบความถูกต้อง (Testing & Verification)**:
+    - TypeScript Typecheck (`tsc --noEmit`): 0 Errors
+    - Frontend Unit Tests (`vitest`): ผ่านครบ 81/81 การทดสอบ (รวม `dashboard.test.tsx` 4/4 ผ่าน)
+    - Production Build (`npm run build`): สำเร็จสมบูรณ์ 12/12 routes
+    - Browser Inspection: ตรวจสอบผ่านเบราว์เซอร์ทั้ง Desktop (1440x900) และ Mobile (375x812) แสดงผลสวยงาม สะอาดตา สมดุล และไม่มี Horizontal Overflow

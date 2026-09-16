@@ -175,10 +175,10 @@ export function QuickGuideCarousel() {
     <section id="quick-guide" className="w-full mx-auto my-10 select-none overflow-hidden sm:overflow-visible scroll-mt-6">
       {/* Section Header */}
       <div className="text-center mb-10 select-none px-4">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-extrabold text-slate-900 tracking-tight">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-slate-900">
           ขั้นตอนการใช้งานระบบ
         </h2>
-        <p className="text-sm sm:text-base text-slate-500 font-display font-normal mt-1.5">
+        <p className="text-sm sm:text-base text-slate-500 font-normal mt-1.5">
           “เรียนรู้การใช้งาน WPK MMS ทีละขั้นตอน”
         </p>
       </div>
@@ -276,11 +276,11 @@ export function QuickGuideCarousel() {
                     >
                       {/* Card Header (Text) */}
                       <div className="flex flex-col items-center justify-center text-center pt-5 sm:pt-6 pb-2 px-3">
-                        <span className="text-[13px] sm:text-base font-bold text-[#BE1111] mb-0.5 sm:mb-1">{step.stepNumber}</span>
-                        <h3 className="text-sm sm:text-lg font-display font-black text-slate-900 tracking-wide mb-0.5 uppercase leading-tight">
+                        <span className="text-[13px] sm:text-base font-medium text-[#BE1111] mb-0.5 sm:mb-1">{step.stepNumber}</span>
+                        <h3 className="text-sm sm:text-lg font-semibold text-slate-900 mb-0.5 uppercase leading-tight">
                           {step.title}
                         </h3>
-                        <p className="text-[11px] sm:text-[13px] font-display font-normal text-slate-500">
+                        <p className="text-[11px] sm:text-[13px] font-normal text-slate-500">
                           {step.shortTitle}
                         </p>
                       </div>
@@ -314,12 +314,12 @@ export function QuickGuideCarousel() {
               transition={{ duration: 0.25 }}
               className="flex flex-col items-center gap-1.5"
             >
-              <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-display font-bold text-slate-800 bg-white px-3.5 py-1 rounded-full border border-slate-200/80 shadow-xs">
-                <span className="text-[#BE1111] font-bold">{guideSteps[activeIndex].stepNumber}</span>
+              <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-800 bg-white px-3.5 py-1 rounded-full border border-slate-200/80 shadow-xs">
+                <span className="text-[#BE1111] font-semibold">{guideSteps[activeIndex].stepNumber}</span>
                 <span className="w-1 h-1 rounded-full bg-slate-300" />
                 <span>{guideSteps[activeIndex].shortTitle}</span>
               </div>
-              <p className="text-xs sm:text-sm font-display font-normal text-slate-600 max-w-lg leading-relaxed">
+              <p className="text-xs sm:text-sm font-normal text-slate-600 max-w-lg leading-relaxed">
                 {guideSteps[activeIndex].shortDescription}
               </p>
             </motion.div>
@@ -352,7 +352,7 @@ export function QuickGuideCarousel() {
             <UserCheck className="w-3.5 h-3.5 text-[#BE1111]" />
             <span>USER ROLES</span>
           </div>
-          <h3 className="text-lg sm:text-xl font-display font-extrabold text-slate-900">
+          <h3 className="text-lg sm:text-xl font-semibold text-slate-900">
             บทบาทผู้ใช้งาน (User Role)
           </h3>
         </div>
@@ -366,13 +366,13 @@ export function QuickGuideCarousel() {
                   <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-display font-extrabold text-slate-900 text-xs sm:text-base leading-tight truncate">
+                  <h4 className="font-semibold text-slate-900 text-xs sm:text-base leading-tight truncate">
                     Staff
                   </h4>
-                  <p className="text-[10px] sm:text-xs font-display font-normal text-slate-500 truncate">พนักงานทั่วไป</p>
+                  <p className="text-[10px] sm:text-xs font-normal text-slate-500 truncate">พนักงานทั่วไป</p>
                 </div>
               </div>
-              <ul className="space-y-2 text-[11px] sm:text-[11.5px] lg:text-xs xl:text-[13px] font-display font-normal text-slate-700">
+              <ul className="space-y-2 text-[11px] sm:text-[11.5px] lg:text-xs xl:text-[13px] font-normal text-slate-700">
                 <li className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
                   <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
                   <span className="truncate">สแกนรับเข้า - เบิกออกสินค้า</span>
@@ -397,13 +397,13 @@ export function QuickGuideCarousel() {
                   <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-display font-extrabold text-slate-900 text-xs sm:text-base leading-tight truncate">
+                  <h4 className="font-semibold text-slate-900 text-xs sm:text-base leading-tight truncate">
                     Supervisor
                   </h4>
-                  <p className="text-[10px] sm:text-xs font-display font-normal text-slate-500 truncate">ผู้ควบคุมดูแลระบบคลัง</p>
+                  <p className="text-[10px] sm:text-xs font-normal text-slate-500 truncate">ผู้ควบคุมดูแลระบบคลัง</p>
                 </div>
               </div>
-              <ul className="space-y-2 text-[11px] sm:text-[11.5px] lg:text-xs xl:text-[13px] font-display font-normal text-slate-700">
+              <ul className="space-y-2 text-[11px] sm:text-[11.5px] lg:text-xs xl:text-[13px] font-normal text-slate-700">
                 <li className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
                   <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
                   <span className="truncate">อนุมัติ / ปฏิเสธการรับ-จ่ายสินค้า</span>
@@ -428,13 +428,13 @@ export function QuickGuideCarousel() {
                   <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#BE1111]" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-display font-extrabold text-slate-900 text-xs sm:text-base leading-tight truncate">
+                  <h4 className="font-semibold text-slate-900 text-xs sm:text-base leading-tight truncate">
                     System Admin
                   </h4>
-                  <p className="text-[10px] sm:text-xs font-display font-normal text-slate-500 truncate">แอดมินผู้ดูแลระบบ</p>
+                  <p className="text-[10px] sm:text-xs font-normal text-slate-500 truncate">แอดมินผู้ดูแลระบบ</p>
                 </div>
               </div>
-              <ul className="space-y-2 text-[11px] sm:text-[11.5px] lg:text-xs xl:text-[13px] font-display font-normal text-slate-700">
+              <ul className="space-y-2 text-[11px] sm:text-[11.5px] lg:text-xs xl:text-[13px] font-normal text-slate-700">
                 <li className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
                   <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
                   <span className="truncate">สร้างบัญชีผู้ใช้ใหม่ และกำหนด Role</span>
@@ -466,10 +466,10 @@ export function QuickGuideCarousel() {
               <BookOpen className="w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[2.2]" />
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="font-display font-extrabold text-slate-900 text-xs sm:text-[13px] md:text-xs lg:text-[13px] xl:text-sm leading-tight tracking-tight group-hover:text-[#BE1111] transition-colors whitespace-nowrap">
+              <h4 className="font-semibold text-slate-900 text-xs sm:text-[13px] md:text-xs lg:text-[13px] xl:text-sm leading-tight group-hover:text-[#BE1111] transition-colors whitespace-nowrap">
                 คู่มือแบบย่อ (Quick Guide)
               </h4>
-              <p className="text-[10px] sm:text-[11px] font-display font-normal text-slate-500 mt-0.5 tracking-tight whitespace-nowrap">
+              <p className="text-[10px] sm:text-[11px] font-normal text-slate-500 mt-0.5 whitespace-nowrap">
                 เปิดดูเอกสารคู่มือการใช้งานแบบย่อ (PDF)
               </p>
             </div>
@@ -487,10 +487,10 @@ export function QuickGuideCarousel() {
               <FileText className="w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[2.2]" />
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="font-display font-extrabold text-slate-900 text-xs sm:text-[13px] md:text-xs lg:text-[13px] xl:text-sm leading-tight tracking-tight group-hover:text-slate-800 transition-colors whitespace-nowrap">
+              <h4 className="font-semibold text-slate-900 text-xs sm:text-[13px] md:text-xs lg:text-[13px] xl:text-sm leading-tight group-hover:text-slate-800 transition-colors whitespace-nowrap">
                 คู่มือแบบรายละเอียด (Work Instruction - WI)
               </h4>
-              <p className="text-[10px] sm:text-[11px] font-display font-normal text-slate-500 mt-0.5 tracking-tight whitespace-nowrap">
+              <p className="text-[10px] sm:text-[11px] font-normal text-slate-500 mt-0.5 whitespace-nowrap">
                 ข้อกำหนดและขั้นตอนปฏิบัติงานอย่างเป็นทางการ (WI)
               </p>
             </div>

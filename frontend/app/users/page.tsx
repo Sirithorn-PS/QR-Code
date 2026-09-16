@@ -280,21 +280,21 @@ export default function UserManagementPage() {
     switch (role) {
       case 'admin':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#BE1111]/10 text-[#BE1111] border border-[#BE1111]/20">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#BE1111]/10 text-[#BE1111] border border-[#BE1111]/20">
             <ShieldCheck className="w-3.5 h-3.5" />
             แอดมินระบบ (Admin)
           </span>
         )
       case 'supervisor':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
             <Shield className="w-3.5 h-3.5" />
             หัวหน้างาน (Supervisor)
           </span>
         )
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
             <User className="w-3.5 h-3.5" />
             พนักงานทั่วไป (Staff)
           </span>
@@ -354,7 +354,7 @@ export default function UserManagementPage() {
               <div className="p-2 sm:p-2.5 bg-red-50 text-[#BE1111] rounded-2xl shrink-0">
                 <Users className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <h1 className="text-[14px] xs:text-[15px] sm:text-xl lg:text-2xl font-display font-bold text-slate-900 tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">
+              <h1 className="text-base sm:text-xl lg:text-2xl font-semibold text-slate-900 whitespace-nowrap overflow-hidden text-ellipsis">
                 จัดการผู้ใช้งานระบบ (User Management)
               </h1>
             </div>
@@ -366,7 +366,7 @@ export default function UserManagementPage() {
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#BE1111] hover:bg-[#A00F0F] text-white font-bold text-sm rounded-2xl shadow-md shadow-[#BE1111]/20 transition-all cursor-pointer active:scale-95 shrink-0"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#BE1111] hover:bg-[#A00F0F] text-white font-medium text-sm rounded-2xl shadow-md shadow-[#BE1111]/20 transition-all cursor-pointer active:scale-95 shrink-0"
           >
             <UserPlus className="w-4 h-4" />
             <span>สร้างผู้ใช้งานใหม่</span>
@@ -569,17 +569,17 @@ export default function UserManagementPage() {
           {loading ? (
             <div className="py-16 text-center text-slate-400">
               <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-[#BE1111]" />
-              <p className="text-sm font-semibold">กำลังโหลดข้อมูลผู้ใช้งาน...</p>
+              <p className="text-sm font-medium">กำลังโหลดข้อมูลผู้ใช้งาน...</p>
             </div>
           ) : filteredUsers.length === 0 ? (
             <div className="py-16 text-center text-slate-400">
               <Users className="w-10 h-10 mx-auto mb-2 text-slate-300" />
-              <p className="text-sm font-bold text-slate-600">ไม่พบรายชื่อผู้ใช้งานที่ตรงกับเงื่อนไข</p>
+              <p className="text-sm font-medium text-slate-600">ไม่พบรายชื่อผู้ใช้งานที่ตรงกับเงื่อนไข</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50/80 border-b border-slate-200/80 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <thead className="bg-slate-50/80 border-b border-slate-200/80 text-xs font-medium text-slate-500 uppercase tracking-wider">
                   <tr>
                     <th className="px-6 py-4">ผู้ใช้งาน</th>
                     <th className="px-6 py-4">Username</th>
@@ -594,17 +594,17 @@ export default function UserManagementPage() {
                     <tr key={u.id} className={`hover:bg-slate-50/50 transition-colors ${u.status === 'disabled' ? 'opacity-60 bg-slate-50/30' : ''}`}>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-700 text-xs shrink-0">
+                          <div className="w-9 h-9 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center font-medium text-slate-700 text-xs shrink-0">
                             {u.fullName ? u.fullName.slice(0, 2).toUpperCase() : u.username.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-bold text-slate-900 text-sm leading-tight">{u.fullName}</p>
+                            <p className="font-medium text-slate-900 text-sm leading-tight">{u.fullName}</p>
                             <p className="text-xs text-slate-400">ID: #{u.id}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 font-mono font-semibold text-slate-700">{u.username}</td>
-                      <td className="px-6 py-4 text-slate-600 font-medium">
+                      <td className="px-6 py-4 font-normal text-slate-700">{u.username}</td>
+                      <td className="px-6 py-4 text-slate-600 font-normal">
                         {u.employeeId ? (
                           <span className="inline-flex items-center gap-1">
                             <BadgeCheck className="w-3.5 h-3.5 text-slate-400" />
@@ -641,7 +641,7 @@ export default function UserManagementPage() {
                               setShowRoleModalUser(u)
                               setSelectedRole((u.role as 'admin' | 'supervisor' | 'warehouse_staff') || 'warehouse_staff')
                             }}
-                            className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                            className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-xl transition-all cursor-pointer"
                             title="เปลี่ยน Role"
                           >
                             Role
@@ -718,71 +718,71 @@ export default function UserManagementPage() {
                 <div className="p-2.5 bg-red-50 text-[#BE1111] rounded-2xl">
                   <UserPlus className="w-5 h-5" />
                 </div>
-                <h3 className="text-lg font-display font-bold text-slate-900">
+                <h3 className="text-lg font-semibold text-slate-900">
                   สร้างผู้ใช้งานใหม่
                 </h3>
               </div>
 
               {createFormError && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-2xl text-xs font-semibold">
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-2xl text-xs font-medium">
                   {createFormError}
                 </div>
               )}
 
               <form onSubmit={handleCreateUserSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">ชื่อผู้ใช้ (Username) *</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">ชื่อผู้ใช้ (Username) *</label>
                   <input
                     type="text"
                     value={newUsername}
                     onChange={(e) => setNewUsername(e.target.value)}
                     placeholder="เช่น employee01"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">รหัสผ่าน (Password) *</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">รหัสผ่าน (Password) *</label>
                   <input
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="อย่างน้อย 6 ตัวอักษร"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">ชื่อ-นามสกุล *</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">ชื่อ-นามสกุล *</label>
                   <input
                     type="text"
                     value={newFullName}
                     onChange={(e) => setNewFullName(e.target.value)}
                     placeholder="เช่น สมชาย ใจดี"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">รหัสพนักงาน (ถ้ามี)</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">รหัสพนักงาน (ถ้ามี)</label>
                   <input
                     type="text"
                     value={newEmployeeId}
                     onChange={(e) => setNewEmployeeId(e.target.value)}
                     placeholder="เช่น EMP-1002"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">บทบาทสิทธิ์การใช้งาน (Role) *</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">บทบาทสิทธิ์การใช้งาน (Role) *</label>
                   <select
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value as 'admin' | 'supervisor' | 'warehouse_staff')}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
                   >
                     <option value="warehouse_staff">พนักงานทั่วไป (Staff - สแกนรับ/จ่าย)</option>
                     <option value="supervisor">หัวหน้างาน (Supervisor - อนุมัติคลังสินค้า)</option>
@@ -794,14 +794,14 @@ export default function UserManagementPage() {
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-2xl cursor-pointer"
+                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm rounded-2xl cursor-pointer"
                   >
                     ยกเลิก
                   </button>
                   <button
                     type="submit"
                     disabled={actionLoadingId === -1}
-                    className="px-5 py-2.5 bg-[#BE1111] hover:bg-[#A00F0F] text-white font-bold text-sm rounded-2xl shadow-md shadow-[#BE1111]/20 disabled:opacity-50 cursor-pointer"
+                    className="px-5 py-2.5 bg-[#BE1111] hover:bg-[#A00F0F] text-white font-medium text-sm rounded-2xl shadow-md shadow-[#BE1111]/20 disabled:opacity-50 cursor-pointer"
                   >
                     สร้างบัญชี
                   </button>
@@ -832,39 +832,39 @@ export default function UserManagementPage() {
 
               <div className="flex items-center gap-2 mb-2 text-slate-900">
                 <Edit className="w-5 h-5 text-[#BE1111]" />
-                <h3 className="text-base font-display font-bold">
+                <h3 className="text-base font-semibold text-slate-900">
                   แก้ไขข้อมูลผู้ใช้งาน
                 </h3>
               </div>
               <p className="text-xs text-slate-500 mb-4">Username: @{showEditModalUser.username}</p>
 
               {editFormError && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-2xl text-xs font-semibold">
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-2xl text-xs font-medium">
                   {editFormError}
                 </div>
               )}
 
               <form onSubmit={handleEditUserSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">ชื่อ-นามสกุล *</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">ชื่อ-นามสกุล *</label>
                   <input
                     type="text"
                     value={editFullName}
                     onChange={(e) => setEditFullName(e.target.value)}
                     placeholder="เช่น สมชาย ใจดี"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">รหัสพนักงาน</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">รหัสพนักงาน</label>
                   <input
                     type="text"
                     value={editEmployeeId}
                     onChange={(e) => setEditEmployeeId(e.target.value)}
                     placeholder="เช่น EMP-1001"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
                   />
                 </div>
 
@@ -872,14 +872,14 @@ export default function UserManagementPage() {
                   <button
                     type="button"
                     onClick={() => setShowEditModalUser(null)}
-                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-xl cursor-pointer"
                   >
                     ยกเลิก
                   </button>
                   <button
                     type="submit"
                     disabled={actionLoadingId === showEditModalUser.id}
-                    className="px-4 py-2.5 bg-[#BE1111] hover:bg-[#A00F0F] text-white font-bold text-xs rounded-xl shadow-xs disabled:opacity-50 cursor-pointer"
+                    className="px-4 py-2.5 bg-[#BE1111] hover:bg-[#A00F0F] text-white font-medium text-xs rounded-xl shadow-xs disabled:opacity-50 cursor-pointer"
                   >
                     บันทึกการแก้ไข
                   </button>
@@ -908,7 +908,7 @@ export default function UserManagementPage() {
                 <X className="w-5 h-5" />
               </button>
 
-              <h3 className="text-base font-display font-bold text-slate-900 mb-1">
+              <h3 className="text-base font-semibold text-slate-900 mb-1">
                 เปลี่ยน Role ของ {showRoleModalUser.fullName}
               </h3>
               <p className="text-xs text-slate-500 mb-4">Username: @{showRoleModalUser.username}</p>
@@ -917,7 +917,7 @@ export default function UserManagementPage() {
                 <select
                   value={selectedRole}
                   onChange={(e) => setSelectedRole(e.target.value as 'admin' | 'supervisor' | 'warehouse_staff')}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
                 >
                   <option value="warehouse_staff">พนักงานทั่วไป (Staff)</option>
                   <option value="supervisor">หัวหน้างาน (Supervisor)</option>
@@ -929,7 +929,7 @@ export default function UserManagementPage() {
                 <button
                   type="button"
                   onClick={() => setShowRoleModalUser(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-xl cursor-pointer"
                 >
                   ยกเลิก
                 </button>
@@ -937,7 +937,7 @@ export default function UserManagementPage() {
                   type="button"
                   onClick={handleUpdateRoleSubmit}
                   disabled={actionLoadingId === showRoleModalUser.id}
-                  className="px-4 py-2 bg-[#BE1111] hover:bg-[#A00F0F] text-white font-bold text-xs rounded-xl shadow-xs disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-2 bg-[#BE1111] hover:bg-[#A00F0F] text-white font-medium text-xs rounded-xl shadow-xs disabled:opacity-50 cursor-pointer"
                 >
                   บันทึกการเปลี่ยน Role
                 </button>
@@ -967,22 +967,22 @@ export default function UserManagementPage() {
 
               <div className="flex items-center gap-2 mb-2 text-amber-600">
                 <KeyRound className="w-5 h-5" />
-                <h3 className="text-base font-display font-bold text-slate-900">
+                <h3 className="text-base font-semibold text-slate-900">
                   รีเซ็ตรหัสผ่านผู้ใช้งาน
                 </h3>
               </div>
               <p className="text-xs text-slate-500 mb-4">
-                ตั้งรหัสผ่านใหม่ให้แก่ <span className="font-bold text-slate-800">{showResetModalUser.fullName}</span> (@{showResetModalUser.username})
+                ตั้งรหัสผ่านใหม่ให้แก่ <span className="font-semibold text-slate-800">{showResetModalUser.fullName}</span> (@{showResetModalUser.username})
               </p>
 
               <div className="mb-6">
-                <label className="block text-xs font-bold text-slate-600 mb-1">รหัสผ่านใหม่ *</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">รหัสผ่านใหม่ *</label>
                 <input
                   type="password"
                   value={resetPassInput}
                   onChange={(e) => setResetPassInput(e.target.value)}
                   placeholder="อย่างน้อย 6 ตัวอักษร"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111]"
                 />
               </div>
 
@@ -990,7 +990,7 @@ export default function UserManagementPage() {
                 <button
                   type="button"
                   onClick={() => setShowResetModalUser(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-xl cursor-pointer"
                 >
                   ยกเลิก
                 </button>
@@ -998,7 +998,7 @@ export default function UserManagementPage() {
                   type="button"
                   onClick={handleResetPasswordSubmit}
                   disabled={actionLoadingId === showResetModalUser.id}
-                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-xs disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-xl shadow-xs disabled:opacity-50 cursor-pointer"
                 >
                   ยืนยันการตั้งรหัสผ่านใหม่
                 </button>

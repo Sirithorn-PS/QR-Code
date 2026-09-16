@@ -192,7 +192,7 @@ function TransactionsContent() {
     <main className="min-h-screen bg-slate-50 px-6 py-8">
       <div className="mx-auto max-w-6xl">
         <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900 tracking-tight">
+          <h1 className="text-3xl font-semibold text-slate-900">
             {user?.role === 'warehouse_staff' ? 'รายการของฉัน' : 'รายการรอการยืนยัน'}
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-slate-500">
@@ -223,7 +223,7 @@ function TransactionsContent() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as 'pending' | 'all' | 'confirmed' | 'rejected')}
-              className="w-full text-xs sm:text-sm font-bold text-slate-900 focus:outline-none bg-transparent cursor-pointer"
+              className="w-full text-xs sm:text-sm font-medium text-slate-900 focus:outline-none bg-transparent cursor-pointer"
             >
               {user?.role === 'warehouse_staff' ? (
                 <>
@@ -284,15 +284,15 @@ function TransactionsContent() {
                   <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2.5 mb-2">
-                        <span className="text-xs sm:text-sm font-display font-bold text-slate-400 bg-slate-50 px-2.5 py-0.5 rounded-md border border-slate-200/80">
+                        <span className="text-xs sm:text-sm font-medium text-slate-400 bg-slate-50 px-2.5 py-0.5 rounded-md border border-slate-200/80">
                           #{transaction.id}
                         </span>
                         {transaction.type === 'receive' ? (
-                          <span className="inline-flex items-center justify-center rounded-full bg-green-50 border border-green-100 px-2.5 py-0.5 text-xs font-bold text-green-700">
+                          <span className="text-xs sm:text-sm font-medium text-emerald-600">
                             รับเข้า
                           </span>
                         ) : (
-                          <span className="inline-flex items-center justify-center rounded-full bg-red-50 border border-red-100 px-2.5 py-0.5 text-xs font-bold text-[#BE1111]">
+                          <span className="inline-flex items-center justify-center rounded-full bg-red-50 border border-red-100 px-2.5 py-0.5 text-xs font-medium text-[#BE1111]">
                             เบิกออก
                           </span>
                         )}
@@ -310,11 +310,11 @@ function TransactionsContent() {
 
                         return (
                           <div>
-                            <h2 className="text-base sm:text-lg md:text-xl font-display font-extrabold text-slate-900 leading-snug tracking-tight">
+                            <h2 className="text-base sm:text-lg md:text-xl font-semibold text-slate-900 leading-snug">
                               {mainTitle}
                             </h2>
                             {subDetail && (
-                              <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-0.5 leading-snug">
+                              <p className="text-xs sm:text-sm font-normal text-slate-500 mt-0.5 leading-snug">
                                 {subDetail}
                               </p>
                             )}
@@ -322,9 +322,9 @@ function TransactionsContent() {
                         )
                       })()}
                       <div className="mt-3 grid gap-x-6 gap-y-2 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-3 bg-slate-50/60 p-3.5 rounded-xl border border-slate-200/60">
-                        <div><span className="text-slate-400 text-[11px] uppercase tracking-wider block mb-0.5">Item Code</span> <span className="font-semibold text-slate-800">{transaction.product?.itemCode || transaction.itemSnapshot.itemCode}</span></div>
-                        <div><span className="text-slate-400 text-[11px] uppercase tracking-wider block mb-0.5">จำนวน</span> <span className="font-extrabold text-slate-900 text-base">{transaction.quantity}</span></div>
-                        <div><span className="text-slate-400 text-[11px] uppercase tracking-wider block mb-0.5">ผู้สร้างรายการ</span> <span className="font-medium text-slate-700">{transaction.createdBy?.fullName || '-'}</span></div>
+                        <div><span className="text-gray-500 font-medium text-[11px] uppercase tracking-wider block mb-0.5">Item Code</span> <span className="font-medium text-slate-800">{transaction.product?.itemCode || transaction.itemSnapshot.itemCode}</span></div>
+                        <div><span className="text-gray-500 font-medium text-[11px] uppercase tracking-wider block mb-0.5">จำนวน</span> <span className="font-semibold text-slate-900 text-base">{transaction.quantity}</span></div>
+                        <div><span className="text-gray-500 font-medium text-[11px] uppercase tracking-wider block mb-0.5">ผู้สร้างรายการ</span> <span className="font-normal text-slate-700">{transaction.createdBy?.fullName || '-'}</span></div>
                       </div>
                     </div>
 
@@ -368,9 +368,10 @@ function TransactionsContent() {
                         </div>
                       )
                     ) : transaction.status === 'confirmed' ? (
-                      <div className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-2.5 text-xs font-bold text-emerald-700 self-start md:self-center shadow-2xs">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        <span>อนุมัติแล้ว</span>
+                      <div className="inline-flex items-center self-start md:self-center">
+                        <span className="text-xs sm:text-sm font-medium text-emerald-600">
+                          อนุมัติแล้ว
+                        </span>
                       </div>
                     ) : (
                       <div className="inline-flex items-center gap-1.5 rounded-xl bg-red-50 border border-red-200 px-4 py-2.5 text-xs font-bold text-[#BE1111] self-start md:self-center shadow-2xs">
@@ -400,7 +401,7 @@ function TransactionsContent() {
                     const unit = transaction.product?.unit || transaction.itemSnapshot?.unit || ''
 
                     return (
-                      <div className="mt-4 pt-4 border-t border-slate-100 font-display">
+                      <div className="mt-4 pt-4 border-t border-slate-100">
                         <div className="rounded-2xl border border-blue-100 bg-blue-50/40 overflow-hidden transition-all">
                           {/* Header / Toggle Button */}
                           <button
@@ -536,7 +537,7 @@ function TransactionsContent() {
               transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
               className="relative w-full max-w-md rounded-3xl bg-white/95 backdrop-blur-xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.1)] border border-white/40"
             >
-              <h3 className="text-xl font-display font-bold text-slate-900 tracking-tight">ยืนยันการปฏิเสธรายการ <span className="text-slate-400 font-display text-lg ml-1">#{rejectModalTxId}</span></h3>
+              <h3 className="text-xl font-semibold text-slate-900">ยืนยันการปฏิเสธรายการ <span className="text-slate-400 text-lg ml-1">#{rejectModalTxId}</span></h3>
               <p className="mt-2 text-sm text-slate-500">
                 กรุณาระบุหมายเหตุหรือเหตุผลในการปฏิเสธรายการนี้ (ถ้ามี) เพื่อแจ้งให้ผู้สร้างรายการทราบ
               </p>

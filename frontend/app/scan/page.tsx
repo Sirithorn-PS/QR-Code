@@ -292,7 +292,7 @@ export default function ScanPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8 text-center"
         >
-          <h2 className="text-2xl md:text-3xl font-display font-bold text-gray-900 tracking-tight">
+          <h2 className="text-2xl md:text-3xl font-semibold text-gray-900">
             สแกนสินค้า
           </h2>
           <p className="text-sm text-gray-500 mt-2">
@@ -461,20 +461,20 @@ export default function ScanPage() {
                       )}
                       {product.itemType === 'Packaging' && (
                         product.status === 'inactive' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 font-display">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
                             <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                             Inactive (ปิดใช้งาน)
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 font-display">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                             Active (ใช้งานอยู่)
                           </span>
                         )
                       )}
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mt-2">{product.name}</h3>
-                    <p className="text-xs font-display text-gray-400 mt-0.5">{product.itemCode}</p>
+                    <h3 className="text-xl font-semibold text-gray-900 mt-2">{product.name}</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">{product.itemCode}</p>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0 ml-2">
                     <button
@@ -534,11 +534,11 @@ export default function ScanPage() {
                         >
                           <div className="flex items-start justify-between pb-4 border-b border-gray-100 mb-4 shrink-0">
                             <div>
-                              <div className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-[#BE1111] border border-red-100 mb-1">
+                              <div className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-[#BE1111] border border-red-100 mb-1">
                                 📑 รายละเอียดสูตรการผลิต (BOM)
                               </div>
-                              <h3 className="text-base sm:text-lg font-display font-bold text-gray-900 tracking-tight">{product.name}</h3>
-                              <p className="text-xs font-display font-semibold text-gray-500 mt-0.5">รหัสสินค้าหลัก: {product.itemCode}</p>
+                              <h3 className="text-base sm:text-lg font-semibold text-gray-900">{product.name}</h3>
+                              <p className="text-xs font-normal text-gray-500 mt-0.5">รหัสสินค้าหลัก: {product.itemCode}</p>
                             </div>
                             <button
                               type="button"
@@ -570,7 +570,7 @@ export default function ScanPage() {
                                       <span className="text-xs font-bold text-gray-800">{subTitle}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-700 font-display">
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-700">
                                         {subComponents.length} รายการ
                                       </span>
                                       {subExpanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
@@ -594,7 +594,7 @@ export default function ScanPage() {
                                               title={`คลิกเพื่อสลับไปยังสินค้าส่วนประกอบ [${c.componentItemCode}]`}
                                             >
                                               <div className="flex items-center gap-2 overflow-hidden">
-                                                <div className="shrink-0 whitespace-nowrap font-display font-bold px-2 py-0.5 rounded border text-[#BE1111] bg-red-50 border-red-100/80 group-hover/item:bg-white">
+                                                <div className="shrink-0 whitespace-nowrap font-medium px-2 py-0.5 rounded border text-[#BE1111] bg-red-50 border-red-100/80 group-hover/item:bg-white">
                                                   {c.componentItemCode}
                                                 </div>
                                                 <div className="truncate font-medium text-gray-700 group-hover/item:text-gray-900">
@@ -603,8 +603,8 @@ export default function ScanPage() {
                                               </div>
                                               <div className="shrink-0 ml-2 flex items-center gap-2">
                                                 <div className="text-right whitespace-nowrap">
-                                                  <span className="font-bold text-gray-900 group-hover/item:text-[#BE1111]">{c.quantity}</span>
-                                                  <span className="text-[10px] text-gray-400 ml-1 font-display">{c.uom}</span>
+                                                  <span className="font-semibold text-gray-900 group-hover/item:text-[#BE1111]">{c.quantity}</span>
+                                                  <span className="text-[10px] text-gray-400 ml-1">{c.uom}</span>
                                                 </div>
                                                 <ExternalLink className="w-3.5 h-3.5 text-gray-300 group-hover/item:text-[#BE1111] transition-colors" />
                                               </div>
@@ -767,7 +767,7 @@ export default function ScanPage() {
                               title={`คลิกเพื่อสลับไปดูและทำรายการรับ/จ่ายสำหรับชิ้นส่วน [${c.componentItemCode}]`}
                             >
                               <div className="flex items-center gap-2 overflow-hidden min-w-0">
-                                <div className="shrink-0 whitespace-nowrap font-display font-bold px-2 py-0.5 rounded border text-[#BE1111] bg-red-50 border-red-100/80 group-hover/item:bg-white">
+                                <div className="shrink-0 whitespace-nowrap font-medium px-2 py-0.5 rounded border text-[#BE1111] bg-red-50 border-red-100/80 group-hover/item:bg-white">
                                   {c.componentItemCode}
                                 </div>
                                 <div className="truncate font-medium text-gray-700 group-hover/item:text-gray-900">
@@ -776,8 +776,8 @@ export default function ScanPage() {
                               </div>
                               <div className="shrink-0 ml-2 flex items-center gap-2">
                                 <div className="text-right whitespace-nowrap">
-                                  <span className="font-bold text-gray-900 group-hover/item:text-[#BE1111]">{c.quantity}</span>
-                                  <span className="text-[10px] text-gray-400 ml-1 font-display">{c.uom}</span>
+                                  <span className="font-semibold text-gray-900 group-hover/item:text-[#BE1111]">{c.quantity}</span>
+                                  <span className="text-[10px] text-gray-400 ml-1">{c.uom}</span>
                                 </div>
                                 <ExternalLink className="w-3.5 h-3.5 text-gray-300 group-hover/item:text-[#BE1111] transition-colors" />
                               </div>

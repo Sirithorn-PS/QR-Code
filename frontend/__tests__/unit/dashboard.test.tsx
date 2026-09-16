@@ -10,6 +10,7 @@ vi.mock('@/lib/auth', async () => {
     fetchTransactions: vi.fn(),
     fetchProducts: vi.fn(),
     getUser: vi.fn(),
+    getUsers: vi.fn(),
   }
 })
 
@@ -128,10 +129,50 @@ describe('Dashboard Page — Personal Activity & Warehouse Overview (STEP 4.25)'
     },
   ]
 
+  const mockUsers: auth.UserItem[] = [
+    {
+      id: 1,
+      username: 'admin',
+      fullName: 'สมชาย ผู้ดูแลระบบ',
+      employeeId: 'EMP-001',
+      role: 'admin',
+      status: 'approved',
+      createdAt: '2026-09-01T08:00:00.000Z',
+    },
+    {
+      id: 2,
+      username: 'supervisor',
+      fullName: 'สมศักดิ์ หัวหน้างาน',
+      employeeId: 'EMP-002',
+      role: 'supervisor',
+      status: 'approved',
+      createdAt: '2026-09-02T08:00:00.000Z',
+    },
+    {
+      id: 3,
+      username: 'staff1',
+      fullName: 'พนักงานคลังสินค้า หนึ่ง',
+      employeeId: 'EMP-003',
+      role: 'warehouse_staff',
+      status: 'approved',
+      createdAt: '2026-09-03T08:00:00.000Z',
+    },
+    {
+      id: 4,
+      username: 'staff2_disabled',
+      fullName: 'พนักงานถูกระงับ',
+      employeeId: 'EMP-004',
+      role: 'warehouse_staff',
+      status: 'disabled',
+      createdAt: '2026-09-04T08:00:00.000Z',
+    },
+  ]
+
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(auth.fetchTransactions).mockResolvedValue(mockTransactions)
     vi.mocked(auth.fetchProducts).mockResolvedValue(mockProducts)
+    vi.mocked(auth.getUsers).mockResolvedValue(mockUsers)
   })
 
   afterEach(() => {
@@ -162,12 +203,13 @@ describe('Dashboard Page — Personal Activity & Warehouse Overview (STEP 4.25)'
     // 7-day trend title for Staff
     expect(screen.getByText('สรุปการทำงานของคุณ 7 วันล่าสุด')).toBeInTheDocument()
 
-    // Recent transactions title for Staff
+    // Recent transactions title & subtitle for Staff
     expect(screen.getByText('รายการของคุณล่าสุด')).toBeInTheDocument()
-    expect(screen.getByText('5 รายการประวัติการทำรายการล่าสุดของคุณ')).toBeInTheDocument()
+    expect(screen.getByText('ประวัติการทำรายการล่าสุดของคุณ')).toBeInTheDocument()
+    expect(screen.getByText('แสดง 1 - 2 จากทั้งหมด 2 รายการ')).toBeInTheDocument()
 
-    // Quick action link for Staff points to My Transactions
-    expect(screen.getByText('ดูรายการของฉัน')).toBeInTheDocument()
+    // Quick action section is removed from Staff Dashboard to avoid navigation redundancy
+    expect(screen.queryByText('เมนูด่วน (Quick Action)')).not.toBeInTheDocument()
   })
 
   it('2. Staff role displays Warehouse Overview section with aggregate metrics', async () => {
@@ -221,11 +263,114 @@ describe('Dashboard Page — Personal Activity & Warehouse Overview (STEP 4.25)'
     // 7-day trend title for Supervisor
     expect(screen.getByText('สรุปการรับเข้า - เบิกออก 7 วันล่าสุด')).toBeInTheDocument()
 
-    // Recent transactions title for Supervisor
+    // Recent transactions title & subtitle for Supervisor
     expect(screen.getByText('รายการล่าสุด (Recent Transactions)')).toBeInTheDocument()
-    expect(screen.getByText('5 รายการประวัติการทำรายการล่าสุดในระบบ')).toBeInTheDocument()
+    expect(screen.getByText('ประวัติการทำรายการล่าสุดในระบบ')).toBeInTheDocument()
+    expect(screen.getByText('แสดง 1 - 2 จากทั้งหมด 2 รายการ')).toBeInTheDocument()
 
     // Quick action link for Supervisor points to reports
     expect(screen.getByText('ดูรายงานทั้งหมด')).toBeInTheDocument()
   })
+
+  it('4. Admin role displays Admin Dashboard with User & System management and no warehouse clutter', async () => {
+    vi.mocked(auth.getUser).mockReturnValue({
+      id: 1,
+      username: 'admin',
+      fullName: 'แอดมินระบบ (Admin)',
+      role: 'admin',
+    })
+
+    render(<DashboardPage />)
+
+    await waitFor(() => {
+      // Header
+      expect(screen.getByText('แผงควบคุมระบบ')).toBeInTheDocument()
+      expect(screen.getByText('ภาพรวมระบบ ผู้ใช้งาน และสถานะการทำงาน')).toBeInTheDocument()
+      expect(screen.getByText('จัดการผู้ใช้งาน')).toBeInTheDocument()
+    })
+
+    // 1. Top 3 Summary Cards
+    expect(screen.getAllByText('ผู้ใช้งานทั้งหมด').length).toBeGreaterThan(0)
+    expect(screen.getByText('บัญชีที่ใช้งานได้')).toBeInTheDocument()
+    expect(screen.getByText('บัญชีที่ถูกระงับ')).toBeInTheDocument()
+    expect(screen.getByText('บัญชีผู้ใช้ที่ลงทะเบียนในระบบ')).toBeInTheDocument()
+    expect(screen.getByText('พร้อมเข้าใช้งานระบบ')).toBeInTheDocument()
+    expect(screen.getByText('ระงับการใช้งาน / ปฏิเสธ')).toBeInTheDocument()
+
+    // 2. Middle Section: Users by Role (Donut) & System Status
+    expect(screen.getByText('ผู้ใช้งานตามบทบาท')).toBeInTheDocument()
+    expect(screen.getAllByText(/ผู้ดูแลระบบ/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('หัวหน้างาน (Supervisor)').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/พนักงาน/).length).toBeGreaterThan(0)
+
+    expect(screen.getByText('สถานะระบบ (System Status)')).toBeInTheDocument()
+    expect(screen.getByText('Web Application')).toBeInTheDocument()
+    expect(screen.getByText('API Gateway')).toBeInTheDocument()
+    expect(screen.getByText('Database Service')).toBeInTheDocument()
+    expect(screen.getByText('Access Control (RBAC)')).toBeInTheDocument()
+
+    // 3. Lower Section: Recent Users Table
+    expect(screen.getByText('สถานะผู้ใช้งานล่าสุด (Recent Users)')).toBeInTheDocument()
+    expect(screen.getByText('รายชื่อบัญชีผู้ใช้และสถานะการอนุญาตล่าสุดในระบบ')).toBeInTheDocument()
+    expect(screen.getByText('สมชาย ผู้ดูแลระบบ')).toBeInTheDocument()
+    expect(screen.getByText('สมศักดิ์ หัวหน้างาน')).toBeInTheDocument()
+    expect(screen.getByText('พนักงานคลังสินค้า หนึ่ง')).toBeInTheDocument()
+    expect(screen.getByText('พนักงานถูกระงับ')).toBeInTheDocument()
+
+    // 4. Verify Warehouse operations are NOT shown for Admin
+    expect(screen.queryByText('กิจกรรมธุรกรรมคลังสินค้า')).not.toBeInTheDocument()
+    expect(screen.queryByText('สถิติการทำงานของฉัน')).not.toBeInTheDocument()
+    expect(screen.queryByText('ภาพรวมคลังสินค้า (Warehouse Overview)')).not.toBeInTheDocument()
+    expect(screen.queryByText('สรุปการรับเข้า - เบิกออก 7 วันล่าสุด')).not.toBeInTheDocument()
+    expect(screen.queryByText('สรุปการทำงานของคุณ 7 วันล่าสุด')).not.toBeInTheDocument()
+  })
+
+  it('5. Recent transactions pagination displays pagination controls when more than 5 items', async () => {
+    const manyMockTransactions: auth.StockTransaction[] = Array.from({ length: 12 }, (_, i) => ({
+      id: 200 + i,
+      productId: 1,
+      type: i % 2 === 0 ? 'receive' : 'issue',
+      quantity: 10 + i,
+      status: 'confirmed',
+      note: `Tx note ${i + 1}`,
+      createdAt: new Date().toISOString(),
+      confirmedAt: null,
+      rejectedAt: null,
+      itemSnapshot: mockProductSnapshot1,
+      createdBy: { username: 'staff', fullName: 'Staff User' },
+      product: {
+        id: 1,
+        itemCode: 'YAM-GAL-01',
+        name: '1L Gallon Yamalube',
+        description: '1L Gallon Yamalube Plastic',
+        unit: 'GALLON',
+        warehouse: 'WPK',
+        location: 'A-01',
+        quantity: 120,
+        itemType: 'Packaging',
+      },
+    }))
+
+    vi.mocked(auth.getUser).mockReturnValue({
+      id: 7,
+      username: 'staff',
+      fullName: 'พนักงานคลังสินค้า (Staff)',
+      role: 'warehouse_staff',
+    })
+    vi.mocked(auth.fetchTransactions).mockResolvedValue(manyMockTransactions)
+
+    render(<DashboardPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('แสดง 1 - 5 จากทั้งหมด 12 รายการ')).toBeInTheDocument()
+    })
+
+    // Expect page numbers 1, 2, 3 and navigation buttons to be present
+    expect(screen.getByRole('button', { name: 'หน้า 1' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'หน้า 2' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'หน้า 3' })).toBeInTheDocument()
+    expect(screen.getByTitle('หน้าก่อนหน้า')).toBeInTheDocument()
+    expect(screen.getByTitle('หน้าถัดไป')).toBeInTheDocument()
+  })
 })
+

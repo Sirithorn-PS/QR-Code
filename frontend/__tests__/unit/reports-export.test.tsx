@@ -336,4 +336,49 @@ describe('Reports Page — Excel Export UI Integration', () => {
       expect(auth.downloadBlob).toHaveBeenCalled()
     })
   })
+
+  it('17. Staff View: Displays "รับเข้า" and "ยืนยันแล้ว" as plain green text without highlight badges', async () => {
+    vi.mocked(auth.getUser).mockReturnValue({
+      id: 3,
+      username: 'staff01',
+      fullName: 'Warehouse Staff',
+      role: 'warehouse_staff',
+    })
+
+    render(<ReportsPage />)
+
+    await waitFor(() => {
+      const receiveElements = screen.getAllByText('รับเข้า')
+      expect(receiveElements.length).toBeGreaterThan(0)
+      const staffReceiveSpan = receiveElements.find(el => el.classList.contains('text-emerald-600') && !el.classList.contains('bg-emerald-50'))
+      expect(staffReceiveSpan).toBeDefined()
+
+      const confirmedElements = screen.getAllByText('ยืนยันแล้ว')
+      expect(confirmedElements.length).toBeGreaterThan(0)
+      const staffConfirmedSpan = confirmedElements.find(el => el.classList.contains('text-emerald-600') && !el.classList.contains('bg-emerald-50'))
+      expect(staffConfirmedSpan).toBeDefined()
+    })
+  })
+
+  it('18. Supervisor View: Displays "รับเข้า" and "ยืนยันแล้ว" with green text styling', async () => {
+    vi.mocked(auth.getUser).mockReturnValue({
+      id: 2,
+      username: 'sup01',
+      fullName: 'Supervisor User',
+      role: 'supervisor',
+    })
+
+    render(<ReportsPage />)
+
+    await waitFor(() => {
+      const receiveBadges = screen.getAllByText('รับเข้า')
+      const badgeContainer = receiveBadges.find(el => el.closest('.text-emerald-600'))
+      expect(badgeContainer).toBeDefined()
+
+      const confirmedBadges = screen.getAllByText('ยืนยันแล้ว')
+      const confirmedContainer = confirmedBadges.find(el => el.closest('.text-emerald-600'))
+      expect(confirmedContainer).toBeDefined()
+    })
+  })
 })
+

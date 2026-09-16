@@ -640,49 +640,53 @@ export default function InventoryPage() {
   })
 
   return (
-    <main className="min-h-screen bg-gray-50/50 px-4 py-8 md:px-8">
-      <div className="mx-auto max-w-7xl">
+    <main className="min-h-screen bg-gray-50/50 w-full max-w-full overflow-x-hidden px-3 sm:px-6 py-6 sm:py-8 font-display">
+      <div className="mx-auto max-w-7xl w-full">
         {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+        <div className="mb-6 sm:mb-8 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 w-full">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-red-50 text-[#BE1111] rounded-xl flex items-center justify-center shadow-sm">
+              <div className="w-10 h-10 bg-red-50 text-[#BE1111] rounded-xl flex items-center justify-center shadow-sm shrink-0">
                 <Box className="w-5 h-5" />
               </div>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-display font-bold text-gray-900 tracking-tight">จัดการสต็อกบรรจุภัณฑ์ (Packaging Stock)</h1>
-                <p className="text-xs text-gray-500 mt-0.5">คลังข้อมูลและระบบจัดการสต็อกบรรจุภัณฑ์ (แกลลอน, ฟอยล์, ฝา, กล่อง) สำหรับตรวจสอบและดาวน์โหลด QR Code</p>
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-display font-bold text-gray-900 tracking-tight whitespace-nowrap">
+                  จัดการสต็อกบรรจุภัณฑ์ (Packaging Stock)
+                </h1>
+                <p className="text-xs text-gray-500 mt-0.5 whitespace-normal hidden sm:block">
+                  คลังข้อมูลและระบบจัดการสต็อกบรรจุภัณฑ์ (แกลลอน, ฟอยล์, ฝา, กล่อง) สำหรับตรวจสอบและดาวน์โหลด QR Code
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="flex items-center gap-2 lg:gap-2.5 shrink-0 flex-nowrap overflow-x-auto pb-1 md:pb-0 scrollbar-none">
             <Link
               href="/reports?view=adjust"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-50 border border-red-100 px-4 py-2.5 text-sm font-semibold text-[#BE1111] hover:bg-[#BE1111] hover:text-white transition-all shadow-sm shrink-0"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-red-50 border border-red-100 px-3 lg:px-3.5 py-2 text-xs lg:text-sm font-semibold text-[#BE1111] hover:bg-[#BE1111] hover:text-white transition-all shadow-xs shrink-0 whitespace-nowrap"
             >
-              <History className="w-4 h-4" />
-              <span>ประวัติการแก้ไขสต็อก</span>
+              <History className="w-3.5 h-3.5 lg:w-4 lg:h-4 shrink-0" />
+              <span>ประวัติแก้ไข</span>
             </Link>
             {user?.role === 'supervisor' && (
               <button
                 type="button"
                 onClick={() => setShowAddModal(true)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#BE1111] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#a00e0e] transition-all shadow-md shadow-[#BE1111]/20 shrink-0 cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#BE1111] px-3 lg:px-3.5 py-2 text-xs lg:text-sm font-bold text-white hover:bg-[#a00e0e] transition-all shadow-md shadow-[#BE1111]/20 shrink-0 cursor-pointer whitespace-nowrap"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5 lg:w-4 lg:h-4 shrink-0" />
                 <span>เพิ่มสินค้าใหม่</span>
               </button>
             )}
             <form
-              className="flex gap-2"
+              className="flex items-center gap-1.5 shrink-0"
               onSubmit={(event) => {
                 event.preventDefault()
                 loadProducts(search)
               }}
             >
-              <div className="relative">
-                <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <div className="relative shrink-0">
+                <Search className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   value={search}
                   onChange={(event) => {
@@ -693,8 +697,8 @@ export default function InventoryPage() {
                       loadProducts('')
                     }
                   }}
-                  className="w-full sm:w-64 rounded-xl border border-gray-200 pl-10 pr-9 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white shadow-sm transition-all"
-                  placeholder="ค้นหา item code / ชื่อ / location"
+                  className="w-36 sm:w-44 md:w-48 lg:w-56 xl:w-60 rounded-xl border border-gray-200 pl-8.5 pr-8 py-2 text-xs lg:text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#BE1111]/20 focus:border-[#BE1111] bg-white shadow-xs transition-all"
+                  placeholder="ค้นหา item code / ชื่อ"
                 />
                 {search && (
                   <button
@@ -704,7 +708,7 @@ export default function InventoryPage() {
                       setPackagingSubTab('all')
                       loadProducts('')
                     }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                     title="ล้างคำค้นหา"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -713,7 +717,7 @@ export default function InventoryPage() {
               </div>
               <button
                 type="submit"
-                className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 transition-colors shadow-sm shrink-0"
+                className="rounded-xl bg-gray-900 px-3.5 lg:px-4 py-2 text-xs lg:text-sm font-semibold text-white hover:bg-gray-800 transition-colors shadow-xs shrink-0 whitespace-nowrap cursor-pointer"
               >
                 ค้นหา
               </button>

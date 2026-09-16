@@ -17,7 +17,13 @@ export default function ReportsPage() {
   const [viewCategory, setViewCategory] = useState<'all' | 'adjust' | 'normal'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [submittedSearch, setSubmittedSearch] = useState('')
-  const [currentUser, setCurrentUser] = useState<UserItem | null>(null)
+  const [currentUser, setCurrentUser] = useState<UserItem | null>(() => {
+    if (typeof window !== 'undefined') {
+      return getUser()
+    }
+    return null
+  })
+  const isStaff = currentUser?.role === 'warehouse_staff'
   const [exporting, setExporting] = useState(false)
   const [exportSuccess, setExportSuccess] = useState('')
   const [exportError, setExportError] = useState('')
@@ -236,7 +242,7 @@ export default function ReportsPage() {
         {/* Top Header */}
         <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-2xl md:text-3xl font-display font-bold text-gray-900 tracking-tight">รายงานธุรกรรม</h1>
+            <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">รายงานธุรกรรม</h1>
           </div>
           
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap justify-end">
@@ -482,17 +488,17 @@ export default function ReportsPage() {
                           className="hover:bg-gray-50/80 transition-colors group"
                         >
                           <td className="px-6 py-5 text-center">
-                            <div className="flex flex-col items-center justify-center text-xs font-display">
-                              <span className="font-semibold text-gray-700 whitespace-nowrap">{dateStr}</span>
-                              <span className="text-[11px] font-bold text-gray-400 mt-0.5 whitespace-nowrap">{timeStr}</span>
+                            <div className="flex flex-col items-center justify-center text-xs">
+                              <span className="font-medium text-slate-700 whitespace-nowrap">{dateStr}</span>
+                              <span className="text-[11px] font-normal text-slate-400 mt-0.5 whitespace-nowrap">{timeStr}</span>
                             </div>
                           </td>
                         <td className="px-6 py-5 text-center">
                           <div className="flex flex-col items-center justify-center text-center">
-                            <div className="font-semibold text-gray-900 text-sm">
+                            <div className="font-medium text-slate-900 text-sm">
                               {transaction.product?.description || transaction.itemSnapshot.name}
                             </div>
-                            <div className="text-xs font-display text-gray-400 mt-1">
+                            <div className="text-xs text-slate-400 mt-1 font-normal">
                               {transaction.product?.itemCode || transaction.itemSnapshot.itemCode}
                             </div>
                           </div>
@@ -500,17 +506,17 @@ export default function ReportsPage() {
                         <td className="px-6 py-5 text-center whitespace-nowrap">
                           <div className="flex items-center justify-center">
                             {transaction.type === 'receive' ? (
-                              <span className="whitespace-nowrap inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-bold font-display bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
-                                <span>รับเข้า</span>
+                              <span className="font-medium text-emerald-600 text-xs sm:text-sm">
+                                รับเข้า
                               </span>
                             ) : (
-                              <span className="whitespace-nowrap inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-bold font-display bg-red-50 text-[#BE1111] border border-red-200/80 shadow-2xs">
-                                <span>เบิกออก</span>
+                              <span className="font-medium text-[#BE1111] text-xs sm:text-sm">
+                                เบิกออก
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-5 text-center font-display font-bold text-gray-900 text-base">
+                        <td className="px-6 py-5 text-center font-semibold text-slate-900 text-base">
                           <div className="text-center">{transaction.quantity.toLocaleString()}</div>
                         </td>
                         <td className="px-6 py-5 text-center">
@@ -519,38 +525,36 @@ export default function ReportsPage() {
                               (() => {
                                 const { title, detail } = parseStockAdjustNote(transaction.note)
                                 return (
-                                  <span className="inline-flex items-center gap-2 rounded-2xl bg-amber-500/10 px-3.5 py-2 text-xs font-bold font-display text-amber-800 border border-amber-200/60 shadow-2xs whitespace-nowrap">
+                                  <span className="inline-flex items-center gap-2 rounded-2xl bg-amber-500/10 px-3.5 py-2 text-xs font-medium text-amber-800 border border-amber-200/60 shadow-2xs whitespace-nowrap">
                                     <SlidersHorizontal className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                                     <span className="flex flex-col items-center justify-center leading-tight whitespace-nowrap">
                                       <span className="whitespace-nowrap">{title}</span>
-                                      {detail && <span className="text-[11px] font-medium text-amber-700/90 mt-0.5 whitespace-nowrap">{detail}</span>}
+                                      {detail && <span className="text-[11px] font-normal text-amber-700/90 mt-0.5 whitespace-nowrap">{detail}</span>}
                                     </span>
                                   </span>
                                 )
                               })()
                             ) : transaction.note ? (
-                              <span className="text-xs text-gray-500 font-display bg-gray-100/50 px-3 py-1.5 rounded-xl border border-gray-200/50 inline-block">
+                              <span className="text-xs text-slate-500 bg-slate-100/50 px-3 py-1.5 rounded-xl border border-slate-200/50 inline-block font-normal">
                                 {transaction.note}
                               </span>
                             ) : (
-                              <span className="text-gray-300">-</span>
+                              <span className="text-slate-300">-</span>
                             )}
                           </div>
                         </td>
                         <td className="px-6 py-5 text-center whitespace-nowrap">
                           <div className="flex items-center justify-center">
                             {transaction.status === 'confirmed' ? (
-                              <span className="whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold font-display bg-emerald-500/10 text-emerald-700 border border-emerald-200/70 shadow-2xs">
-                                <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
-                                <span>ยืนยันแล้ว</span>
+                              <span className="font-medium text-emerald-600 text-xs sm:text-sm">
+                                ยืนยันแล้ว
                               </span>
                             ) : transaction.status === 'rejected' ? (
-                              <span className="whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold font-display bg-rose-500/10 text-rose-700 border border-rose-200/70 shadow-2xs">
-                                <XCircle className="w-3.5 h-3.5 shrink-0 text-rose-600" />
-                                <span>ปฏิเสธแล้ว</span>
+                              <span className="font-medium text-[#BE1111] text-xs sm:text-sm">
+                                ปฏิเสธแล้ว
                               </span>
                             ) : (
-                              <span className="whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold font-display bg-amber-500/10 text-amber-800 border border-amber-200/70 shadow-2xs">
+                              <span className="whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200/80 shadow-2xs">
                                 <Clock className="w-3.5 h-3.5 shrink-0 text-amber-600" />
                                 <span>รอการยืนยัน</span>
                               </span>
@@ -559,9 +563,9 @@ export default function ReportsPage() {
                         </td>
                         <td className="px-6 py-5 text-center text-xs">
                           <div className="flex flex-col items-center justify-center text-center">
-                            <div className="font-medium text-gray-900">{transaction.createdBy?.fullName || '-'}</div>
+                            <div className="font-normal text-slate-900">{transaction.createdBy?.fullName || '-'}</div>
                             {transaction.approvedBy && (
-                              <div className="text-gray-400 mt-1 font-display text-[10px] uppercase tracking-wider">
+                              <div className="text-slate-400 mt-1 text-[10px] uppercase tracking-wider font-normal">
                                 APPV: {transaction.approvedBy.fullName}
                               </div>
                             )}
@@ -602,15 +606,15 @@ export default function ReportsPage() {
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="font-bold text-gray-900 text-sm leading-tight">
+                      <div className="font-medium text-slate-900 text-sm leading-tight">
                         {transaction.product?.description || transaction.itemSnapshot.name}
                       </div>
-                      <div className="text-xs font-display text-gray-400 mt-1">
+                      <div className="text-xs text-slate-400 mt-1 font-normal">
                         {transaction.product?.itemCode || transaction.itemSnapshot.itemCode}
                       </div>
                     </div>
                     <div className="text-right flex flex-col items-end gap-1">
-                      <div className={`font-display font-bold text-lg ${transaction.type === 'receive' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      <div className={`font-semibold text-lg ${transaction.type === 'receive' ? 'text-emerald-600' : 'text-rose-600'}`}>
                         {transaction.type === 'receive' ? '+' : '-'}{transaction.quantity.toLocaleString()}
                       </div>
                     </div>
@@ -618,20 +622,20 @@ export default function ReportsPage() {
                   
                   <div className="flex items-center gap-2 text-xs">
                     {transaction.status === 'confirmed' ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold bg-emerald-50 px-2 py-1 rounded-lg">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> ยืนยันแล้ว
+                      <span className="text-emerald-600 font-medium">
+                        ยืนยันแล้ว
                       </span>
                     ) : transaction.status === 'rejected' ? (
-                      <span className="inline-flex items-center gap-1 text-rose-600 font-semibold bg-rose-50 px-2 py-1 rounded-lg">
-                        <XCircle className="w-3.5 h-3.5" /> ปฏิเสธแล้ว
+                      <span className="text-[#BE1111] font-medium">
+                        ปฏิเสธแล้ว
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-amber-600 font-semibold bg-amber-50 px-2 py-1 rounded-lg">
+                      <span className="inline-flex items-center gap-1 text-amber-600 font-medium bg-amber-50 px-2 py-1 rounded-lg">
                         <Clock className="w-3.5 h-3.5" /> รอการยืนยัน
                       </span>
                     )}
-                    <span className="text-gray-400 font-display">•</span>
-                    <span className="text-gray-400 font-display">{formatDate(transaction.createdAt)}</span>
+                    <span className="text-slate-400">•</span>
+                    <span className="text-slate-400 font-normal">{formatDate(transaction.createdAt)}</span>
                   </div>
 
                   {transaction.note && (
@@ -640,7 +644,7 @@ export default function ReportsPage() {
                         (() => {
                           const { title, detail } = parseStockAdjustNote(transaction.note)
                           return (
-                            <span className="inline-flex items-center gap-2 rounded-2xl bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-800 w-full border border-amber-100 whitespace-nowrap">
+                            <span className="inline-flex items-center gap-2 rounded-2xl bg-amber-50 px-3.5 py-2 text-xs font-medium text-amber-800 w-full border border-amber-100 whitespace-nowrap">
                               <SlidersHorizontal className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                               <span className="flex flex-col items-start leading-tight whitespace-nowrap">
                                 <span className="whitespace-nowrap">{title}</span>

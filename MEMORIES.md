@@ -1,6 +1,172 @@
 # บันทึกการทำงาน (Memories)
 
 ## 16 ก.ย. 2026
+- **ดำเนินการปรับปรุง UI/Visual Design ของหน้า Dashboard สำหรับ Role Supervisor (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ปรับปรุงการออกแบบเชิงทัศนียภาพ (Visual Redesign) และลำดับขั้นการมองเห็น (Visual Hierarchy) ของหน้า Dashboard สำหรับบทบาท Supervisor ตามแนวทางอ้างอิง Reference Design โดยเน้นความเป็นมืออาชีพ เรียบง่าย สะอาดตา (Minimal, Clean, Professional WMS) และอ่านค่าง่าย โดยไม่แตะต้อง Business Logic, Database Schema, API, หรือการคำนวณข้อมูลจริงของระบบ
+  - **รายละเอียดการปรับปรุง (Key Design Implementations)**:
+    1. **Typography & Font Family**: ปรับฟอนต์ของหน้า Dashboard Supervisor ให้ใช้ Google Font **Prompt** (`font-display`) สอดคล้องเป็นหนึ่งเดียวกับแถบเมนูนำทาง (Sidebar Navigation) ทั้งตัวเลข หัวข้อ และคำอธิบาย
+    2. **Layout 4 KPI Cards (Horizontal Layout with Left Icon & Single-line Metrics)**: ปรับโครงสร้างภายใน 4 Cards ให้ตรงตามภาพต้นแบบ โดยไอคอนจัดวางอยู่ฝั่งซ้าย (`w-12 h-12 rounded-2xl shrink-0`) และข้อมูลจัดวางอยู่ฝั่งขวา (Label ด้านบน $\rightarrow$ ตัวเลขขนาดใหญ่และหน่วยนับ `ชิ้น / หน่วย` หรือ `รายการ` อยู่ในบรรทัดเดียวกันอย่างสมบูรณ์แบบด้วย `flex-nowrap whitespace-nowrap` $\rightarrow$ คำอธิบายย่อย/ลิงก์ด้านล่าง)
+    3. **Inbound / Outbound 7-Day Grouped Bar Chart (2/3 Width)**: พัฒนากราฟเปรียบเทียบการรับเข้า (Crimson Red `#B91C1C`) และการเบิกออก (Coral Pink `#FB7185`) แท่งคู่ในแต่ละวัน พร้อม Dynamic Y-Axis scale, ค่าตัวเลขบนแท่งกราฟ, Badge ช่วงเวลา 7 วัน (`"10 ก.ย. 2569 - 16 ก.ย. 2569"`), และกล่องสรุปรวม 7 วันด้านล่างพร้อมเปอร์เซ็นต์เปรียบเทียบ
+    4. **Donut Chart สัดส่วนวัตถุดิบบรรจุภัณฑ์ (1/3 Width)**: แสดง Donut Chart ขนาด 180x180 px พร้อมตัวเลขรวมกึ่งกลางวงแหวน (`รวม / 23 / รายการ`) และรายการ Category List ด้านขวาแสดงจุดสี, ชื่อหมวดหมู่, จำนวน และร้อยละ (%) อย่างเป็นระเบียบ
+    5. **Action Required Section**: ปรับลดน้ำหนักสายตาลงจาก Chart โดยแสดงกล่องสถานะเรียบร้อยสีเขียวอ่อน (`bg-emerald-50/50 border-emerald-100`) พร้อม Badge `สถานะเรียบร้อย` หรือคิวรออนุมัติหากมีรายการค้าง
+    6. **Supervisor Quick Actions**: จัดวางเป็น 4 Horizontal Cards สวยงาม (ตรวจสอบรายการ, ดูสต็อกบรรจุภัณฑ์, ธุรกรรมทั้งหมด, ดูรายงานทั้งหมด) พร้อมไอคอนกำกับและลูกศรนำทาง
+    7. **Recent Transactions Table & Transactions Page (No Highlight Badges)**: ปรับตารางรายการล่าสุดและหน้ารายการธุรกรรม (Transactions Page) โดยยกเลิกการใช้กล่องไฮไลท์พื้นหลัง (Un-highlighted Clean Text) บนคำว่า `รับเข้า`, `เบิกออก`, `ยืนยันแล้ว`, `ปฏิเสธ` / `ปฏิเสธแล้ว`, `รอการยืนยัน` เพื่อให้หน้าจอเป็นระเบียบ เรียบง่าย และสะอาดตาสูงสุด
+    8. **Quality & Regression Testing**: ผ่าน TypeScript (`npx tsc --noEmit` 0 errors), Vitest Unit Tests ใน Frontend ผ่านครบถ้วน 100% (9/9 test files, 104/104 tests PASS)
+
+- **ดำเนินการ STEP 16.1: FINAL UAT SIGN-OFF DOCUMENT REVIEW & PREPARATION บน Production (เสร็จสมบูรณ์ 100% - PASS / READY FOR SIGN-OFF)**:
+  - **เหตุผลและเป้าหมาย**: ดำเนินการตรวจสอบและจัดเตรียมเอกสารสรุปผลการยอมรับของผู้ใช้ขั้นสุดท้าย (Final UAT Sign-off Document Preparation) แบบ Read-Only อ้างอิงตามหลักฐานการทดสอบ UAT จริงบน Production อย่างเคร่งครัด โดยตรวจสอบความถูกต้องของข้อมูลทุกจุด (Transaction IDs, Product IDs, ProductLots, FIFO Allocation, RBAC, Data Disposition) และแยกแยะสถานะระหว่าง "READY FOR SIGN-OFF" กับ "FORMALLY SIGNED" อย่างชัดเจน เพื่อให้ผู้มีอำนาจตัดสินใจนำไปใช้ลงนามจริง
+  - **ผลการสอบทานเอกสารและความสอดคล้องของหลักฐาน (Document Verification Findings)**:
+    1. **ความถูกต้องของผลการทดสอบ**: ยืนยันผลการทดสอบ UAT ครบทุก Test Cases (UAT-REC-001 PASS, UAT-REC-002 Initial Fail $\rightarrow$ Fix & Deploy $\rightarrow$ Re-run PASS, UAT-ISS-001 PASS, UAT-ISS-002 PASS, UAT-ISS-003 PASS, UAT-REJ-001 PASS, STEP 15.1-15.3 PASS)
+    2. **ความถูกต้องของตัวเลขและ Invariants**: สต็อกสินค้า `ITEM-TEST-UAT` (ID: 1892) คงเหลือ 18 Box, ProductLots #161 = 8, #164 = 5, #165 = 5 ($8 + 5 + 5 = 18$), FIFO Allocation #206 (Tx #527 $\rightarrow$ Lot #161 = 2 Box), และ Global Stock Invariant 42 รายการ (23 Lots) ครบถ้วน 100%
+    3. **ความโปร่งใสของประเด็นปัญหาเดิม**: บันทึกปัญหา `itemType: "Packaging Material"` และการแก้ไขอย่างละเอียด ไม่ปกปิดข้อผิดพลาดเดิม
+    4. **การควบคุมความปลอดภัย**: ยืนยันสถานะ `ITEM-TEST-UAT` เป็น `inactive`, Transaction #528 เป็น `rejected`, ค้างรออนุมัติ = 0, ไม่มีการแก้ไข Code, Schema หรือข้อมูล Production ใดๆ ในขั้นตอนนี้
+    5. **Sign-off Readiness**: จัดเตรียมส่วนลงนามแบบ Placeholder (ไม่ลงชื่อแทนผู้ใช้) พร้อมระบุสถานะทางการเป็น `FINAL UAT STATUS — PASS / READY FOR SIGN-OFF`
+
+- **ดำเนินการ STEP 16: FINAL UAT SIGN-OFF REVIEW & REPORT บน Production (เสร็จสมบูรณ์ 100% - PASS / READY FOR SIGN-OFF)**:
+  - **เหตุผลและเป้าหมาย**: จัดทำรายงานสรุปผลการทดสอบการยอมรับของผู้ใช้ขั้นสุดท้าย (Final UAT Sign-off Review & Final UAT Summary Report) แบบ Read-Only สำหรับระบบบริหารจัดการคลังสินค้า WPK MMS บนสภาพแวดล้อม Production โดยรวบรวมผลการทดสอบครบทุกขอบเขต (23 ขอบเขต), สรุปประเด็นปัญหาที่พบในขั้นตอน UAT-REC-002 เดิม (Root Cause: non-canonical itemType), การแก้ไขและ Deploy, การทดสอบซ้ำ (Re-run), การตรวจสอบความสมบูรณ์ของสต็อกและ FIFO, สิทธิ์ RBAC, และการจัดเก็บข้อมูลทดสอบ (Data Disposition) เพื่อนำเสนอต่อผู้มีอำนาจตัดสินใจในการลงนาม Sign-off
+  - **ผลการสรุปและประเมินผลภาพรวม (Executive Summary & Key Findings)**:
+    1. **UAT Test Cases (6/6 PASS)**: UAT-REC-001 (PASS), UAT-REC-002 (Initial Fail $\rightarrow$ Fix & Deploy $\rightarrow$ Re-run PASS), UAT-ISS-001 (PASS), UAT-ISS-002 (PASS / FIFO Lot #161 $\rightarrow$ Alloc #206), UAT-ISS-003 (PASS / Blocked & Rejected), UAT-REJ-001 (PASS / Rejected #529)
+    2. **Stock & FIFO Invariant**: $\text{Product.quantity} = \sum\text{ProductLot.remainingQuantity} = 18\text{ Box}$ ($8 + 5 + 5 = 18$), Global Invariant 42 รายการ (23 Lots) ถูกต้อง 100% (0 Mismatch, 0 Negative)
+    3. **RBAC & Operational Safety**: สิทธิ์การใช้งานแยกชัดเจนตามบทบาท (Staff, Supervisor, Admin), Inactive Product Operational Guard บล็อกการสร้าง Transaction สินค้า Inactive ได้สมบูรณ์ 100%
+    4. **Data Disposition Completed**: ปรับสถานะ `ITEM-TEST-UAT` (ID: 1892) เป็น `inactive`, ปิด Transaction #528 ค้างรออนุมัติเป็น `rejected` (0 Pending UAT Transactions), และคงประวัติ Audit Trail (#519, #526, #527, #528, #529, Lots #161, #164, #165, Alloc #206) ครบถ้วน 100%
+    5. **Final Technical Quality**: Automated Tests ผ่าน 104/104 (9 test files), TypeScript 0 errors, Builds ผ่าน 100%, ไม่มีข้อบกพร่องทางเทคนิคค้างคา (0 Unresolved Defects)
+    6. **UAT Acceptance Conclusion**: `FINAL UAT STATUS — PASS / READY FOR SIGN-OFF`
+
+- **ดำเนินการ STEP 15.3: FINAL UAT DISPOSITION VERIFICATION บน Production (เสร็จสมบูรณ์ 100% - PASS)**:
+  - **เหตุผลและเป้าหมาย**: ดำเนินการตรวจสอบขั้นสุดท้ายหลังเสร็จสิ้นกระบวนการจัดการข้อมูลทดสอบ UAT (Data Disposition) แบบ Read-Only เพื่อยืนยันว่าสินค้าทดสอบ `ITEM-TEST-UAT` ปรับเป็น `inactive` อย่างปลอดภัย, หลักฐาน Audit Trail ทั้งหมดคงเดิมครบถ้วน 100%, ความสอดคล้องของสต็อกและ ProductLots ทั่วทั้งระบบถูกต้องสมบูรณ์, การจัดสรรแบบ FIFO และประวัติธุรกรรมครบถ้วน, Operational Guard ป้องกันสินค้า inactive ทำงานถูกต้อง, หน้าจอ Dashboards และการส่งออกรายงาน Excel ใช้งานได้ปกติ, และไม่มีการเปลี่ยนแปลงข้อมูลจริงใดๆ
+  - **ผลการตรวจสอบทั้ง 19 หมวดหมู่ (100% PASS - FINAL UAT DISPOSITION VERIFICATION — PASS)**:
+    1. **Product Status**: `ITEM-TEST-UAT` (Product ID: 1892) อยู่ในสถานะ `inactive`, `itemType: "Packaging"`, `minStock: 10` (PASS)
+    2. **Product Quantity**: `Product.quantity` คงเดิมที่ $18\text{ Box}$ ไม่มีการเปลี่ยนแปลง (PASS)
+    3. **ProductLot Verification**: ProductLots ทั้ง 3 รายการคงเดิม 100%: Lot #161 = 8, Lot #164 = 5, Lot #165 = 5 (PASS)
+    4. **Stock Consistency**: $\text{Product.quantity} = \text{SUM(ProductLot.remainingQuantity)} \rightarrow 18 = 8 + 5 + 5 = 18$ (PASS)
+    5. **UAT Transaction History**: ประวัติธุรกรรม UAT ทั้ง 5 รายการคงเดิมสมบูรณ์: #519 (`confirmed` receive 5), #526 (`confirmed` receive 5), #527 (`confirmed` issue 2), #528 (`rejected` issue 19), #529 (`rejected` receive 1) (PASS)
+    6. **FIFO Verification**: Transaction #527 มี `TransactionLotAllocation` #206 ตัดยอดจาก Lot เก่าสุด Lot #161 จำนวน 2 Box คงเดิมสมบูรณ์ (PASS)
+    7. **Transaction #528 (Insufficient Stock)**: อยู่ในสถานะ `rejected`, มี Note `"UAT Insufficient Stock Test Completed"`, สต็อกคงเดิมที่ 18 Box (PASS)
+    8. **Inactive-Product Operational Guard**: พนักงานคลังไม่สามารถสร้าง Transaction สำหรับสินค้า `inactive` ได้ (ระบบตอบกลับ 409 Conflict และบล็อกใน UI Scan) (PASS)
+    9. **Inventory Verification**: รายการสินค้าทดสอบ `ITEM-TEST-UAT` ยังคงมีอยู่ในฐานข้อมูล, สามารถตรวจสอบประวัติย้อนหลังได้ตามสิทธิ์, ข้อมูลสินค้าอื่นไม่ถูกแก้ไข (PASS)
+    10. **Dashboard Verification**: หน้า Dashboard ของ Staff, Supervisor, และ Admin โหลดข้อมูลได้ถูกต้องสมบูรณ์ ไม่มี runtime/UI error (PASS)
+    11. **Transaction History Verification**: หน้า Transactions แสดงประวัติได้ครบถ้วน, Transaction #528 ไม่อยู่ในสถานะ Pending, ยอด Pending UAT Transactions = 0 (PASS)
+    12. **Reports / Export Verification**: หน้า Reports และการ Export Excel (`GET /reports/export-excel`) ทำงานได้สมบูรณ์ (HTTP 200) ไม่เกิด runtime error จากสินค้า inactive (PASS)
+    13. **Notification Verification**: ระบบแจ้งเตือน Notification ทั้ง 23 รายการคงเดิมสมบูรณ์ ไม่มีการสร้าง Notification ผิดปกติ (PASS)
+    14. **Global Stock Consistency**: ตรวจสอบสินค้า 42 รายการในระบบ (มี ProductLots 23 รายการ) พบว่า $\text{Product.quantity} = \text{SUM(ProductLot.remainingQuantity)}$ ครบ 100% โดยมี **0 Mismatches** และ **0 Negative Stock** (PASS)
+    15. **Data Safety / Regression Check**: การปรับสถานะมีผลเฉพาะ `ITEM-TEST-UAT` (ID: 1892) จาก `active` $\rightarrow$ `inactive` เท่านั้น โดยไม่มีการแก้ไขข้อมูล Operational อื่นๆ (PASS)
+    16. **Code Changes**: NO (PASS)
+    17. **Schema Changes**: NO (PASS)
+    18. **Deployment Status**: NO (PASS)
+    19. **Overall Final Disposition Result**: `FINAL UAT DISPOSITION VERIFICATION — PASS`
+
+  - **เหตุผลและเป้าหมาย**: ดำเนินการปรับเปลี่ยนสถานะของสินค้าทดสอบ `ITEM-TEST-UAT` (Product ID: 1892) จาก `active` $\rightarrow$ `inactive` โดยใช้สิทธิ์ Supervisor ผ่าน API Endpoint `PATCH /products/1892/status` ตามขั้นตอนมาตรฐาน เพื่อซ่อนสินค้าทดสอบและป้องกันไม่ให้พนักงานคลังสแกนหรือทำธุรกรรมผิดพลาดในระหว่างการใช้งานจริง แต่ยังคงรักษาประวัติ Audit Trail, ProductLots, FIFO Allocation, และรายงานย้อนหลังไว้ครบถ้วน 100%
+  - **ผลการดำเนินการและการตรวจสอบ (Controlled Status Disposition & Operational Verification)**:
+    1. **Pre-condition Check**: ตรวจสอบสถานะก่อนเปลี่ยน: `ITEM-TEST-UAT` (ID: 1892, `status: active`, `quantity: 18 Box`), ProductLots 3 รายการ (8, 5, 5 Box), Transactions #519-#529 และ Allocation #206 ครบถ้วน (PASS)
+    2. **Status Update**: เปลี่ยนสถานะเป็น `inactive` สำเร็จผ่าน `PATCH /products/1892/status` (`status: "inactive"`, `quantity: 18`)
+    3. **Immediate & Consistency Check**: สต็อกคงเดิมที่ $18\text{ Box}$, ProductLots คงเดิม (Lot #161 = 8, Lot #164 = 5, Lot #165 = 5), Invariant $18 = 8 + 5 + 5 = 18$ (PASS)
+    4. **Historical Data Verification**: Transactions #519, #526, #527 (`confirmed`), #528, #529 (`rejected`) และ Allocation #206 คงเดิม 100% ไม่มีการสูญหายหรือเปลี่ยนแปลง
+    5. **Operational Safety Guard**: ทดสอบจำลองกรณี Staff พยายามสร้าง Transaction สำหรับ `ITEM-TEST-UAT` $\rightarrow$ ระบบตอบกลับ 409 Conflict (`"สินค้ารายการนี้ถูกปิดการใช้งาน (Inactive)..."`) และบล็อกการสร้างรายการอย่างปลอดภัย 100%
+    6. **Reports & Safety**: ส่งออกรายงาน Excel และเข้าถึงประวัติรายการได้สมบูรณ์, ไม่มีการแก้ไข Code, Schema หรือการ Deploy ใดๆ (PASS)
+
+- **ดำเนินการ STEP 15.2: UAT Test Product Disposition Review (Read-Only Review - เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ทำการวิเคราะห์และตรวจสอบผลกระทบเชิงเทคนิค (Impact Analysis) แบบ Read-Only กรณีปรับเปลี่ยนสถานะของสินค้าทดสอบ `ITEM-TEST-UAT` (ID: 1892) จาก `active` $\rightarrow$ `inactive` เพื่อประเมินความปลอดภัยต่อประวัติธุรกรรมย้อนหลัง, ProductLots, FIFO Allocations, รายงานสรุป และกระบวนการทำงานของพนักงานคลัง
+  - **ผลการวิเคราะห์ทางเทคนิค (Technical Impact Findings)**:
+    1. **ประวัติและหลักฐานย้อนหลัง (Audit Trail)**: การปรับเป็น `inactive` ไม่กระทบต่อ Transactions (#519, #526, #527, #528, #529), ProductLots (#161, #164, #165) หรือ Allocation (#206) ทั้งหมดสามารถเปิดดูและ Export รายงานได้ตามปกติ 100%
+    2. **ความสอดคล้องของสต็อก (Stock Invariant)**: ปริมาณ `Product.quantity` (18 Box) และยอดรวม ProductLots ($8 + 5 + 5 = 18\text{ Box}$) ยังคงถูกต้องสมบูรณ์
+    3. **ความปลอดภัยในการปฏิบัติงานจริง**: สถานะ `inactive` จะช่วยป้องกันพนักงานคลังไม่ให้สแกนหรือสร้างรายการเบิก/รับสินค้าทดสอบโดยไม่ได้ตั้งใจ (มี Guard ป้องกันทั้งใน UI และ API)
+    4. **การรองรับ Workflow**: ระบบมี UI Toggle สำหรับ Supervisor ในหน้า Inventory ในการเปลี่ยนสถานะกลับเป็น `active` ได้ทันทีหากต้องการใช้ทดสอบ Regression หรือ Training ในอนาคต
+    5. **ข้อเสนอแนะเชิงธุรกิจ**: แนะนำให้ **SET INACTIVE** โดยรอการอนุมัติอย่างเป็นทางการจากผู้มีอำนาจตัดสินใจ
+
+- **ดำเนินการ STEP 15.1: UAT Test Data Disposition — Close Transaction #528 บน Production (เสร็จสมบูรณ์ 100% - PASS)**:
+  - **เหตุผลและเป้าหมาย**: ดำเนินการจัดการปิดรายการทดสอบ UAT Transaction #528 ที่ตกค้างอยู่ในสถานะ `pending` ผ่านกระบวนการปฏิเสธรายการ (Supervisor Reject Workflow) ตามขั้นตอนมาตรฐานของระบบ โดยระบุเหตุผล `"UAT Insufficient Stock Test Completed"` เพื่อเคลียร์คิวรออนุมัติของหัวหน้างานให้เป็น 0 พร้อมทั้งรักษาประวัติ Audit Trail ไว้อย่างครบถ้วน 100%
+  - **ผลการดำเนินการและการตรวจสอบ (Controlled Disposition & Regression Verification)**:
+    1. **Pre-condition Check**: ตรวจสอบสถานะก่อนดำเนินการ `ITEM-TEST-UAT` (ID: 1892, `quantity: 18 Box`), ProductLots 3 รายการรวม 18 Box (Lot #161 = 8, Lot #164 = 5, Lot #165 = 5), Transaction #528 มีสถานะ `pending` ปริมาณ 19 Box และไม่มี Allocation ใดๆ ผูกไว้ (PASS)
+    2. **Supervisor Rejection Action**: เข้าสู่ระบบด้วย Supervisor (ID: 10) ปฏิเสธ Transaction #528 สำเร็จผ่าน API มาตรฐาน `POST /transactions/528/reject` พร้อมบันทึก Note `"UAT Insufficient Stock Test Completed"`
+    3. **Transaction State**: Transaction #528 เปลี่ยนสถานะจาก `pending` $\rightarrow$ `rejected`, บันทึก `rejectedAt: 2026-09-16T07:41:59.284Z`, `approvedById: 10` ถูกต้อง
+    4. **Stock & Lots Protection**: สต็อกสินค้า `Product.quantity` คงเดิมที่ $18\text{ Box}$ ($18 \rightarrow 18$), ProductLots ทั้ง 3 รายการคงเดิม 8, 5, 5 Box (รวม 18 Box) ไม่มีการเคลื่อนไหวของสต็อกหรือการสร้าง Lot/Allocation ใดๆ (PASS)
+    5. **Pending Queue**: รายการค้างรออนุมัติของกลุ่มสินค้า UAT ในระบบลดลงเหลือ **0 รายการ** อย่างสมบูรณ์
+    6. **Historical Data Safety**: Transactions ในอดีต (#519, #526, #527, #529) คงเดิม 100%, ข้อมูลสินค้า Operational ทั้งหมดไม่ได้รับผลกระทบ, ไม่มีการแก้ไข Code, Schema หรือการ Deploy ใดๆ (PASS)
+
+- **ดำเนินการ UAT Test Data Disposition Review (Read-Only Review - เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ทำการทบทวนและตรวจสอบสถานะข้อมูลทดสอบ UAT ทั้งหมดบนระบบ Production แบบ Read-Only โดยไม่แตะต้องหรือแก้ไขข้อมูล เพื่อจำแนกประเภทและให้คำแนะนำในการจัดการข้อมูลทดสอบ (Data Disposition) ก่อนการทำ UAT Sign-off อย่างเป็นทางการ
+  - **สรุปผลการตรวจสอบข้อมูลและข้อเสนอแนะ**:
+    1. **UAT Product (`ITEM-TEST-UAT` / ID: 1892)**: สต็อก 18 Box, สถานะ active, itemType Packaging $\rightarrow$ **REQUIRES BUSINESS DECISION** (แนะนำให้คงไว้เพื่อใช้ทดสอบหรือปรับเป็น `inactive` เพื่อซ่อนจากการสแกนของ Staff ทั่วไป)
+    2. **ProductLots (Lot #161, #164, #165)**: ยอดคงเหลือ $8 + 5 + 5 = 18\text{ Box}$ $\rightarrow$ **MUST NOT MODIFY** (หลักฐาน Audit Trail ที่เชื่อมโยงกับประวัติ Transaction)
+    3. **Transactions (#519, #526, #527, #529)**: ยืนยันแล้วและปฏิเสธแล้ว $\rightarrow$ **MUST NOT MODIFY** (หลักฐานการทดสอบ UAT ที่ห้ามแก้ไข)
+    4. **Transaction #528 (Issue 19 Box / Pending)**: รายการทดสอบ Insufficient Stock ที่คงสถานะ `pending` $\rightarrow$ **CLEANUP CANDIDATE / REQUIRES BUSINESS DECISION** (สามารถให้ Supervisor ใช้สิทธิ์ตาม Workflow ปกติในการ Reject เพื่อเคลียร์คิวรออนุมัติได้เมื่อได้รับอนุมัติ)
+    5. **Production Safety**: ยืนยันไม่มีการแก้ไข ดัดแปลง หรือลบข้อมูลใดๆ ใน Production, ไม่มีการแก้ไข Code, Schema หรือการ Deploy ใดๆ 100%
+
+- **ดำเนินการทดสอบ Final UAT Verification — Post Functional UAT บน Production (เสร็จสมบูรณ์ 100% - PASS)**:
+  - **เหตุผลและเป้าหมาย**: ดำเนินการตรวจสอบภาพรวมระบบ (Read-Only Verification) ทั้งหมดใน Production ภายหลังเสร็จสิ้นกระบวนการทดสอบ Functional UAT ครบทุก Test Cases เพื่อยืนยันความถูกต้องของสต็อกสินค้า, ลำดับ FIFO, ความสอดคล้องของข้อมูลทั่วทั้งระบบ (Global Invariant), สิทธิ์การเข้าถึง (RBAC), หน้าจอการทำงานหลัก, และความปลอดภัยของข้อมูลจริง
+  - **สรุปผลการตรวจสอบทั้ง 17 หมวดหมู่ (100% PASS)**:
+    1. **Product Stock**: `ITEM-TEST-UAT` (ID: 1892) มีสต็อกคงเหลือ 18 Box, สถานะ active, itemType Packaging ถูกต้อง (PASS)
+    2. **ProductLot Consistency**: ProductLots 3 รายการ (Lot #161 = 8, Lot #164 = 5, Lot #165 = 5) รวม $8 + 5 + 5 = 18\text{ Box}$ ตรงกับ `Product.quantity` ($18 = 18$) ไม่มียอดติดลบหรือ Lot ซ้ำซ้อน (PASS)
+    3. **FIFO Allocation**: Transaction #527 (Issue 2 Box) ตัดยอดจาก Lot เก่าที่สุด Lot #161 ($10 \rightarrow 8$) โดย Lot #164 และ #165 คงเดิมที่ 5 Box พร้อมมี Allocation ชัดเจน (PASS)
+    4. **Transaction Status**: ตรวจสอบสถานะธุรกรรม UAT ทั้ง 5 รายการถูกต้องครบถ้วน (#519 confirmed, #526 confirmed, #527 confirmed, #528 pending, #529 rejected) (PASS)
+    5. **Reject Safety**: Transaction #529 (Rejected Receive) ไม่มีผลกระทบต่อสต็อกสินค้าและไม่มีการสร้าง Lot (PASS)
+    6. **Insufficient Stock Safety**: Transaction #528 (Issue 19 Box) ถูกบล็อกการยืนยันและคงสถานะ pending โดยสต็อกคงเดิมที่ 18 Box ไม่มีการตัดยอดติดลบ (PASS)
+    7. **Global Stock Consistency**: ตรวจสอบสินค้าทั้งหมด 42 รายการในระบบ (สินค้าที่มี Lots ทั้งหมด 23 รายการ) พบว่า $\text{Product.quantity} = \text{SUM(ProductLot.remainingQuantity)}$ ครบ 100% โดยมี **0 Mismatches** (PASS)
+    8. **RBAC**: ตรวจสอบสิทธิ์ Staff ถูกบล็อกจากการ Confirm/Reject (403 Forbidden) และมองเห็นเฉพาะรายการตนเอง, Supervisor เข้าถึงได้ทั่วทั้งคลัง, Admin จัดการผู้ใช้ได้ถูกต้อง (PASS)
+    9. **Dashboard / Inventory / Transactions / Reports / Notifications / Health**: ทุกหน้าจอโหลดข้อมูลสมบูรณ์, การส่งออกรายงาน Excel ทำงานได้ปกติ, Notification แจ้งเตือนและเชื่อมโยงถูกต้อง, ระบบ Backend / Database เชื่อมต่อปกติ 100%
+    10. **Data & Deployment Safety**: ไม่มีการแก้ไขข้อมูล Operational, ไม่มีการแก้ไข Code, Schema หรือการ Deploy ใดๆ ระหว่างการตรวจสอบ (PASS)
+
+- **ดำเนินการทดสอบ UAT-REJ-001: Supervisor Reject Transaction บน Production (เสร็จสมบูรณ์ 100% - PASS)**:
+  - **เหตุผลและเป้าหมาย**: ดำเนินการทดสอบ Controlled Production Write Test สำหรับกระบวนการปฏิเสธรายการ (Reject Workflow) โดยพนักงานคลัง (Staff) สร้างรายการรับเข้าทดสอบ Transaction #529 (1 Box, `LOT-UAT-REJECT-01`) และหัวหน้างาน (Supervisor / User ID 10) ปฏิเสธรายการพร้อมระบุเหตุผล `"Incorrect Lot Code"` เพื่อตรวจสอบว่ารายการเปลี่ยนสถานะเป็น `rejected` อย่างถูกต้อง และสต็อกสินค้า `Product.quantity` รวมถึง `ProductLot` ทั้งหมดไม่มีการเปลี่ยนแปลงเด็ดขาด
+  - **ผลการทดสอบ (Controlled Rejection Verification)**:
+    1. **STEP 1 (Precheck)**: ตรวจสอบสถานะเริ่มต้น: `ITEM-TEST-UAT` (ID 1892) มี `quantity = 18 Box`, มี 3 ProductLots รวม 18 Box (Lot #161 = 8, Lot #164 = 5, Lot #165 = 5), Invariant $18 = 8 + 5 + 5 = 18$ (PASS) และตรวจสอบ Transactions #519, #526, #527 (`confirmed`) และ #528 (`pending`) ถูกต้องครบถ้วน
+    2. **STEP 2 (Login as Staff)**: เข้าสู่ระบบด้วย Staff (`warehouse_staff` / User ID: 7) สำเร็จ
+    3. **STEP 3 & 4 (Create Receive Tx 1 Box)**: สร้างรายการรับเข้า Transaction ID: 529 (`ITEM-TEST-UAT`, Type: `receive`, Quantity: 1 Box, Lot: `LOT-UAT-REJECT-01`, Note: `UAT Reject Test`) ได้สถานะ `pending`, สต็อกคงเหลือ 18 Box, ProductLots ยังคงมี 3 รายการเดิม
+    4. **STEP 5 & 6 (Supervisor Reject Tx #529)**: เข้าสู่ระบบด้วย Supervisor (ID: 10) ทำการปฏิเสธรายการ Transaction #529 พร้อมระบุเหตุผล `"Incorrect Lot Code"` สำเร็จ
+    5. **STEP 7 (Verify Reject Result)**: Transaction #529 เปลี่ยนสถานะเป็น `rejected`, บันทึก `rejectedAt: 2026-09-16T07:04:58.931Z`, `approvedById: 10`, และ Note = `"Incorrect Lot Code"` ถูกต้อง
+    6. **STEP 8 (Verify Stock Protection)**: สต็อก `Product.quantity` ปลอดภัยและคงเดิมที่ $18\text{ Box}$ ($18 \rightarrow 18$) ไม่มีการเพิ่มหรือลดสต็อก (PASS)
+    7. **STEP 9 (Verify ProductLots Protection)**: ProductLots ทุกรายการคงเดิม 100% (Lot #161 = 8, Lot #164 = 5, Lot #165 = 5, รวม 18 Box) ไม่มีการสร้าง Lot ใหม่ขึ้นมา (PASS)
+    8. **STEP 10 (Verify Allocations)**: ไม่มีการสร้าง `TransactionLotAllocation` สำหรับรายการที่ถูกปฏิเสธ (PASS)
+    9. **STEP 11 (Scope Safety)**: Transactions ในอดีต (#519, #526, #527, #528) คงเดิม 100%, ข้อมูลสินค้า Operational อื่นๆ ไม่ได้รับผลกระทบ, ไม่มีการแก้ไข Code, Schema หรือการ Deploy ใดๆ
+
+- **ดำเนินการทดสอบ UAT-ISS-003: Insufficient Stock Prevention บน Production (เสร็จสมบูรณ์ 100% - PASS)**:
+  - **เหตุผลและเป้าหมาย**: ดำเนินการทดสอบ Controlled Production Write Test เพื่อตรวจสอบกลไกการป้องกันการเบิกสินค้าเกินสต็อกคงเหลือ (Insufficient Stock Prevention) โดยพนักงานคลัง (Staff) สร้างรายการเบิกสินค้า 19 Box สำหรับ `ITEM-TEST-UAT` ที่มีสต็อกคงเหลือเพียง 18 Box และตรวจสอบว่าระบบต้องป้องกันไม่ให้มีการตัดสต็อกติดลบ ยอดสต็อก `Product.quantity` และ `ProductLot` ทั้งหมดยังคงปลอดภัย 100%
+  - **ผลการทดสอบ (Controlled Insufficient Stock Verification)**:
+    1. **STEP 1 (Precheck)**: ตรวจสอบสถานะเริ่มต้น: `ITEM-TEST-UAT` (ID 1892) มี `quantity = 18 Box`, มี 3 ProductLots รวม 18 Box (Lot #161 = 8, Lot #164 = 5, Lot #165 = 5), Invariant $18 = 8 + 5 + 5 = 18$ (PASS)
+    2. **STEP 2 (Login as Staff)**: เข้าสู่ระบบด้วยบัญชี Staff (`warehouse_staff` / User ID: 7) สำเร็จ
+    3. **STEP 3 (Create Issue Tx 19 Box)**: สร้างรายการเบิก Transaction ID: 528 (`ITEM-TEST-UAT`, Type: `issue`, Quantity: 19 Box, Note: `UAT Insufficient Stock Test`) ได้สถานะ `pending`
+    4. **STEP 4 (Supervisor Confirm Blocked)**: เข้าสู่ระบบด้วย Supervisor (ID: 10) พยายามยืนยัน Transaction #528 $\rightarrow$ ระบบบล็อกการยืนยันทันทีเนื่องจากสต็อกใน Lot ไม่เพียงพอ (Insufficient Stock / Error Response) และทำการ Rollback รายการทั้งหมด
+    5. **STEP 5 (Verify Stock Protection)**: สต็อก `Product.quantity` ได้รับการป้องกันอย่างสมบูรณ์ คงเดิมที่ $18\text{ Box}$ ($18 \rightarrow 18$) ไม่มีการลดสต็อกหรือติดลบ (PASS)
+    6. **STEP 6 (Verify Product Lot Protection)**: ProductLots ทุกรายการคงเดิม 100% (Lot #161 = 8, Lot #164 = 5, Lot #165 = 5, รวม 18 Box) ไม่มีการตัดยอดบางส่วนหรือทำให้ Lot ติดลบ (PASS)
+    7. **STEP 7 (Verify Transaction State)**: Transaction #528 ยังคงสถานะ `pending` (ไม่สามารถ confirm ได้) ปลอดภัย
+    8. **STEP 8 (Verify FIFO Safety)**: ไม่มีการสร้าง `TransactionLotAllocation` สำหรับ Transaction #528 และไม่มีการตัดสต็อกผิดพลาด
+    9. **STEP 9 (Scope Safety)**: รายการที่ยืนยันแล้วในอดีต (Tx #519, #526, #527) คงเดิม 100%, สต็อกสินค้า Operational อื่นๆ ไม่ได้รับผลกระทบ, ไม่มีการแก้ไข Code, Schema หรือการ Deploy ใดๆ
+
+- **ดำเนินการทดสอบ UAT-ISS-002: Supervisor Confirm Issue + FIFO Verification บน Production (เสร็จสมบูรณ์ 100% - PASS)**:
+  - **เหตุผลและเป้าหมาย**: ดำเนินการทดสอบ Controlled Production Write Test สำหรับกระบวนการยืนยันการเบิกสินค้า (Issue Workflow) โดยหัวหน้างาน (Supervisor / User ID 10) เพื่ออนุมัติ Transaction #527 และตรวจสอบว่าการตัดยอดสต็อกเป็นไปตามกฎ FIFO (First-In, First-Out) โดยตัดสต็อกออกจาก ProductLot ที่เก่าที่สุดก่อน และยอดรวมคงเหลือของ ProductLots ต้องตรงกับ `Product.quantity` อย่างสมบูรณ์ 100%
+  - **ผลการทดสอบ (Controlled Workflow & FIFO Verification)**:
+    1. **STEP 1 (Precheck)**: ตรวจสอบสถานะเริ่มต้น: `ITEM-TEST-UAT` (ID 1892) มี `quantity = 20 Box`, มี 3 ProductLots รวม 20 Box (Lot #161 = 10, Lot #164 = 5, Lot #165 = 5), Transaction #527 มีสถานะ `pending`, ปริมาณ 2 Box ตรวจสอบ Invariant $20 = 10 + 5 + 5 = 20$ (PASS)
+    2. **STEP 2 & 3 (Supervisor Confirm Tx #527)**: เข้าสู่ระบบด้วย Supervisor (ID: 10) ยืนยันรายการเบิกสินค้า Transaction #527 สำเร็จผ่าน API มาตรฐาน
+    3. **STEP 4 (Verify Transaction)**: Transaction #527 เปลี่ยนสถานะเป็น `confirmed`, บันทึก `confirmedAt: 2026-09-16T06:40:05.457Z` และ `approvedById: 10` ถูกต้อง
+    4. **STEP 5 (Verify Product Stock)**: `Product.quantity` ลดลงตรงตามจำนวนที่เบิก $20 \rightarrow 18\text{ Box}$ (ลดลง 2 Box พอดี ไม่มีการตัดสต็อกซ้ำ)
+    5. **STEP 6 (Verify FIFO Allocation)**: การตัดยอดสต็อกระดับ Lot เป็นไปตาม FIFO โดยตัดจาก Lot ที่เก่าที่สุดคือ Lot #161 (`LOT-UAT-INIT`) จำนวน 2 Box ทำให้คงเหลือ $10 \rightarrow 8\text{ Box}$ ขณะที่ Lot #164 ($5 \rightarrow 5$) และ Lot #165 ($5 \rightarrow 5$) ไม่ถูกตัดยอด (PASS)
+    6. **STEP 7 (Stock Consistency)**: ตรวจสอบความสอดคล้อง $\text{Product.quantity} = \text{SUM(ProductLot.remainingQuantity)}$ ได้ $18 = 8 + 5 + 5 = 18$ (PASS) และไม่มี Lot ใดติดลบ
+    7. **STEP 8 (Transaction Lot Allocation)**: Transaction #527 มีบันทึก `TransactionLotAllocation` ถูกต้องตรงกับ Lot #161 จำนวน 2 Box
+    8. **STEP 9 (Scope Safety)**: ไม่มีรายการธุรกรรมซ้ำซ้อน, Transaction #519 และ #526 คงเดิม, สต็อกสินค้า Operational อื่นๆ ไม่ได้รับผลกระทบ, ไม่มีการแก้ไข Code, Schema หรือการ Deploy ใดๆ
+
+- **ดำเนินการทดสอบ UAT-ISS-001: Staff Create Issue Transaction บน Production (เสร็จสมบูรณ์ 100% - PASS)**:
+  - **เหตุผลและเป้าหมาย**: ดำเนินการทดสอบ Controlled Production Write Test สำหรับกระบวนการเบิกสินค้า (Issue Workflow) โดยพนักงานคลัง (Staff / User ID 7) เพื่อตรวจสอบว่าเมื่อสร้างรายการเบิกสินค้า สถานะของรายการต้องเป็น `pending` โดยที่สต็อกสินค้าจริง (`Product.quantity`) และ `ProductLot` จะต้องไม่ถูกตัดยอดก่อนที่หัวหน้างาน (Supervisor) จะอนุมัติ
+  - **ผลการทดสอบ (Controlled Workflow Verification)**:
+    1. **STEP 1 (Precheck)**: ตรวจสอบสถานะก่อนสร้างรายการ: `ITEM-TEST-UAT` (ID 1892) มี `quantity = 20 Box`, ProductLots 3 รายการรวม 20 Box (Lot #161 = 10, Lot #164 = 5, Lot #165 = 5), Transactions #519 และ #526 อยู่ในสถานะ `confirmed` ถูกต้องครบถ้วน (PASS)
+    2. **STEP 2 (Login as Staff)**: เข้าสู่ระบบด้วยบัญชี Staff (`warehouse_staff`) สำเร็จ
+    3. **STEP 3 (Create Issue Tx)**: สร้างรายการเบิกสินค้า Transaction ID: 527 (`ITEM-TEST-UAT`, Type: `issue`, Quantity: 2 Box, Note: `UAT Test Issue`) สำเร็จ
+    4. **STEP 4 (Verify Transaction)**: Transaction ID 527 อยู่ในสถานะ `pending`, `createdById: 7`, ปริมาณ 2 Box ถูกต้อง
+    5. **STEP 5 (Stock Unchanged)**: สต็อกสินค้าคงเหลือ `Product.quantity` ยังคงเดิมที่ $20\text{ Box}$ ($20 \rightarrow 20$) ไม่มีการลดสต็อกก่อนได้รับอนุมัติ (PASS)
+    6. **STEP 6 (Lots Unchanged)**: ProductLots ทั้ง 3 รายการยังคงมีจำนวนคงเหลือเดิม 10, 5, 5 Box (รวม 20 Box) ไม่มีการตัดยอดในระดับ Lot (PASS)
+    7. **STEP 7 (Supervisor Pending Queue)**: รายการ Transaction #527 ปรากฏใน Pending Queue ของ Supervisor และเกิดการแจ้งเตือน Notification (ID: 673) ไปยัง Supervisor ถูกต้อง
+    8. **STEP 8 (Scope Safety)**: ไม่มีรายการธุรกรรมซ้ำซ้อน, Transaction #519 และ #526 คงเดิม, ไม่มีผลกระทบต่อสินค้าอื่นในระบบ
+- **ดำเนินการทดสอบ UAT Re-run: Receive -> Supervisor Confirm -> ProductLot Auto-Creation บน Production (เสร็จสมบูรณ์ 100% - PASS)**:
+  - **เหตุผลและเป้าหมาย**: ทำการทดสอบ Controlled Production Write Test เพื่อพิสูจน์ว่าหลังจากการ Deploy โค้ดที่แก้ไข `isPackagingItem` เมื่อ Staff สร้างรายการรับเข้าและ Supervisor ทำการอนุมัติยืนยัน ระบบจะสร้าง ProductLot ใหม่อัตโนมัติและเพิ่มสต็อกสินค้าอย่างถูกต้องสอดคล้องกัน 100%
+  - **ขั้นตอนการทดสอบ (Controlled Workflow)**:
+    1. **STEP 1 (Precheck)**: ตรวจสอบสถานะก่อนทดสอบ `ITEM-TEST-UAT` (ID 1892): `Product.quantity = 15`, `itemType = "Packaging"`, ProductLots รวม = 15 (Lot #161 = 10, Lot #164 = 5) $\rightarrow$ $15 = 15$ (PASS)
+    2. **STEP 2 (Staff Create)**: เข้าสู่ระบบด้วย Staff (ID: 7) สร้างรายการรับเข้า Transaction ID: 526 (`ITEM-TEST-UAT`, Qty: 5, Lot: `LOT-UAT-REC-RERUN-01`, Note: `UAT Re-run Receive Confirm`) $\rightarrow$ ได้สถานะ `pending`, สต็อกคงเดิมที่ 15 Box, ยังไม่มีการสร้าง ProductLot ก่อนอนุมัติ (PASS)
+    3. **STEP 3 (Supervisor Confirm)**: เข้าสู่ระบบด้วย Supervisor (ID: 10) ยืนยันรายการ Transaction ID: 526 ผ่าน API $\rightarrow$ สถานะเปลี่ยนเป็น `confirmed`
+    4. **STEP 4 (Verify Fix)**:
+       - `Product.quantity` เพิ่มขึ้นจาก $15 \rightarrow 20\text{ Box}$
+       - ระบบสร้าง ProductLot ใหม่ให้อัตโนมัติ (Lot ID: 165, `lotNumber: "LOT-20260916-0165"`, `supplierLot: "LOT-UAT-REC-RERUN-01"`, `receivedQuantity: 5`, `remainingQuantity: 5`, `status: "active"`, `transactionId: 526`)
+       - ยอดรวม ProductLots: Lot #161 (10) + Lot #164 (5) + Lot #165 (5) = 20 Box
+       - Invariant: $\text{Product.quantity} = \text{SUM(ProductLot.remainingQuantity)}$ ($20 = 20$) $\rightarrow$ **PASS**
+    5. **STEP 5 (Scope Safety)**: ไม่มีรายการธุรกรรมซ้ำซ้อน, Transaction #519 และ Lot #161, #164 คงเดิม, สินค้า Operational อื่นๆ ไม่ได้รับผลกระทบ
 - **ดำเนินการ Deploy โค้ดแก้ไข Packaging / ProductLot / FIFO สู่ Production (เสร็จสมบูรณ์ 100%)**:
   - **เหตุผลและเป้าหมาย**: นำโค้ดที่ผ่านการแก้ไขและทดสอบ Unit Test ครบ 104/104 tests (100% PASS) ขึ้นสู่ Production Repository เพื่อให้ระบบ Live Production (Render Backend & Vercel Frontend) ใช้งาน Logic ใหม่ที่ถูกต้อง ป้องกันปัญหา Inconsistency ในอนาคต
   - **ขั้นตอนการตรวจสอบและการ Deploy (Git & CI/CD)**:

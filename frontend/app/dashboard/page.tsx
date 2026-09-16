@@ -32,7 +32,8 @@ import {
   Server,
   Database,
   UserCheck,
-  BadgeCheck
+  BadgeCheck,
+  PieChart
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -913,11 +914,15 @@ export default function DashboardPage() {
     ? (total7DaysTransactions > 0 ? 7 : 0)
     : Math.round(((total7DaysTransactions - prev7DaysTransactions) / prev7DaysTransactions) * 100)
 
-  // วันที่สำหรับป้ายกำกับช่วง 7 วัน (เช่น 9 - 15 ก.ย. 2569)
+  // วันที่สำหรับป้ายกำกับช่วง 7 วัน (เช่น 10 ก.ย. 2569 - 16 ก.ย. 2569)
   const start7Day = new Date()
   start7Day.setDate(start7Day.getDate() - 6)
   const end7Day = new Date()
-  const dateRange7DaysText = `${start7Day.getDate()} - ${end7Day.getDate()} ${end7Day.toLocaleDateString('th-TH', { month: 'short' })} ${end7Day.getFullYear() + 543}`
+  const startThaiMonth = start7Day.toLocaleDateString('th-TH', { month: 'short' })
+  const startThaiYear = start7Day.getFullYear() + 543
+  const endThaiMonth = end7Day.toLocaleDateString('th-TH', { month: 'short' })
+  const endThaiYear = end7Day.getFullYear() + 543
+  const dateRange7DaysText = `${start7Day.getDate()} ${startThaiMonth} ${startThaiYear} - ${end7Day.getDate()} ${endThaiMonth} ${endThaiYear}`
 
   const maxTxIn7Days = Math.max(...last7Days.map(d => Math.max(d.receiveCount, d.issueCount)), 5)
 
@@ -953,12 +958,12 @@ export default function DashboardPage() {
   }
 
   const categoriesDef = [
-    { key: 'gallon', label: 'แกลลอน', color: '#34D399' }, // Soft Pastel Mint
-    { key: 'cap', label: 'ฝา', color: '#60A5FA' }, // Soft Pastel Sky Blue
-    { key: 'foil', label: 'ฟอยล์', color: '#A78BFA' }, // Soft Pastel Lavender
-    { key: 'box', label: 'กล่อง', color: '#F472B6' }, // Soft Pastel Coral Pink
-    { key: 'label', label: 'ฉลาก', color: '#5EEAD4' }, // Soft Pastel Seafoam Teal
-    { key: 'other', label: 'อื่นๆ', color: '#94A3B8' } // Soft Pastel Slate
+    { key: 'gallon', label: 'แกลลอน', color: '#B91C1C' }, // Crimson Red
+    { key: 'cap', label: 'ฝา', color: '#E11D48' }, // Rose Red
+    { key: 'foil', label: 'ฟอยล์', color: '#FB7185' }, // Soft Coral Pink
+    { key: 'box', label: 'กล่อง', color: '#FDA4AF' }, // Light Pink
+    { key: 'label', label: 'ฉลาก', color: '#94A3B8' }, // Slate Gray
+    { key: 'other', label: 'อื่นๆ', color: '#CBD5E1' } // Light Slate
   ]
 
   const categoryCounts = categoriesDef
@@ -1654,408 +1659,471 @@ export default function DashboardPage() {
           /* ======================================================== */
           /* ROLE: SUPERVISOR DASHBOARD VIEW                          */
           /* ======================================================== */
-          <div className="space-y-8">
-            
+          <div className="space-y-6 sm:space-y-7 font-display">
+
             {/* ---------------------------------------------------- */}
-            {/* LEVEL 1: SECTION A - WAREHOUSE OVERVIEW (4 CARDS)    */}
+            {/* LEVEL 1: 4 KPI CARDS                                 */}
             {/* ---------------------------------------------------- */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center">
-                    <Boxes className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-900">
-                      ภาพรวมคลังสินค้า (Warehouse Overview)
-                    </h2>
-                    <p className="text-xs text-slate-400 font-normal">
-                      สรุปสถานะรายการบรรจุภัณฑ์และระดับสต็อกคงเหลือทั้งหมด
-                    </p>
-                  </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+              {/* Card 1: PACKAGING ทั้งหมด */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: 0.05 }}
+                className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-2xs flex items-start gap-4"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-violet-50 border border-violet-100/80 text-violet-600 flex items-center justify-center shrink-0">
+                  <Package className="w-6 h-6" />
                 </div>
-                <span className="text-xs font-medium px-3 py-1 rounded-full border bg-violet-50/70 text-violet-700 border-violet-200/60 hidden sm:inline-block">
-                  ข้อมูลคลังสินค้า (Warehouse Scope)
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Overview Card 1: Packaging ทั้งหมด */}
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, delay: 0.05 }}
-                  className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col justify-between"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-2xl bg-violet-50 border border-violet-100 text-violet-600 flex items-center justify-center">
-                      <Package className="w-5 h-5" />
-                    </div>
-                    <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">PACKAGING ทั้งหมด</span>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-display block">
+                    PACKAGING ทั้งหมด
+                  </span>
+                  <div className="mt-1 flex items-baseline gap-1.5 flex-nowrap">
+                    <span className="text-2xl sm:text-3xl lg:text-[26px] xl:text-3xl font-bold font-display text-slate-900 tracking-tight whitespace-nowrap">
+                      {loading ? '-' : totalPackagingCount.toLocaleString()}
+                    </span>
+                    <span className="text-xs sm:text-sm font-semibold font-display text-slate-600 whitespace-nowrap shrink-0">
+                      รายการ
+                    </span>
                   </div>
-                  <div className="mt-4">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-semibold text-slate-900">{loading ? '-' : totalPackagingCount}</span>
-                      <span className="text-xs font-normal text-slate-500">รายการ</span>
-                    </div>
-                    <Link href="/inventory" className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-700 transition-colors">
-                      <span>ดูรายละเอียดสต็อก</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
-                </motion.div>
-
-                {/* Overview Card 2: ยอดคงเหลือรวม */}
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, delay: 0.1 }}
-                  className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col justify-between"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-2xl bg-sky-50 border border-sky-100 text-sky-600 flex items-center justify-center">
-                      <Boxes className="w-5 h-5" />
-                    </div>
-                    <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">จำนวนคงเหลือรวม</span>
-                  </div>
-                  <div className="mt-4">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-semibold text-slate-900">
-                        {loading ? '-' : totalStockQuantity.toLocaleString()}
-                      </span>
-                      <span className="text-xs font-normal text-slate-500">ชิ้น / หน่วย</span>
-                    </div>
-                    <div className="mt-2 text-xs font-normal text-slate-400">
-                      รวมทุกหมวดหมู่วัตถุดิบบรรจุภัณฑ์
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Overview Card 3: สต็อกใกล้หมด */}
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, delay: 0.15 }}
-                  className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col justify-between"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center border ${
-                      lowStockCount > 0
-                        ? 'bg-amber-50 border-amber-100 text-amber-600'
-                        : 'bg-slate-50 border-slate-100 text-slate-400'
-                    }`}>
-                      <AlertTriangle className="w-5 h-5" />
-                    </div>
-                    <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">สต็อกใกล้หมด</span>
-                  </div>
-                  <div className="mt-4">
-                    <div className="flex items-baseline gap-2">
-                      <span className={`text-3xl font-semibold ${lowStockCount > 0 ? 'text-amber-600' : 'text-slate-900'}`}>
-                        {loading ? '-' : lowStockCount}
-                      </span>
-                      <span className="text-xs font-normal text-slate-500">รายการ</span>
-                    </div>
-                    <div className="mt-2 text-xs font-normal text-slate-400">
-                      {lowStockCount > 0 ? 'ต่ำกว่าจุดสั่งซื้อขั้นต่ำ (Min Stock)' : 'ระดับสต็อกปกติ'}
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Overview Card 4: สินค้าหมด (Out of Stock) */}
-                {(() => {
-                  const outOfStockCount = packagingProducts.filter(p => p.quantity === 0).length
-                  return (
-                    <motion.div
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.25, delay: 0.2 }}
-                      className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col justify-between"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center border ${
-                          outOfStockCount > 0
-                            ? 'bg-red-50 border-red-100 text-[#BE1111]'
-                            : 'bg-slate-50 border-slate-100 text-slate-400'
-                        }`}>
-                          <XCircle className="w-5 h-5" />
-                        </div>
-                        <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">สินค้าหมด (OUT OF STOCK)</span>
-                      </div>
-                      <div className="mt-4">
-                        <div className="flex items-baseline gap-2">
-                          <span className={`text-3xl font-semibold ${outOfStockCount > 0 ? 'text-[#BE1111]' : 'text-slate-900'}`}>
-                            {loading ? '-' : outOfStockCount}
-                          </span>
-                          <span className="text-xs font-normal text-slate-500">รายการ</span>
-                        </div>
-                        <div className="mt-2 text-xs font-normal text-slate-400">
-                          {outOfStockCount > 0 ? 'สินค้าคงเหลือ 0 ชิ้นในคลัง' : 'ไม่มีรายการสินค้าหมด'}
-                        </div>
-                      </div>
-                    </motion.div>
-                  )
-                })()}
-              </div>
-            </div>
-
-            {/* ---------------------------------------------------- */}
-            {/* LEVEL 2: SECTION B - WAREHOUSE ACTIVITY TODAY         */}
-            {/* ---------------------------------------------------- */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2.5 px-1">
-                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                  <Activity className="w-4 h-4" />
+                  <Link
+                    href="/inventory"
+                    className="mt-2.5 inline-flex items-center gap-1 text-xs font-semibold font-display text-violet-600 hover:text-violet-700 transition-colors"
+                  >
+                    <span>ดูรายละเอียดสินค้า</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-900">
-                    กิจกรรมธุรกรรมคลังสินค้า
-                  </h2>
-                  <p className="text-xs text-slate-400 font-normal">
-                    สรุปการเคลื่อนไหวรับเข้า เบิกออก และรายการรอยืนยันทั้งหมดในคลังสินค้า
+              </motion.div>
+
+              {/* Card 2: จำนวนคงเหลือรวม */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: 0.1 }}
+                className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-2xs flex items-start gap-4"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-100/80 text-sky-600 flex items-center justify-center shrink-0">
+                  <Boxes className="w-6 h-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-display block">
+                    จำนวนคงเหลือรวม
+                  </span>
+                  <div className="mt-1 flex items-baseline gap-1.5 flex-nowrap">
+                    <span className="text-2xl sm:text-3xl lg:text-[26px] xl:text-3xl font-bold font-display text-slate-900 tracking-tight whitespace-nowrap">
+                      {loading ? '-' : totalStockQuantity.toLocaleString()}
+                    </span>
+                    <span className="text-xs sm:text-sm font-semibold font-display text-slate-500 whitespace-nowrap shrink-0">
+                      ชิ้น / หน่วย
+                    </span>
+                  </div>
+                  <p className="mt-2.5 text-xs text-slate-400 font-normal font-display">
+                    รวมทุกหมวดหมู่วัตถุดิบบรรจุภัณฑ์
                   </p>
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                {/* Card 1: รับเข้าวันนี้ */}
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, delay: 0.1 }}
-                  className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col justify-between"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center">
-                      <ArrowDownToLine className="w-5 h-5" />
-                    </div>
-                    <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">รับเข้าวันนี้</span>
+              {/* Card 3: สต็อกใกล้หมด */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: 0.15 }}
+                className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-2xs flex items-start gap-4"
+              >
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border shrink-0 ${
+                  lowStockCount > 0
+                    ? 'bg-amber-50 border-amber-100/80 text-amber-600'
+                    : 'bg-slate-50 border-slate-200/80 text-slate-400'
+                }`}>
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-display block">
+                    สต็อกใกล้หมด
+                  </span>
+                  <div className="mt-1 flex items-baseline gap-1.5 flex-nowrap">
+                    <span className={`text-2xl sm:text-3xl lg:text-[26px] xl:text-3xl font-bold font-display tracking-tight whitespace-nowrap ${lowStockCount > 0 ? 'text-amber-600' : 'text-slate-900'}`}>
+                      {loading ? '-' : lowStockCount.toLocaleString()}
+                    </span>
+                    <span className="text-xs sm:text-sm font-semibold font-display text-slate-600 whitespace-nowrap shrink-0">
+                      รายการ
+                    </span>
                   </div>
-                  <div className="mt-4">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-semibold text-slate-900">{loading ? '-' : todayReceives}</span>
-                      <span className="text-xs font-normal text-slate-500">รายการ</span>
-                    </div>
-                    <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
-                      <TrendingUp className="w-3.5 h-3.5" />
-                      <span>{receiveDiffPercent >= 0 ? `+${receiveDiffPercent}%` : `${receiveDiffPercent}%`} จากเมื่อวาน</span>
-                    </div>
-                  </div>
-                </motion.div>
+                  <p className="mt-2.5 text-xs text-slate-400 font-normal font-display">
+                    {lowStockCount > 0 ? 'ต่ำกว่าจุดสั่งซื้อขั้นต่ำ (Min Stock)' : 'ระดับสต็อกปกติ'}
+                  </p>
+                </div>
+              </motion.div>
 
-                {/* Card 2: เบิกออกวันนี้ */}
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, delay: 0.15 }}
-                  className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col justify-between"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="w-11 h-11 rounded-2xl bg-red-50 border border-red-100 text-[#BE1111] flex items-center justify-center">
-                      <ArrowUpFromLine className="w-5 h-5" />
+              {/* Card 4: สินค้าหมด (OUT OF STOCK) */}
+              {(() => {
+                const outOfStockCount = packagingProducts.filter(p => p.quantity === 0).length
+                return (
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: 0.2 }}
+                    className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-2xs flex items-start gap-4"
+                  >
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border shrink-0 ${
+                      outOfStockCount > 0
+                        ? 'bg-red-50 border-red-100/80 text-[#BE1111]'
+                        : 'bg-slate-50 border-slate-200/80 text-slate-400'
+                    }`}>
+                      <XCircle className="w-6 h-6" />
                     </div>
-                    <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">เบิกออกวันนี้</span>
-                  </div>
-                  <div className="mt-4">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-semibold text-slate-900">{loading ? '-' : todayIssues}</span>
-                      <span className="text-xs font-normal text-slate-500">รายการ</span>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-display block">
+                        สินค้าหมด (OUT OF STOCK)
+                      </span>
+                      <div className="mt-1 flex items-baseline gap-1.5 flex-nowrap">
+                        <span className={`text-2xl sm:text-3xl lg:text-[26px] xl:text-3xl font-bold font-display tracking-tight whitespace-nowrap ${outOfStockCount > 0 ? 'text-[#BE1111]' : 'text-slate-900'}`}>
+                          {loading ? '-' : outOfStockCount.toLocaleString()}
+                        </span>
+                        <span className="text-xs sm:text-sm font-semibold font-display text-slate-600 whitespace-nowrap shrink-0">
+                          รายการ
+                        </span>
+                      </div>
+                      <p className="mt-2.5 text-xs text-slate-400 font-normal font-display">
+                        {outOfStockCount > 0 ? 'สินค้าคงเหลือ 0 ชิ้นในคลัง' : 'ไม่มีรายการสินค้าหมด'}
+                      </p>
                     </div>
-                    <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-[#BE1111]">
-                      <TrendingDown className="w-3.5 h-3.5" />
-                      <span>{issueDiffPercent >= 0 ? `+${issueDiffPercent}%` : `${issueDiffPercent}%`} จากเมื่อวาน</span>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Card 3: รายการรอยืนยัน */}
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, delay: 0.2 }}
-                  className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col justify-between"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="w-11 h-11 rounded-2xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center">
-                      <Clock className="w-5 h-5" />
-                    </div>
-                    <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">รายการรอยืนยัน</span>
-                  </div>
-                  <div className="mt-4">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-semibold text-slate-900">{loading ? '-' : pendingCount}</span>
-                      <span className="text-xs font-normal text-slate-500">รายการ</span>
-                    </div>
-                    <Link href="/transactions" className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-amber-600 hover:text-amber-700 transition-colors">
-                      <span>ไปที่การตรวจสอบรายการ</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
-                </motion.div>
-              </div>
+                  </motion.div>
+                )
+              })()}
             </div>
 
             {/* ---------------------------------------------------- */}
-            {/* LEVEL 3: SECTIONS C & D - CHARTS (7 DAYS + DONUT)    */}
+            {/* LEVEL 2: CHARTS (7-DAY TREND + DONUT DISTRIBUTION)  */}
             {/* ---------------------------------------------------- */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-              {/* Section C: Warehouse Activity 7 Days (Grouped Bar Chart - 7 Cols) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
+              {/* Left (7 Cols): Inbound / Outbound 7-Day Chart */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: 0.22 }}
+                className="lg:col-span-7 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col justify-between"
+              >
+                <div>
+                  {/* Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-red-50 border border-red-100/80 text-[#BE1111] flex items-center justify-center shrink-0">
+                        <BarChart3 className="w-4.5 h-4.5" />
+                      </div>
+                      <div>
+                        <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                          สรุปการรับเข้า - เบิกออก 7 วันล่าสุด
+                        </h3>
+                        <p className="text-xs text-slate-400 font-normal mt-0.5">
+                          เปรียบเทียบจำนวนรายการรับเข้า (Inbound) และเบิกออก (Outbound) ในคลังสินค้า
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/80 bg-slate-50 text-xs font-medium text-slate-600 shadow-2xs shrink-0 self-start sm:self-auto">
+                      <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span>{dateRange7DaysText}</span>
+                    </div>
+                  </div>
+
+                  {/* Legend */}
+                  <div className="flex items-center justify-end gap-4 text-xs font-medium mb-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#B91C1C]" />
+                      <span className="text-slate-600">รับเข้า (Inbound)</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#FB7185]" />
+                      <span className="text-slate-600">เบิกออก (Outbound)</span>
+                    </div>
+                  </div>
+
+                  {/* Chart SVG */}
+                  <div className="w-full pt-2 pb-1 border-b border-slate-100">
+                    <svg className="w-full h-48 overflow-visible" viewBox="0 0 540 170">
+                      {/* Y-Axis Label */}
+                      <text x="0" y="12" fill="#94A3B8" fontSize="10" fontWeight="500">
+                        จำนวนรายการ
+                      </text>
+
+                      {/* Dashed Grid Lines and Y-Axis numbers (30, 20, 10, 0 dynamic) */}
+                      {(() => {
+                        const maxVal7Days = Math.max(...last7Days.map(d => Math.max(d.receiveCount, d.issueCount)), 5)
+                        const chartYMax = maxVal7Days <= 10 ? 10 : maxVal7Days <= 20 ? 20 : maxVal7Days <= 30 ? 30 : Math.ceil(maxVal7Days / 10) * 10
+                        const yStep1 = chartYMax
+                        const yStep2 = Math.round((chartYMax * 2) / 3)
+                        const yStep3 = Math.round(chartYMax / 3)
+                        const yStep4 = 0
+
+                        const ticks = [
+                          { val: yStep1, y: 25 },
+                          { val: yStep2, y: 62 },
+                          { val: yStep3, y: 99 },
+                          { val: yStep4, y: 136 }
+                        ]
+
+                        return (
+                          <>
+                            {ticks.map((g, idx) => (
+                              <g key={idx}>
+                                <text x="24" y={g.y + 3} fill="#94A3B8" fontSize="10" textAnchor="end" fontWeight="400">
+                                  {g.val}
+                                </text>
+                                <line
+                                  x1="32"
+                                  y1={g.y}
+                                  x2="530"
+                                  y2={g.y}
+                                  stroke="#F1F5F9"
+                                  strokeDasharray="4 4"
+                                  strokeWidth="1"
+                                />
+                              </g>
+                            ))}
+
+                            {/* 7-Day Grouped Bars */}
+                            {last7Days.map((day, idx) => {
+                              const cX = 35 + idx * 70 + 35
+                              const barW = 14
+                              const barGap = 4
+                              const baselineY = 136
+                              const plotH = 111
+
+                              const recH = Math.min((day.receiveCount / chartYMax) * plotH, plotH)
+                              const issH = Math.min((day.issueCount / chartYMax) * plotH, plotH)
+
+                              const recX = cX - barW - barGap / 2
+                              const recY = baselineY - recH
+                              const issX = cX + barGap / 2
+                              const issY = baselineY - issH
+
+                              return (
+                                <g key={idx} className="cursor-pointer group">
+                                  <title>{`${day.dayLabel} — รับเข้า: ${day.receiveCount} รายการ, เบิกออก: ${day.issueCount} รายการ`}</title>
+
+                                  {/* Receive Bar (Inbound Red) */}
+                                  {recH > 0 && (
+                                    <rect
+                                      x={recX}
+                                      y={recY}
+                                      width={barW}
+                                      height={recH}
+                                      rx="3"
+                                      fill="#B91C1C"
+                                      className="transition-all duration-200 hover:opacity-85"
+                                    />
+                                  )}
+                                  {/* Receive Number */}
+                                  {day.receiveCount > 0 && (
+                                    <text
+                                      x={recX + barW / 2}
+                                      y={recY - 4}
+                                      fill="#B91C1C"
+                                      fontSize="10"
+                                      fontWeight="700"
+                                      textAnchor="middle"
+                                    >
+                                      {day.receiveCount}
+                                    </text>
+                                  )}
+
+                                  {/* Issue Bar (Outbound Pink/Coral) */}
+                                  {issH > 0 && (
+                                    <rect
+                                      x={issX}
+                                      y={issY}
+                                      width={barW}
+                                      height={issH}
+                                      rx="3"
+                                      fill="#FB7185"
+                                      className="transition-all duration-200 hover:opacity-85"
+                                    />
+                                  )}
+                                  {/* Issue Number */}
+                                  {day.issueCount > 0 && (
+                                    <text
+                                      x={issX + barW / 2}
+                                      y={issY - 4}
+                                      fill="#FB7185"
+                                      fontSize="10"
+                                      fontWeight="700"
+                                      textAnchor="middle"
+                                    >
+                                      {day.issueCount}
+                                    </text>
+                                  )}
+
+                                  {/* Day Label */}
+                                  <text
+                                    x={cX}
+                                    y="156"
+                                    fill="#64748B"
+                                    fontSize="11"
+                                    fontWeight="500"
+                                    textAnchor="middle"
+                                  >
+                                    {day.dayLabel}
+                                  </text>
+                                </g>
+                              )
+                            })}
+                          </>
+                        )
+                      })()}
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Bottom 2 Summary Cards */}
+                <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  {/* Card 1: รับเข้ารวม 7 วัน */}
+                  <div className="p-3.5 rounded-2xl bg-emerald-50/40 border border-emerald-100/70 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-emerald-100/80 text-emerald-600 flex items-center justify-center shrink-0">
+                        <ArrowDownToLine className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-xs text-slate-500 font-normal">รับเข้ารวม (7 วัน)</span>
+                        <div className="flex items-baseline gap-1 mt-0.5">
+                          <span className="text-xl font-bold text-slate-900 leading-none">
+                            {total7DaysReceives}
+                          </span>
+                          <span className="text-xs text-slate-500 font-normal">รายการ</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="inline-flex items-center gap-0.5 text-xs font-semibold text-emerald-600">
+                        <TrendingUp className="w-3.5 h-3.5" />
+                        <span>{receive7DaysDiffPercent >= 0 ? `+${receive7DaysDiffPercent}%` : `${receive7DaysDiffPercent}%`}</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-normal">เทียบกับ 7 วันก่อนหน้า</p>
+                    </div>
+                  </div>
+
+                  {/* Card 2: เบิกออกรวม 7 วัน */}
+                  <div className="p-3.5 rounded-2xl bg-rose-50/40 border border-rose-100/70 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-rose-100/80 text-rose-600 flex items-center justify-center shrink-0">
+                        <ArrowUpFromLine className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-xs text-slate-500 font-normal">เบิกออกรวม (7 วัน)</span>
+                        <div className="flex items-baseline gap-1 mt-0.5">
+                          <span className="text-xl font-bold text-slate-900 leading-none">
+                            {total7DaysIssues}
+                          </span>
+                          <span className="text-xs text-slate-500 font-normal">รายการ</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="inline-flex items-center gap-0.5 text-xs font-semibold text-rose-600">
+                        <TrendingDown className="w-3.5 h-3.5" />
+                        <span>{issue7DaysDiffPercent >= 0 ? `+${issue7DaysDiffPercent}%` : `${issue7DaysDiffPercent}%`}</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-normal">เทียบกับ 7 วันก่อนหน้า</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Right (5 Cols): Donut Packaging Distribution */}
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25, delay: 0.25 }}
-                className="lg:col-span-7 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-                    <div>
-                      <h3 className="text-lg font-semibold text-slate-900">
-                        สรุปการรับเข้า - เบิกออก 7 วันล่าสุด
-                      </h3>
-                      <p className="text-xs text-slate-400 mt-0.5 font-normal">
-                        เปรียบเทียบจำนวนรายการรับเข้า (Inbound) และเบิกออก (Outbound) ในคลังสินค้า
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4 text-xs font-medium shrink-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-3 h-3 rounded-full bg-[#34D399]"></span>
-                        <span className="text-slate-600">รับเข้า</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-3 h-3 rounded-full bg-[#BE1111]"></span>
-                        <span className="text-slate-600">เบิกออก</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* SVG / Bar Chart Display */}
-                  <div className="h-56 flex items-end justify-between gap-2 sm:gap-4 pt-6 pb-2 border-b border-slate-100 px-2">
-                    {last7Days.map((day, idx) => {
-                      const receiveHeight = Math.max((day.receiveCount / maxTxIn7Days) * 100, 6)
-                      const issueHeight = Math.max((day.issueCount / maxTxIn7Days) * 100, 6)
-                      return (
-                        <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end group">
-                          <div className="w-full flex items-end justify-center gap-1 h-full">
-                            {/* Receive Bar */}
-                            <div
-                              style={{ height: `${receiveHeight}%` }}
-                              className="w-1/2 max-w-[16px] bg-[#34D399] rounded-t-md transition-all duration-300 group-hover:bg-emerald-400 relative flex justify-center"
-                              title={`รับเข้า: ${day.receiveCount} รายการ`}
-                            >
-                              {day.receiveCount > 0 && (
-                                <span className="absolute -top-5 text-[10px] font-semibold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  {day.receiveCount}
-                                </span>
-                              )}
-                            </div>
-                            {/* Issue Bar */}
-                            <div
-                              style={{ height: `${issueHeight}%` }}
-                              className="w-1/2 max-w-[16px] bg-[#BE1111] rounded-t-md transition-all duration-300 group-hover:bg-[#a00e0e] relative flex justify-center"
-                              title={`เบิกออก: ${day.issueCount} รายการ`}
-                            >
-                              {day.issueCount > 0 && (
-                                <span className="absolute -top-5 text-[10px] font-semibold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  {day.issueCount}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <span className="text-[11px] font-medium text-slate-500 mt-3 whitespace-nowrap">{day.dayLabel}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-3 flex items-center justify-between text-xs text-slate-500 font-normal">
-                  <span>ช่วงวันที่: {dateRange7DaysText}</span>
-                  <span className="font-medium text-slate-700">รายการรวม 7 วัน: {total7DaysTransactions} รายการ</span>
-                </div>
-              </motion.div>
-
-              {/* Section D: Packaging Distribution (Donut Chart - 5 Cols) */}
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, delay: 0.3 }}
                 className="lg:col-span-5 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-slate-900">สัดส่วนวัตถุดิบบรรจุภัณฑ์</h3>
-                      <p className="text-xs text-slate-400 font-normal">สัดส่วนตามหมวดหมู่ที่มีในระบบ</p>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-red-50 border border-red-100/80 text-[#BE1111] flex items-center justify-center shrink-0">
+                        <PieChart className="w-4.5 h-4.5" />
+                      </div>
+                      <div>
+                        <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                          สัดส่วนวัตถุดิบบรรจุภัณฑ์
+                        </h3>
+                        <p className="text-xs text-slate-400 font-normal">
+                          สัดส่วนตามหมวดหมู่ที่มีในระบบ
+                        </p>
+                      </div>
                     </div>
                     <Link
                       href="/inventory"
-                      className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-[#BE1111] hover:text-[#a00e0e] transition-colors"
                     >
-                      <span>ดูสต็อก</span>
+                      <span>ดูสต็อกทั้งหมด</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-6 my-2">
-                    {/* Left: Donut Chart */}
-                    <div className="flex flex-col items-center justify-center shrink-0">
-                      <div className="relative w-44 h-44 sm:w-48 sm:h-48 flex items-center justify-center">
-                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
-                          <circle
-                            cx="100"
-                            cy="100"
-                            r="70"
-                            fill="none"
-                            className="text-slate-100"
-                            stroke="currentColor"
-                            strokeWidth="38"
-                          />
-                          {categoryCounts.reduce((acc, cat, idx) => {
-                            const percent = totalCategorized > 0 ? (cat.count / totalCategorized) * 100 : 0
-                            if (percent <= 0) return acc
+                  {/* Donut Chart & Category List */}
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-6 my-auto py-2">
+                    {/* Donut Chart */}
+                    <div className="relative w-44 h-44 sm:w-48 sm:h-48 flex items-center justify-center shrink-0">
+                      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
+                        <circle
+                          cx="100"
+                          cy="100"
+                          r="70"
+                          fill="none"
+                          className="text-slate-100"
+                          stroke="currentColor"
+                          strokeWidth="32"
+                        />
+                        {categoryCounts.reduce((acc, cat, idx) => {
+                          const percent = totalCategorized > 0 ? (cat.count / totalCategorized) * 100 : 0
+                          if (percent <= 0) return acc
 
-                            const totalC = 2 * Math.PI * 70
-                            const segmentLen = (percent / 100) * totalC
+                          const totalC = 2 * Math.PI * 70
+                          const segmentLen = (percent / 100) * totalC
 
-                            const strokeDasharray = `${segmentLen} ${totalC - segmentLen}`
-                            const strokeDashoffset = -acc.offset
-                            acc.offset += segmentLen
+                          const strokeDasharray = `${segmentLen} ${totalC - segmentLen}`
+                          const strokeDashoffset = -acc.offset
+                          acc.offset += segmentLen
 
-                            acc.elements.push(
-                              <circle
-                                key={idx}
-                                cx="100"
-                                cy="100"
-                                r="70"
-                                fill="none"
-                                stroke={cat.color}
-                                strokeWidth="38"
-                                strokeDasharray={strokeDasharray}
-                                strokeDashoffset={strokeDashoffset}
-                              />
-                            )
-                            return acc
-                          }, { offset: 0, elements: [] as React.ReactNode[] }).elements}
-                        </svg>
-                        <div className="absolute flex flex-col items-center justify-center text-center">
-                          <span className="text-xs text-slate-400 font-normal">รวม</span>
-                          <span className="text-2xl font-semibold text-slate-900 leading-tight my-0.5">{totalPackagingCount}</span>
-                          <span className="text-xs text-slate-400 font-normal">รายการ</span>
-                        </div>
+                          acc.elements.push(
+                            <circle
+                              key={idx}
+                              cx="100"
+                              cy="100"
+                              r="70"
+                              fill="none"
+                              stroke={cat.color}
+                              strokeWidth="32"
+                              strokeDasharray={strokeDasharray}
+                              strokeDashoffset={strokeDashoffset}
+                            />
+                          )
+                          return acc
+                        }, { offset: 0, elements: [] as React.ReactNode[] }).elements}
+                      </svg>
+                      <div className="absolute flex flex-col items-center justify-center text-center select-none">
+                        <span className="text-xs text-slate-400 font-medium">รวม</span>
+                        <span className="text-3xl font-bold text-slate-900 tracking-tight leading-none my-0.5">
+                          {totalPackagingCount}
+                        </span>
+                        <span className="text-xs text-slate-400 font-medium">รายการ</span>
                       </div>
                     </div>
 
-                    {/* Right: Legend */}
+                    {/* Category List */}
                     <div className="flex-1 space-y-2.5 w-full sm:w-auto">
                       {categoryCounts.map((cat, idx) => {
                         const pct = Math.round((cat.count / totalCategorized) * 100)
                         return (
-                          <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-xl bg-slate-50/60 border border-slate-100">
+                          <div key={idx} className="flex items-center justify-between text-xs py-1 px-1">
                             <div className="flex items-center gap-2">
-                              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }}></span>
-                              <span className="font-medium text-slate-800 text-xs">{cat.label}</span>
+                              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
+                              <span className="font-medium text-slate-700">{cat.label}</span>
                             </div>
-                            <div className="text-xs text-slate-500 font-normal">
-                              {cat.count} <span className="text-slate-400">({pct}%)</span>
+                            <div className="font-semibold text-slate-900">
+                              {cat.count} <span className="text-slate-400 font-normal">({pct}%)</span>
                             </div>
                           </div>
                         )
@@ -2067,21 +2135,21 @@ export default function DashboardPage() {
             </div>
 
             {/* ---------------------------------------------------- */}
-            {/* LEVEL 4: SECTION E - ACTION REQUIRED                 */}
+            {/* LEVEL 3: ACTION REQUIRED                             */}
             {/* ---------------------------------------------------- */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: 0.35 }}
+              transition={{ duration: 0.25, delay: 0.28 }}
               className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/80 shadow-2xs space-y-4"
             >
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-xl bg-red-50 text-[#BE1111] border border-red-100/80 flex items-center justify-center shrink-0">
                     <Clock className="w-4.5 h-4.5" />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-semibold text-slate-900">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900">
                       งานที่ต้องดำเนินการ (Action Required)
                     </h3>
                     <p className="text-xs text-slate-400 font-normal">
@@ -2095,21 +2163,21 @@ export default function DashboardPage() {
               </div>
 
               {pendingCount === 0 && lowStockCount === 0 ? (
-                /* Empty State: ไม่มีงานค้างและไม่มีสต็อกเตือน */
-                <div className="p-6 rounded-2xl bg-slate-50/70 border border-slate-100/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+                /* Empty State: เมื่อไม่มีงานค้าง */
+                <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/30 border border-emerald-100/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
                       <CheckCircle2 className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">ไม่มีรายการที่ต้องดำเนินการ</p>
+                      <p className="text-sm font-bold text-slate-900">ไม่มีรายการที่ต้องดำเนินการ</p>
                       <p className="text-xs text-slate-500 font-normal mt-0.5">
                         ขณะนี้ไม่มีงานที่รอการตรวจสอบ และระดับสต็อกสินค้าทั้งหมดอยู่ในเกณฑ์ปกติ
                       </p>
                     </div>
                   </div>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 whitespace-nowrap">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 whitespace-nowrap self-start sm:self-auto">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                     <span>สถานะเรียบร้อย</span>
                   </span>
                 </div>
@@ -2176,86 +2244,93 @@ export default function DashboardPage() {
             </motion.div>
 
             {/* ---------------------------------------------------- */}
-            {/* LEVEL 5: SECTION F - SUPERVISOR QUICK ACTIONS        */}
+            {/* LEVEL 4: SUPERVISOR QUICK ACTIONS                    */}
             {/* ---------------------------------------------------- */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: 0.4 }}
+              transition={{ duration: 0.25, delay: 0.32 }}
               className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/80 shadow-2xs space-y-4"
             >
               <div>
-                <h3 className="text-base sm:text-lg font-semibold text-slate-900">
-                  เมนูดำเนินการด่วน (Supervisor Quick Actions)
-                </h3>
-                <p className="text-xs text-slate-400 font-normal mt-0.5">
-                  ทางลัดสำหรับเข้าถึงงานตรวจสอบ จัดการสต็อก และรายงาน
-                </p>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-red-50 text-[#BE1111] border border-red-100/80 flex items-center justify-center shrink-0">
+                    <Activity className="w-4.5 h-4.5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                      เมนูดำเนินการด่วน (Supervisor Quick Actions)
+                    </h3>
+                    <p className="text-xs text-slate-400 font-normal mt-0.5">
+                      ทางลัดสำหรับเข้าถึงงานตรวจสอบ จัดการสต็อก และรายงาน
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Action 1: ตรวจสอบรายการ (Pending Approval) */}
                 <Link
                   href="/transactions"
-                  className="flex items-center justify-between p-4 rounded-2xl bg-amber-50/70 border border-amber-100 text-amber-900 hover:bg-amber-100/70 transition-all group font-medium text-sm shadow-2xs"
+                  className="flex items-center justify-between p-4 rounded-2xl bg-red-50/40 border border-red-100/80 text-slate-900 hover:bg-red-50/70 transition-all group font-medium text-sm shadow-2xs cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-2xs shrink-0">
-                      <Clock className="w-4.5 h-4.5" />
+                    <div className="w-10 h-10 rounded-xl bg-[#BE1111] text-white flex items-center justify-center shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
+                      <Clock className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-900 text-sm">ตรวจสอบรายการ</p>
+                      <p className="font-bold text-slate-900 text-sm">ตรวจสอบรายการ</p>
                       <p className="text-xs text-slate-500 font-normal">อนุมัติงานรอยืนยัน</p>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-amber-600 group-hover:translate-x-1 transition-transform shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-[#BE1111] group-hover:translate-x-1 transition-transform shrink-0" />
                 </Link>
 
                 {/* Action 2: ดูสต็อกบรรจุภัณฑ์ */}
                 <Link
                   href="/inventory"
-                  className="flex items-center justify-between p-4 rounded-2xl bg-violet-50/70 border border-violet-100 text-violet-900 hover:bg-violet-100/70 transition-all group font-medium text-sm shadow-2xs"
+                  className="flex items-center justify-between p-4 rounded-2xl bg-purple-50/40 border border-purple-100/80 text-slate-900 hover:bg-purple-50/70 transition-all group font-medium text-sm shadow-2xs cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-violet-500 text-white flex items-center justify-center shadow-2xs shrink-0">
-                      <Package className="w-4.5 h-4.5" />
+                    <div className="w-10 h-10 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
+                      <Package className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-900 text-sm">ดูสต็อกบรรจุภัณฑ์</p>
+                      <p className="font-bold text-slate-900 text-sm">ดูสต็อกบรรจุภัณฑ์</p>
                       <p className="text-xs text-slate-500 font-normal">จัดการและปรับแต่งสต็อก</p>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-violet-600 group-hover:translate-x-1 transition-transform shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-[#7C3AED] group-hover:translate-x-1 transition-transform shrink-0" />
                 </Link>
 
-                {/* Action 3: รายการธุรกรรมทั้งหมด */}
+                {/* Action 3: ธุรกรรมทั้งหมด */}
                 <Link
                   href="/reports"
-                  className="flex items-center justify-between p-4 rounded-2xl bg-emerald-50/70 border border-emerald-100 text-emerald-900 hover:bg-emerald-100/70 transition-all group font-medium text-sm shadow-2xs"
+                  className="flex items-center justify-between p-4 rounded-2xl bg-emerald-50/40 border border-emerald-100/80 text-slate-900 hover:bg-emerald-50/70 transition-all group font-medium text-sm shadow-2xs cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-2xs shrink-0">
-                      <Layers className="w-4.5 h-4.5" />
+                    <div className="w-10 h-10 rounded-xl bg-[#059669] text-white flex items-center justify-center shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
+                      <Layers className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-900 text-sm">ธุรกรรมทั้งหมด</p>
+                      <p className="font-bold text-slate-900 text-sm">ธุรกรรมทั้งหมด</p>
                       <p className="text-xs text-slate-500 font-normal">ประวัติรับเข้า-เบิกออก</p>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-emerald-600 group-hover:translate-x-1 transition-transform shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-[#059669] group-hover:translate-x-1 transition-transform shrink-0" />
                 </Link>
 
-                {/* Action 4: ออกรายงาน Excel */}
+                {/* Action 4: ดูรายงานทั้งหมด */}
                 <Link
                   href="/reports"
-                  className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-slate-800 hover:bg-slate-100/80 transition-all group font-medium text-sm shadow-2xs"
+                  className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-slate-900 hover:bg-slate-100/80 transition-all group font-medium text-sm shadow-2xs cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-slate-700 text-white flex items-center justify-center shadow-2xs shrink-0">
-                      <BarChart3 className="w-4.5 h-4.5" />
+                    <div className="w-10 h-10 rounded-xl bg-[#334155] text-white flex items-center justify-center shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
+                      <BarChart3 className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-900 text-sm">ดูรายงานทั้งหมด</p>
+                      <p className="font-bold text-slate-900 text-sm">ดูรายงานทั้งหมด</p>
                       <p className="text-xs text-slate-500 font-normal">ส่งออกข้อมูล Excel</p>
                     </div>
                   </div>
@@ -2265,17 +2340,17 @@ export default function DashboardPage() {
             </motion.div>
 
             {/* ---------------------------------------------------- */}
-            {/* LEVEL 6: SECTION G - RECENT TRANSACTIONS             */}
+            {/* LEVEL 5: RECENT TRANSACTIONS TABLE                   */}
             {/* ---------------------------------------------------- */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: 0.45 }}
+              transition={{ duration: 0.25, delay: 0.35 }}
               className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200/80 shadow-2xs space-y-4"
             >
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-slate-900">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900">
                     รายการล่าสุด (Recent Transactions)
                   </h3>
                   <p className="text-xs text-slate-400 font-normal mt-0.5">
@@ -2284,7 +2359,7 @@ export default function DashboardPage() {
                 </div>
                 <Link
                   href="/reports"
-                  className="inline-flex items-center gap-1 text-xs font-medium text-[#BE1111] hover:text-[#a00e0e] transition-colors"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#BE1111] hover:text-[#a00e0e] transition-colors"
                 >
                   <span>ดูทั้งหมด</span>
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -2295,7 +2370,7 @@ export default function DashboardPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-100 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <tr className="border-b border-slate-100 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                       <th className="pb-3 px-4">วันที่ / เวลา</th>
                       <th className="pb-3 px-4">วัตถุดิบบรรจุภัณฑ์</th>
                       <th className="pb-3 px-4 text-center">ประเภท</th>
@@ -2325,7 +2400,7 @@ export default function DashboardPage() {
                             {tx.createdAt.replace('T', ' ').substring(0, 16)}
                           </td>
                           <td className="py-4 px-4">
-                            <div className="font-medium text-slate-900 text-sm">
+                            <div className="font-semibold text-slate-900 text-sm">
                               {tx.product?.description || tx.itemSnapshot.name}
                             </div>
                             <div className="text-xs text-slate-400 font-normal mt-0.5">
@@ -2334,16 +2409,12 @@ export default function DashboardPage() {
                           </td>
                           <td className="py-4 px-4 text-center whitespace-nowrap">
                             {tx.type === 'receive' ? (
-                              <span className="whitespace-nowrap inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
-                                <span>รับเข้า</span>
-                              </span>
+                              <span className="text-xs font-semibold text-emerald-600">รับเข้า</span>
                             ) : (
-                              <span className="whitespace-nowrap inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-medium bg-red-50 text-[#BE1111] border border-red-200/80 shadow-2xs">
-                                <span>เบิกออก</span>
-                              </span>
+                              <span className="text-xs font-semibold text-[#BE1111]">เบิกออก</span>
                             )}
                           </td>
-                          <td className="py-4 px-4 text-center font-medium text-slate-900 whitespace-nowrap">
+                          <td className="py-4 px-4 text-center font-bold text-slate-900 whitespace-nowrap">
                             {tx.quantity.toLocaleString()}
                           </td>
                           <td className="py-4 px-4 text-center whitespace-nowrap">
@@ -2368,17 +2439,17 @@ export default function DashboardPage() {
                           </td>
                           <td className="py-4 px-4 text-center whitespace-nowrap">
                             {tx.status === 'confirmed' ? (
-                              <span className="whitespace-nowrap inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
+                              <span className="text-xs font-semibold text-emerald-600 inline-flex items-center justify-center gap-1">
                                 <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
                                 <span>ยืนยันแล้ว</span>
                               </span>
                             ) : tx.status === 'rejected' ? (
-                              <span className="whitespace-nowrap inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-[#BE1111] border border-red-200/80 shadow-2xs">
+                              <span className="text-xs font-semibold text-[#BE1111] inline-flex items-center justify-center gap-1">
                                 <XCircle className="w-3.5 h-3.5 shrink-0 text-[#BE1111]" />
                                 <span>ปฏิเสธแล้ว</span>
                               </span>
                             ) : (
-                              <span className="whitespace-nowrap inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200/80 shadow-2xs">
+                              <span className="text-xs font-semibold text-amber-600 inline-flex items-center justify-center gap-1">
                                 <Clock className="w-3.5 h-3.5 shrink-0 text-amber-600" />
                                 <span>รอการยืนยัน</span>
                               </span>
@@ -2568,18 +2639,16 @@ export default function DashboardPage() {
                         </td>
                         <td className="py-4 px-4 text-center whitespace-nowrap">
                           {tx.status === 'confirmed' ? (
-                            <span className="font-medium text-emerald-600 text-xs sm:text-sm">
+                            <span className="font-semibold text-emerald-600 text-xs sm:text-sm">
                               ยืนยันแล้ว
                             </span>
                           ) : tx.status === 'rejected' ? (
-                            <span className="whitespace-nowrap inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-[#BE1111] border border-red-200/80 shadow-2xs">
-                              <XCircle className="w-3.5 h-3.5 shrink-0 text-[#BE1111]" />
-                              <span>ปฏิเสธแล้ว</span>
+                            <span className="font-semibold text-[#BE1111] text-xs sm:text-sm">
+                              ปฏิเสธแล้ว
                             </span>
                           ) : (
-                            <span className="whitespace-nowrap inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200/80 shadow-2xs">
-                              <Clock className="w-3.5 h-3.5 shrink-0 text-amber-600" />
-                              <span>รอการยืนยัน</span>
+                            <span className="font-semibold text-amber-600 text-xs sm:text-sm">
+                              รอการยืนยัน
                             </span>
                           )}
                         </td>

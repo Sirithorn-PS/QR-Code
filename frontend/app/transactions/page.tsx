@@ -293,7 +293,7 @@ function TransactionsContent() {
                             รับเข้า
                           </span>
                         ) : (
-                          <span className="inline-flex items-center justify-center rounded-full bg-red-50 border border-red-100 px-2.5 py-0.5 text-xs font-medium text-[#BE1111]">
+                          <span className="text-xs sm:text-sm font-medium text-[#BE1111]">
                             เบิกออก
                           </span>
                         )}
@@ -375,11 +375,12 @@ function TransactionsContent() {
                         </span>
                       </div>
                     ) : (
-                      <div className="inline-flex items-center gap-1.5 rounded-xl bg-red-50 border border-red-200 px-4 py-2.5 text-xs font-bold text-[#BE1111] self-start md:self-center shadow-2xs">
-                        <XCircle className="w-4 h-4 text-[#BE1111]" />
-                        <span>ปฏิเสธแล้ว</span>
+                      <div className="inline-flex items-center gap-1.5 self-start md:self-center">
+                        <span className="text-xs sm:text-sm font-medium text-[#BE1111]">
+                          ปฏิเสธแล้ว
+                        </span>
                         {transaction.note && (
-                          <span className="text-[11px] font-normal text-red-600 ml-1">({transaction.note})</span>
+                          <span className="text-xs font-normal text-slate-500 ml-1">({transaction.note})</span>
                         )}
                       </div>
                     )}

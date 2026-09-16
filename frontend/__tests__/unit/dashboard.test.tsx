@@ -237,7 +237,7 @@ describe('Dashboard Page — Personal Activity & Warehouse Overview (STEP 4.25)'
     expect(countElements.length).toBeGreaterThan(0)
   })
 
-  it('3. Supervisor role maintains existing warehouse-wide transaction labels', async () => {
+  it('3. Supervisor role displays warehouse KPI overview, charts, quick actions, and recent transactions', async () => {
     vi.mocked(auth.getUser).mockReturnValue({
       id: 10,
       username: 'supervisor',
@@ -248,10 +248,10 @@ describe('Dashboard Page — Personal Activity & Warehouse Overview (STEP 4.25)'
     render(<DashboardPage />)
 
     await waitFor(() => {
-      expect(screen.getByText('กิจกรรมธุรกรรมคลังสินค้า')).toBeInTheDocument()
-      expect(screen.getByText('รับเข้าวันนี้')).toBeInTheDocument()
-      expect(screen.getByText('เบิกออกวันนี้')).toBeInTheDocument()
-      expect(screen.getByText('รายการรอยืนยัน')).toBeInTheDocument()
+      expect(screen.getByText('PACKAGING ทั้งหมด')).toBeInTheDocument()
+      expect(screen.getByText('จำนวนคงเหลือรวม')).toBeInTheDocument()
+      expect(screen.getByText('สต็อกใกล้หมด')).toBeInTheDocument()
+      expect(screen.getByText('สินค้าหมด (OUT OF STOCK)')).toBeInTheDocument()
     })
 
     // Ensure personal labels are NOT shown for supervisor
@@ -260,16 +260,28 @@ describe('Dashboard Page — Personal Activity & Warehouse Overview (STEP 4.25)'
     expect(screen.queryByText('คุณเบิกออกวันนี้')).not.toBeInTheDocument()
     expect(screen.queryByText('รายการของคุณที่รอยืนยัน')).not.toBeInTheDocument()
 
-    // 7-day trend title for Supervisor
+    // 7-day trend title & summary cards for Supervisor
     expect(screen.getByText('สรุปการรับเข้า - เบิกออก 7 วันล่าสุด')).toBeInTheDocument()
+    expect(screen.getByText('รับเข้ารวม (7 วัน)')).toBeInTheDocument()
+    expect(screen.getByText('เบิกออกรวม (7 วัน)')).toBeInTheDocument()
+
+    // Donut chart title
+    expect(screen.getByText('สัดส่วนวัตถุดิบบรรจุภัณฑ์')).toBeInTheDocument()
+
+    // Action Required
+    expect(screen.getByText('งานที่ต้องดำเนินการ (Action Required)')).toBeInTheDocument()
+
+    // Quick Actions
+    expect(screen.getByText('เมนูดำเนินการด่วน (Supervisor Quick Actions)')).toBeInTheDocument()
+    expect(screen.getByText('ตรวจสอบรายการ')).toBeInTheDocument()
+    expect(screen.getByText('ดูสต็อกบรรจุภัณฑ์')).toBeInTheDocument()
+    expect(screen.getByText('ธุรกรรมทั้งหมด')).toBeInTheDocument()
+    expect(screen.getByText('ดูรายงานทั้งหมด')).toBeInTheDocument()
 
     // Recent transactions title & subtitle for Supervisor
     expect(screen.getByText('รายการล่าสุด (Recent Transactions)')).toBeInTheDocument()
     expect(screen.getByText('ประวัติการทำรายการล่าสุดในระบบ')).toBeInTheDocument()
     expect(screen.getByText('แสดง 1 - 2 จากทั้งหมด 2 รายการ')).toBeInTheDocument()
-
-    // Quick action link for Supervisor points to reports
-    expect(screen.getByText('ดูรายงานทั้งหมด')).toBeInTheDocument()
   })
 
   it('4. Admin role displays Admin Dashboard with User & System management and no warehouse clutter', async () => {

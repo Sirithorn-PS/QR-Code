@@ -1,6 +1,16 @@
 # บันทึกการทำงาน (Memories)
 
 ## 16 ก.ย. 2026
+- **ดำเนินการ Deploy โค้ดแก้ไข Packaging / ProductLot / FIFO สู่ Production (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: นำโค้ดที่ผ่านการแก้ไขและทดสอบ Unit Test ครบ 104/104 tests (100% PASS) ขึ้นสู่ Production Repository เพื่อให้ระบบ Live Production (Render Backend & Vercel Frontend) ใช้งาน Logic ใหม่ที่ถูกต้อง ป้องกันปัญหา Inconsistency ในอนาคต
+  - **ขั้นตอนการตรวจสอบและการ Deploy (Git & CI/CD)**:
+    1. **Pre-Deployment Tests**: รัน `npx vitest run` ผ่าน 104/104 tests (9 test files), TypeScript Backend 0 errors, TypeScript Frontend 0 errors, Frontend Build (`next build`) PASS, Backend Build (`tsc`) PASS
+    2. **Git Commit & Push**: บันทึก Commit `37e5f34` ด้วยข้อความ `"fix: normalize packaging item type for FIFO lot tracking"` และ Push สู่ Branch `main` บน GitHub (`Sirithorn-PS/QR-Code`) เรียบร้อย
+    3. **Post-Deployment Read-Only Verification**:
+       - ทดสอบ Authentication เข้าสู่ระบบสำเร็จครบทั้ง 3 Roles: `admin` (Admin), `staff` (Warehouse Staff), `supervisor` (Supervisor)
+       - ตรวจสอบ `ITEM-TEST-UAT` (Product ID 1892): `Product.quantity = 15 Box`, `itemType = "Packaging"`, ProductLots รวม = 15 Box (Lot #161 = 10, Lot #164 = 5) $\rightarrow$ $15 = 15$ (**PASS**)
+       - ตรวจสอบ Transaction #519: สถานะ `confirmed`, ปริมาณ 5 Box คงเดิม 100%
+       - ตรวจสอบ Scope Safety: ไม่มีการสร้าง Transaction ใหม่, ไม่มีการลบข้อมูล, ไม่มีการเปลี่ยนแปลง Schema ใดๆ
 - **ดำเนินการกู้คืนความถูกต้องของข้อมูล UAT Data Recovery สำหรับ ITEM-TEST-UAT / Transaction #519 (เสร็จสมบูรณ์ 100%)**:
   - **เหตุผลและเป้าหมาย**: คืนค่าความสอดคล้องของข้อมูลสต็อกระหว่าง `Product.quantity` (15 Box) และ `SUM(ProductLot.remainingQuantity)` ให้เท่ากัน ($15 = 15$) ภายหลังการยืนยัน Transaction #519
   - **ขั้นตอนที่ดำเนินการ (Controlled Atomic Transaction)**:

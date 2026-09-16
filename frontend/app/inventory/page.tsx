@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { fetchProducts, updateProductQuantity, updateProductStatus, updateProductMinStock, createProduct, deleteProduct, fetchProductBom, createProductWithBom, fetchProductLots, Product, BillOfMaterial, ProductLot } from '@/lib/auth'
+import { isPackagingItem } from '@/lib/packaging'
 import QRCode from 'react-qr-code'
 import { Search, Package, ArrowLeft, Layers, Download, Check, History, X, Trash2, FileText, LayoutGrid, Crown, Droplets, Box, FlaskConical, QrCode, Star, Copy, Zap, Disc, Plus, CheckCircle2, AlertCircle, Printer, Power } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -742,12 +743,12 @@ export default function InventoryPage() {
         {/* Interactive Overview Statistics Cards for Packaging (Acts as Direct Filter Buttons) */}
         <div className="mb-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
           {[
-            { id: 'all', label: 'บรรจุภัณฑ์ทั้งหมด', count: products.filter(p => p.itemType === 'Packaging').length, icon: Package, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
-            { id: 'gallon', label: 'แกลลอน (Gallon)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'gallon').length, icon: Droplets, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
-            { id: 'foil', label: 'ฟอยล์ (Foil)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'foil').length, icon: Zap, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
-            { id: 'cap', label: 'ฝา (Cap)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'cap').length, icon: Disc, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
-            { id: 'box', label: 'กล่อง (Box)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'box').length, icon: Box, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
-            { id: 'other', label: 'อื่นๆ (Others)', count: products.filter(p => p.itemType === 'Packaging' && getPackagingSubCategory(p) === 'other').length, icon: LayoutGrid, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
+            { id: 'all', label: 'บรรจุภัณฑ์ทั้งหมด', count: products.filter(p => isPackagingItem(p.itemType)).length, icon: Package, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
+            { id: 'gallon', label: 'แกลลอน (Gallon)', count: products.filter(p => isPackagingItem(p.itemType) && getPackagingSubCategory(p) === 'gallon').length, icon: Droplets, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
+            { id: 'foil', label: 'ฟอยล์ (Foil)', count: products.filter(p => isPackagingItem(p.itemType) && getPackagingSubCategory(p) === 'foil').length, icon: Zap, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
+            { id: 'cap', label: 'ฝา (Cap)', count: products.filter(p => isPackagingItem(p.itemType) && getPackagingSubCategory(p) === 'cap').length, icon: Disc, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
+            { id: 'box', label: 'กล่อง (Box)', count: products.filter(p => isPackagingItem(p.itemType) && getPackagingSubCategory(p) === 'box').length, icon: Box, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
+            { id: 'other', label: 'อื่นๆ (Others)', count: products.filter(p => isPackagingItem(p.itemType) && getPackagingSubCategory(p) === 'other').length, icon: LayoutGrid, badgeBg: 'bg-red-50/50 text-[#BE1111] border-red-200/80' },
           ].map(card => {
             const isSelected = packagingSubTab === card.id
             const IconComponent = card.icon
@@ -1133,7 +1134,7 @@ export default function InventoryPage() {
                             : 'text-gray-500 hover:text-gray-900'
                         }`}
                       >
-                        ทั้งหมด ({products.filter(p => p.itemType === 'Packaging' && (packagingSubTab === 'all' || getPackagingSubCategory(p) === packagingSubTab)).length})
+                        ทั้งหมด ({products.filter(p => isPackagingItem(p.itemType) && (packagingSubTab === 'all' || getPackagingSubCategory(p) === packagingSubTab)).length})
                       </button>
                       <button
                         type="button"
@@ -1144,7 +1145,7 @@ export default function InventoryPage() {
                             : 'text-gray-500 hover:text-emerald-700'
                         }`}
                       >
-                        Active ({products.filter(p => p.itemType === 'Packaging' && p.status !== 'inactive' && (packagingSubTab === 'all' || getPackagingSubCategory(p) === packagingSubTab)).length})
+                        Active ({products.filter(p => isPackagingItem(p.itemType) && p.status !== 'inactive' && (packagingSubTab === 'all' || getPackagingSubCategory(p) === packagingSubTab)).length})
                       </button>
                       <button
                         type="button"
@@ -1155,7 +1156,7 @@ export default function InventoryPage() {
                             : 'text-gray-500 hover:text-rose-700'
                         }`}
                       >
-                        Inactive ({products.filter(p => p.itemType === 'Packaging' && p.status === 'inactive' && (packagingSubTab === 'all' || getPackagingSubCategory(p) === packagingSubTab)).length})
+                        Inactive ({products.filter(p => isPackagingItem(p.itemType) && p.status === 'inactive' && (packagingSubTab === 'all' || getPackagingSubCategory(p) === packagingSubTab)).length})
                       </button>
                     </div>
                   </div>
@@ -1163,14 +1164,14 @@ export default function InventoryPage() {
 
                 {displayedProducts
                   .filter(p => {
-                    if (p.itemType !== 'Packaging') return false
+                    if (!isPackagingItem(p.itemType)) return false
                     if (packagingSubTab !== 'all' && getPackagingSubCategory(p) !== packagingSubTab) return false
                     if (packagingStatusFilter === 'active' && p.status === 'inactive') return false
                     if (packagingStatusFilter === 'inactive' && p.status !== 'inactive') return false
                     return true
                   })
                   .map(item => {
-                    const canGenerateQR = item.itemType === 'Packaging' && item.warehouse === 'WPK'
+                    const canGenerateQR = isPackagingItem(item.itemType) && item.warehouse === 'WPK'
 
                     return (
                     <div key={item.id} className="w-full rounded-3xl border border-gray-200/90 bg-white p-5 sm:p-6 shadow-[0_2px_15px_rgb(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-gray-300 transition-all flex flex-col justify-between gap-4 relative group/card font-display">
@@ -1340,7 +1341,7 @@ export default function InventoryPage() {
                               <FileText className="w-4 h-4 shrink-0" />
                               <span>ดูรายละเอียด BOM</span>
                             </button>
-                            {user?.role === 'supervisor' && item.itemType === 'Packaging' && (
+                            {user?.role === 'supervisor' && isPackagingItem(item.itemType) && (
                               item.status === 'inactive' ? (
                                 <button
                                   type="button"
@@ -1535,7 +1536,7 @@ export default function InventoryPage() {
                                   <span>สูตร BOM</span>
                                 </button>
                               )}
-                              {item.itemType === 'Packaging' && user?.role === 'supervisor' && (
+                              {isPackagingItem(item.itemType) && user?.role === 'supervisor' && (
                                 <>
                                   <button
                                     type="button"
@@ -1588,7 +1589,7 @@ export default function InventoryPage() {
                                 }`}>
                                 {item.itemType || 'General'}
                               </span>
-                              {item.itemType === 'Packaging' && (
+                              {isPackagingItem(item.itemType) && (
                                 item.status === 'inactive' ? (
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 font-display">
                                     <span className="w-1 h-1 rounded-full bg-rose-500"></span>
@@ -2180,7 +2181,7 @@ export default function InventoryPage() {
                 <div className="flex items-center justify-center gap-2">
                   <span className={`px-2 py-0.5 rounded-md text-[11px] font-extrabold border ${selectedQrProduct.itemType === 'FG' ? 'bg-red-50 text-red-700 border-red-200' :
                     selectedQrProduct.itemType === 'Bulk' ? 'bg-amber-50 text-amber-800 border-amber-200' :
-                      selectedQrProduct.itemType === 'Packaging' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                      isPackagingItem(selectedQrProduct.itemType) ? 'bg-blue-50 text-blue-700 border-blue-200' :
                         'bg-purple-50 text-purple-700 border-purple-200'
                     }`}>
                     {selectedQrProduct.itemType || 'General'}

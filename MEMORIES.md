@@ -1,5 +1,54 @@
 # บันทึกการทำงาน (Memories)
 
+## 16 ก.ย. 2026
+- **ดำเนินการกู้คืนความถูกต้องของข้อมูล UAT Data Recovery สำหรับ ITEM-TEST-UAT / Transaction #519 (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: คืนค่าความสอดคล้องของข้อมูลสต็อกระหว่าง `Product.quantity` (15 Box) และ `SUM(ProductLot.remainingQuantity)` ให้เท่ากัน ($15 = 15$) ภายหลังการยืนยัน Transaction #519
+  - **ขั้นตอนที่ดำเนินการ (Controlled Atomic Transaction)**:
+    1. **Precheck**: ตรวจสอบสถานะดั้งเดิม (Product ID 1892, `quantity: 15`, `itemType: "Packaging Material"`, Lot #161 `remainingQuantity: 10`, Transaction #519 `confirmed`, ไม่มี Lot ซ้ำซ้อน)
+    2. **Normalize ItemType**: ปรับปรุง `itemType` ของ `ITEM-TEST-UAT` (ID 1892) เฉพาะรายการนี้ให้เป็น `"Packaging"` (Canonical Form)
+    3. **Create Missing ProductLot**: สร้าง ProductLot ID: 164 (`lotNumber: "LOT-20260916-0164"`, `supplierLot: "LOT-UAT-REC01"`, `receivedQuantity: 5`, `remainingQuantity: 5`, `status: "active"`, `transactionId: 519`)
+    4. **Invariant Check & Commit**: ตรวจสอบ Invariant `Product.quantity === SUM(ProductLot.remainingQuantity)` ($15 = 15$) สำเร็จ 100% ภายใน Database Transaction เดียวกัน
+  - **ผลการตรวจสอบหลังการกู้คืน (Verification)**:
+    - `ITEM-TEST-UAT` (ID 1892): `itemType = "Packaging"`, `quantity = 15 Box`
+    - ProductLots: Lot #161 (10 Box) + Lot #164 (5 Box) = รวม 15 Box
+    - Transaction #519: สถานะ `confirmed` คงเดิม, ปริมาณ 5 คงเดิม ไม่มีการลบหรือสร้าง Transaction ซ้ำ
+    - Scope Safety: สินค้าอื่นๆ และข้อมูล Operational ทั้งหมดยังคงเดิม 100%, ไม่มีรายการสูญหาย, ไม่มีการ Deploy ในขั้นตอนนี้
+- **ดำเนินการแก้ไขโค้ด Packaging Item Type + ProductLot + FIFO Logic (Code Fix Only - ไม่แตะต้อง Production Data)**:
+  - **เหตุผลและเป้าหมาย**: แก้ไขข้อผิดพลาดเชิงตรรกะที่พบจาก UAT-REC-002 ที่ระบบใช้เงื่อนไขแบบเข้มงวด `itemType === 'Packaging'` ทำให้สินค้าที่มีประเภทเป็น `'Packaging Material'` ถูกข้ามขั้นตอนการสร้าง `ProductLot` และการจัดสรร `FIFO Lot Allocation` เมื่อยืนยันรายการรับเข้า/เบิกออก
+  - **การปรับปรุง Logic และ Source Code**:
+    1. **สร้างฟังก์ชันส่วนกลาง `isPackagingItem` และ `normalizeItemType`**:
+       - สร้างใน `backend/src/index.ts` และ `frontend/lib/packaging.ts` เพื่อ Normalize ข้อความและตัวพิมพ์ (Case-insensitive, Trim) เช่น `"Packaging"`, `"packaging"`, `" PACKAGING "`, `"Packaging Material"`, `"packaging_material"` ให้ถือเป็นสินค้า Packaging ทั้งหมดอย่างปลอดภัย
+       - กำหนดให้ Canonical Storage สำหรับสินค้าใหม่ถูกจัดเก็บเป็น `"Packaging"` เสมอผ่าน `normalizeItemType`
+    2. **ปรับปรุง Receive Confirmation (`POST /transactions/:id/confirm`)**:
+       - ตรวจสอบ `isPackagingItem` เพื่อสร้าง `ProductLot` ควบคู่กับการอัปเดต `Product.quantity` ให้อยู่ใน Database Transaction เดียวกันเสมอ รักษา Invariant: `Product.quantity = SUM(ProductLot.remainingQuantity)`
+    3. **ปรับปรุง Issue FIFO Allocation (`POST /transactions/:id/confirm`)**:
+       - ตรวจสอบ `isPackagingItem` เพื่อทำการตัดยอดสต็อกตามลำดับ FIFO (1. `receivedDate ASC` -> 2. `Transaction.createdAt ASC` -> 3. `ProductLot.id ASC`)
+    4. **ปรับปรุงจุดที่เกี่ยวข้องในระบบ**:
+       - `GET /products/:productId/lots`, `PATCH /products/:id/min-stock`, `PATCH /products/:id/status`, `POST /products`, `POST /products/with-bom`
+       - หน้าจอ Frontend (`frontend/app/inventory/page.tsx`, `frontend/app/transactions/page.tsx`, `frontend/app/scan/page.tsx`, `frontend/app/dashboard/page.tsx`)
+    5. **เพิ่ม Automated Tests ครอบคลุม Test 1 - Test 6**:
+       - สร้าง `frontend/__tests__/unit/packaging-fifo.test.ts` (20 tests) และ `backend/__tests__/packaging.unit.test.ts` (10 tests)
+  - **ผลการตรวจสอบและการทดสอบ (Verification)**:
+    - **TypeScript Type Check**: Backend 0 errors, Frontend 0 errors
+    - **Build**: Frontend Production Build (`next build`) ผ่านสำเร็จ 100%, Backend (`tsc`) ผ่านสำเร็จ 100%
+    - **Automated Tests**: รวม 9 Test Files ผ่านครบ 104/104 tests (100% PASS จาก Baseline เดิม 84 tests)
+    - **Production Safety**: ยืนยันไม่มีการแก้ไขข้อมูลใน Production Database, ไม่มีการแตะต้อง Transaction #519, ไม่มีการ Deploy ในขั้นตอนนี้
+- **ดำเนินการทดสอบ UAT-REC-002 (Supervisor Confirm Receive) บนระบบ Production**:
+  - **เหตุผลและเป้าหมาย**: ดำเนินการทดสอบ Controlled Production Write Test ตามแผน UAT Test Case `UAT-REC-002` โดยใช้บทบาท Supervisor เพื่ออนุมัติยืนยันรายการรับเข้าหมายเลข 519 (Receive Quantity 5) สำหรับ `ITEM-TEST-UAT`
+  - **ผลการทดสอบ**:
+    - ยืนยันรายการสำเร็จ: สถานะ Transaction เปลี่ยนจาก `pending` เป็น `confirmed`, บันทึก `confirmedAt` และ `approvedById: 10` (Supervisor) ถูกต้อง
+    - สต็อกรวม (`Product.quantity`) เพิ่มขึ้นจาก 10 เป็น 15 Box ตามที่คาดหมาย
+    - ผลการตรวจสอบ ProductLot: พบว่าระบบไม่ได้สร้าง ProductLot ใหม่สำหรับ `LOT-UAT-REC01` เนื่องจากเงื่อนไขในระบบ `backend/src/index.ts` กำหนดการสร้าง Lot สำหรับสินค้าที่มี `itemType === 'Packaging'` แต่ `ITEM-TEST-UAT` ถูกสร้างด้วย `itemType: 'Packaging Material'` ส่งผลให้ยอดรวม ProductLot คงเหลืออยู่ที่ 10 Box ในขณะที่ Product.quantity อยู่ที่ 15 Box ($15 \neq 10$)
+    - สถานะการทดสอบ: **FAIL** (หยุดการทดสอบทันทีตามกฎ UAT Safety Protocol เพื่อรายงานปัญหาให้ผู้ใช้งานทราบโดยไม่แก้ไขโค้ดหรือฐานข้อมูลเอง)
+- **ดำเนินการทดสอบ UAT-REC-001 (Staff Create Receive Transaction) บนระบบ Production (เสร็จสมบูรณ์ 100%)**:
+  - **เหตุผลและเป้าหมาย**: ดำเนินการทดสอบ Controlled Production Write Test ตามแผน UAT Test Case `UAT-REC-001` โดยใช้บทบาทพนักงานคลัง (Staff / `warehouse_staff`) เพื่อสร้างรายการรับเข้าสำหรับสินค้าทดสอบ UAT (`ITEM-TEST-UAT`) จำนวน 5 Box และตรวจสอบว่าสถานะรายการเป็น `pending` โดยที่สต็อกสินค้าจริง (`Product.quantity`) ยังคงเดิมไม่เพิ่มขึ้นก่อนได้รับการอนุมัติจาก Supervisor
+  - **ผลการทดสอบ**:
+    - เข้าสู่ระบบด้วยบัญชี Staff สำเร็จ ได้รับ JWT Token ถูกต้อง
+    - ดึงข้อมูลสินค้า `ITEM-TEST-UAT` สำเร็จ
+    - สร้างรายการ Receive Transaction (ID: `519`, Quantity: `5`, Lot: `LOT-UAT-REC01`, Note: `UAT Test Receive`) สำเร็จ และได้สถานะ `pending`
+    - สต็อกคงเหลือของ `ITEM-TEST-UAT` ยังคงอยู่ที่ `10 Box` เท่าเดิม และ `ProductLot` (LOT-UAT-INIT) ยังคงมี `10 Box` เท่าเดิม ไม่มีการเปลี่ยนแปลงก่อนการอนุมัติ
+    - เกิดการแจ้งเตือน (`Notification` ID: `667`) ไปยังกลุ่มผู้ใช้งาน `supervisor` เพื่อรอยืนยันรายการตาม Workflow อย่างถูกต้อง
+
 ## 15 ก.ย. 2026
 - **ตรวจสอบและปรับปรุง Business Logic ด้าน Stock (Low Stock / Out of Stock / Action Required) สำหรับ Supervisor Dashboard (เสร็จสมบูรณ์ 100%)**:
   - **เหตุผลและเป้าหมาย**: ตรวจสอบการนับสถานะสต็อกสินค้าบน Supervisor Dashboard ([frontend/app/dashboard/page.tsx](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/dashboard/page.tsx)) ให้แบ่งแยก 3 สถานะอย่างเด็ดขาด ป้องกันการนับซ้ำ:

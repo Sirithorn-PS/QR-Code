@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState, useRef } from 'react'
 import { fetchTransactions, fetchProducts, getUsers, StockTransaction, Product, getUser, UserItem } from '@/lib/auth'
+import { isPackagingItem } from '@/lib/packaging'
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -856,7 +857,7 @@ export default function DashboardPage() {
 
   // --- 2. คำนวณสถิติ Warehouse Overview ---
   // สินค้ากลุ่ม Packaging ในคลัง
-  const packagingProducts = products.filter(p => p.itemType === 'Packaging')
+  const packagingProducts = products.filter(p => isPackagingItem(p.itemType))
   const totalPackagingCount = packagingProducts.length
 
   // ยอดรวมจำนวนชิ้น Packaging คงเหลือทั้งหมดในคลัง

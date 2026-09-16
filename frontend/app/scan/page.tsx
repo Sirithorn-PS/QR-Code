@@ -2,6 +2,7 @@
 
 import { FormEvent, useState, useCallback, useEffect } from 'react'
 import { createTransaction, fetchProduct, fetchProductBom, Product, BillOfMaterial } from '@/lib/auth'
+import { isPackagingItem } from '@/lib/packaging'
 import { motion, AnimatePresence } from 'framer-motion'
 import QRScanner from '@/components/QRScanner'
 import { FileText, ChevronDown, ChevronUp, Droplets, Box, FlaskConical, ExternalLink, ArrowLeft, PackagePlus, PackageMinus, Search, X, AlertCircle } from 'lucide-react'
@@ -247,7 +248,7 @@ export default function ScanPage() {
   }
 
   const getProductGroup = (p: Product): 'FG' | 'Bulk' | 'Packaging' | 'Raw Material' => {
-    if (p.itemType === 'Packaging') return 'Packaging'
+    if (isPackagingItem(p.itemType)) return 'Packaging'
     if (p.itemType === 'Bulk') return 'Bulk'
     if (p.itemType === 'FG') return 'FG'
     if (p.itemType === 'Raw Material' || p.itemType === 'RM') return 'Raw Material'
@@ -453,13 +454,13 @@ export default function ScanPage() {
                         <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${
                           product.itemType === 'FG' ? 'bg-red-50 text-red-700 border-red-200' :
                           product.itemType === 'Bulk' ? 'bg-amber-50 text-amber-800 border-amber-200' :
-                          product.itemType === 'Packaging' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                          isPackagingItem(product.itemType) ? 'bg-blue-50 text-blue-700 border-blue-200' :
                           'bg-purple-50 text-purple-700 border-purple-200'
                         }`}>
                           {product.itemType}
                         </span>
                       )}
-                      {product.itemType === 'Packaging' && (
+                      {isPackagingItem(product.itemType) && (
                         product.status === 'inactive' ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
                             <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>

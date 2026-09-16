@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { confirmTransaction, fetchTransactions, rejectTransaction, StockTransaction } from '@/lib/auth'
+import { isPackagingItem } from '@/lib/packaging'
 import { Loader2, CheckCircle2, AlertCircle, XCircle, Clock, Filter, Layers, ChevronDown, ChevronUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -390,7 +391,7 @@ function TransactionsContent() {
                     const isPackagingIssueConfirmed =
                       transaction.type === 'issue' &&
                       transaction.status === 'confirmed' &&
-                      (transaction.product?.itemType === 'Packaging' || transaction.itemSnapshot?.itemType === 'Packaging')
+                      (isPackagingItem(transaction.product?.itemType) || isPackagingItem(transaction.itemSnapshot?.itemType))
 
                     if (!isSupervisor || !isPackagingIssueConfirmed || !transaction.allocations || transaction.allocations.length === 0) {
                       return null

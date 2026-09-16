@@ -95,6 +95,27 @@ function normalizeText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+function isPackagingItem(itemType?: string | null): boolean {
+  if (!itemType || typeof itemType !== 'string') return false
+  const normalized = itemType.trim().toLowerCase()
+  return (
+    normalized === 'packaging' ||
+    normalized === 'packaging material' ||
+    normalized === 'packaging_material'
+  )
+}
+
+function normalizeItemType(itemType?: string | null): string {
+  if (!itemType || typeof itemType !== 'string') return 'FG'
+  if (isPackagingItem(itemType)) return 'Packaging'
+  const trimmed = itemType.trim()
+  const lower = trimmed.toLowerCase()
+  if (lower === 'fg' || lower === 'finished goods' || lower === 'finished_goods') return 'FG'
+  if (lower === 'bulk') return 'Bulk'
+  if (lower === 'raw material' || lower === 'raw_material' || lower === 'rawmaterial' || lower === 'rm') return 'Raw Material'
+  return trimmed
+}
+
 function roundQty(value: number): number {
   return Number(Math.round(Number(value + 'e+4')) + 'e-4')
 }
@@ -472,7 +493,7 @@ app.get('/products/:productId/lots', authenticate, async (req, res) => {
       return res.status(404).json({ error: 'ไม่พบสินค้าในระบบ' })
     }
 
-    if (product.itemType !== 'Packaging') {
+    if (!isPackagingItem(product.itemType)) {
       return res.status(400).json({ error: 'ระบบ FIFO รองรับเฉพาะสินค้าประเภท Packaging เท่านั้น' })
     }
 
@@ -662,7 +683,7 @@ app.post('/products/with-bom', authenticate, requireRole('supervisor'), async (r
           warehouse: finalWarehouse,
           location: '-',
           quantity: qtyNum,
-          itemType: finalBomType,
+          itemType: normalizeItemType(finalBomType),
         }
       })
 
@@ -676,7 +697,7 @@ app.post('/products/with-bom', authenticate, requireRole('supervisor'), async (r
           quantity: qtyNum || 1,
           warehouse: finalWarehouse,
           depth: 1,
-          bomType: finalBomType,
+          bomType: normalizeItemType(finalBomType),
         }
       })
 
@@ -691,7 +712,7 @@ app.post('/products/with-bom', authenticate, requireRole('supervisor'), async (r
             quantity: comp.quantity,
             warehouse: comp.warehouse,
             depth: 1,
-            bomType: finalBomType,
+            bomType: normalizeItemType(finalBomType),
           }
         })
 
@@ -790,7 +811,7 @@ app.post('/products', authenticate, requireRole('supervisor'), async (req, res) 
         warehouse: String(warehouse),
         location: String(location),
         quantity: Number(quantity),
-        itemType: req.body.itemType ? String(req.body.itemType) : 'FG',
+        itemType: normalizeItemType(req.body.itemType),
       },
     })
 
@@ -860,7 +881,7 @@ app.patch('/products/:id/quantity', authenticate, requireRole('supervisor'), asy
 
     // ตรวจสอบ Low Stock สำหรับสินค้า Packaging ที่ Active เมื่อปรับสต็อกลดลงจนเข้าเกณฑ์ (Edge-Triggered)
     if (
-      product.itemType === 'Packaging' &&
+      isPackagingItem(product.itemType) &&
       product.status === 'active' &&
       product.minStock !== null &&
       product.minStock !== undefined &&
@@ -929,7 +950,7 @@ app.patch(
         return res.status(404).json({ error: 'ไม่พบสินค้ารายการนี้ในระบบ' })
       }
 
-      if (product.itemType !== 'Packaging') {
+      if (!isPackagingItem(product.itemType)) {
         return res.status(400).json({ error: 'สามารถกำหนด minStock ได้เฉพาะสินค้าประเภท Packaging เท่านั้น' })
       }
 
@@ -967,7 +988,7 @@ app.patch(
         return res.status(404).json({ error: 'ไม่พบสินค้ารายการนี้ในระบบ' })
       }
 
-      if (product.itemType !== 'Packaging') {
+      if (!isPackagingItem(product.itemType)) {
         return res.status(400).json({ error: 'ระบบจัดการสถานะ Active/Inactive รองรับเฉพาะสินค้าประเภท Packaging เท่านั้น' })
       }
 
@@ -1470,7 +1491,7 @@ app.post(
           })
 
           // 2. ถ้าเป็นสินค้า Packaging ให้สร้าง ProductLot อัตโนมัติ
-          if (transaction.product.itemType === 'Packaging') {
+          if (isPackagingItem(freshProduct.itemType) || isPackagingItem(transaction.product.itemType)) {
             const tempLotNumber = `TEMP-${transaction.id}-${Date.now()}`
             const createdLot = await tx.productLot.create({
               data: {
@@ -1498,7 +1519,7 @@ app.post(
         // ----------------------------------------------------
         else if (transaction.type === 'issue') {
           // 2.1 หากเป็นสินค้า Packaging: ใช้ FIFO Allocation ตัดยอดจาก ProductLot
-          if (transaction.product.itemType === 'Packaging') {
+          if (isPackagingItem(freshProduct.itemType) || isPackagingItem(transaction.product.itemType)) {
             // ดึง Active Lots ที่มีสต็อกคงเหลือ > 0
             const availableLots = await tx.productLot.findMany({
               where: {
@@ -1575,11 +1596,12 @@ app.post(
             })
 
             // ตรวจสอบเงื่อนไข Low Stock State Transition (Edge-Triggered):
-            // 1. itemType === 'Packaging'
+            // 1. isPackagingItem(freshProduct.itemType)
             // 2. status === 'active'
             // 3. minStock !== null
             // 4. previousQty > minStock && nextQty <= minStock
             if (
+              isPackagingItem(freshProduct.itemType) &&
               freshProduct.status === 'active' &&
               freshProduct.minStock !== null &&
               freshProduct.minStock !== undefined &&
@@ -2249,4 +2271,4 @@ process.on('beforeExit', async () => {
   await prisma.$disconnect()
 })
 
-export { app, prisma }
+export { app, prisma, isPackagingItem, normalizeItemType }

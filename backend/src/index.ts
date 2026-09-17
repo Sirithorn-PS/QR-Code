@@ -2059,27 +2059,24 @@ app.patch('/users/:id/role', authenticate, requireRole('admin'), async (req: Aut
       return res.status(400).json({ error: 'บทบาท (Role) ไม่ถูกต้อง' })
     }
 
-    try {
-      const updatedUser = await prisma.user.update({
-        where: { id: userId },
-        data: { role: newRole },
-        select: {
-          id: true,
-          username: true,
-          fullName: true,
-          employeeId: true,
-          role: true,
-          status: true,
-        },
-      })
-      return res.json({ success: true, message: 'เปลี่ยนสิทธิ์การใช้งานสำเร็จ', user: updatedUser })
-    } catch {
-      return res.json({
-        success: true,
-        message: 'เปลี่ยนสิทธิ์การใช้งานสำเร็จ (Memory Mode)',
-        user: { id: userId, role: newRole },
-      })
+    const existingUser = await prisma.user.findUnique({ where: { id: userId } })
+    if (!existingUser) {
+      return res.status(404).json({ error: 'ไม่พบข้อมูลผู้ใช้งานนี้' })
     }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { role: newRole },
+      select: {
+        id: true,
+        username: true,
+        fullName: true,
+        employeeId: true,
+        role: true,
+        status: true,
+      },
+    })
+    return res.json({ success: true, message: 'เปลี่ยนสิทธิ์การใช้งานสำเร็จ', user: updatedUser })
   } catch (error) {
     console.error('Error updating user role:', error)
     return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการเปลี่ยนสิทธิ์ผู้ใช้งาน' })
@@ -2100,16 +2097,17 @@ app.patch('/users/:id/reset-password', authenticate, requireRole('admin'), async
       return res.status(400).json({ error: 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร' })
     }
 
-    try {
-      const hashedPassword = await bcrypt.hash(newPassword, 10)
-      await prisma.user.update({
-        where: { id: userId },
-        data: { password: hashedPassword },
-      })
-      return res.json({ success: true, message: 'รีเซ็ตรหัสผ่านผู้ใช้งานเรียบร้อยแล้ว' })
-    } catch {
-      return res.json({ success: true, message: 'รีเซ็ตรหัสผ่านผู้ใช้งานเรียบร้อยแล้ว (Memory Mode)' })
+    const existingUser = await prisma.user.findUnique({ where: { id: userId } })
+    if (!existingUser) {
+      return res.status(404).json({ error: 'ไม่พบข้อมูลผู้ใช้งานนี้' })
     }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    })
+    return res.json({ success: true, message: 'รีเซ็ตรหัสผ่านผู้ใช้งานเรียบร้อยแล้ว' })
   } catch (error) {
     console.error('Error resetting user password by Admin:', error)
     return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการรีเซ็ตรหัสผ่าน' })
@@ -2131,30 +2129,27 @@ app.patch('/users/:id', authenticate, requireRole('admin'), async (req: Authenti
       return res.status(400).json({ error: 'กรุณากรอกชื่อ-นามสกุล' })
     }
 
-    try {
-      const updatedUser = await prisma.user.update({
-        where: { id: userId },
-        data: {
-          fullName,
-          employeeId: employeeId || null,
-        },
-        select: {
-          id: true,
-          username: true,
-          fullName: true,
-          employeeId: true,
-          role: true,
-          status: true,
-        },
-      })
-      return res.json({ success: true, message: 'แก้ไขข้อมูลผู้ใช้งานเรียบร้อยแล้ว', user: updatedUser })
-    } catch {
-      return res.json({
-        success: true,
-        message: 'แก้ไขข้อมูลผู้ใช้งานเรียบร้อยแล้ว (Memory Mode)',
-        user: { id: userId, fullName, employeeId: employeeId || null },
-      })
+    const existingUser = await prisma.user.findUnique({ where: { id: userId } })
+    if (!existingUser) {
+      return res.status(404).json({ error: 'ไม่พบข้อมูลผู้ใช้งานนี้' })
     }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        fullName,
+        employeeId: employeeId || null,
+      },
+      select: {
+        id: true,
+        username: true,
+        fullName: true,
+        employeeId: true,
+        role: true,
+        status: true,
+      },
+    })
+    return res.json({ success: true, message: 'แก้ไขข้อมูลผู้ใช้งานเรียบร้อยแล้ว', user: updatedUser })
   } catch (error) {
     console.error('Error updating user info by Admin:', error)
     return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการแก้ไขข้อมูลผู้ใช้งาน' })
@@ -2176,31 +2171,28 @@ app.patch('/users/:id/status', authenticate, requireRole('admin'), async (req: A
       return res.status(400).json({ error: 'สถานะไม่ถูกต้อง (ต้องเป็น approved หรือ disabled)' })
     }
 
-    try {
-      const updatedUser = await prisma.user.update({
-        where: { id: userId },
-        data: { status },
-        select: {
-          id: true,
-          username: true,
-          fullName: true,
-          employeeId: true,
-          role: true,
-          status: true,
-        },
-      })
-      return res.json({
-        success: true,
-        message: status === 'disabled' ? 'ระงับการใช้งานบัญชีแล้ว' : 'เปิดใช้งานบัญชีเรียบร้อยแล้ว',
-        user: updatedUser,
-      })
-    } catch {
-      return res.json({
-        success: true,
-        message: status === 'disabled' ? 'ระงับการใช้งานบัญชีแล้ว (Memory Mode)' : 'เปิดใช้งานบัญชีเรียบร้อยแล้ว (Memory Mode)',
-        user: { id: userId, status },
-      })
+    const existingUser = await prisma.user.findUnique({ where: { id: userId } })
+    if (!existingUser) {
+      return res.status(404).json({ error: 'ไม่พบข้อมูลผู้ใช้งานนี้' })
     }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { status },
+      select: {
+        id: true,
+        username: true,
+        fullName: true,
+        employeeId: true,
+        role: true,
+        status: true,
+      },
+    })
+    return res.json({
+      success: true,
+      message: status === 'disabled' ? 'ระงับการใช้งานบัญชีแล้ว' : 'เปิดใช้งานบัญชีเรียบร้อยแล้ว',
+      user: updatedUser,
+    })
   } catch (error) {
     console.error('Error toggling user status by Admin:', error)
     return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการปรับสถานะผู้ใช้งาน' })
@@ -2215,13 +2207,37 @@ app.delete('/users/:id', authenticate, requireRole('admin'), async (req: Authent
       return res.status(400).json({ error: 'ID ผู้ใช้งานไม่ถูกต้อง' })
     }
 
-    try {
-      await prisma.user.delete({ where: { id: userId } })
-      return res.json({ success: true, message: 'ลบบัญชีผู้ใช้งานเรียบร้อยแล้ว' })
-    } catch {
-      return res.json({ success: true, message: 'ลบบัญชีผู้ใช้งานเรียบร้อยแล้ว (Memory Mode)' })
+    const existingUser = await prisma.user.findUnique({ where: { id: userId } })
+    if (!existingUser) {
+      return res.status(404).json({ error: 'ไม่พบข้อมูลผู้ใช้งานนี้' })
     }
+
+    // Guard: ตรวจสอบความสัมพันธ์ Transaction เพื่อป้องกัน Foreign Key Error
+    const txCount = await prisma.transaction.count({
+      where: {
+        OR: [
+          { createdById: userId },
+          { approvedById: userId },
+        ],
+      },
+    })
+    if (txCount > 0) {
+      return res.status(409).json({
+        error: `ไม่สามารถลบผู้ใช้งานได้เนื่องจากมีประวัติการทำรายการในระบบ (${txCount} รายการ) กรุณาใช้วิธีระงับการใช้งาน (Disabled) แทน`,
+      })
+    }
+
+    // ลบการแจ้งเตือนที่เกี่ยวข้องก่อนลบผู้ใช้ (ถ้ามี)
+    await prisma.notification.deleteMany({
+      where: { userId },
+    })
+
+    await prisma.user.delete({ where: { id: userId } })
+    return res.json({ success: true, message: 'ลบบัญชีผู้ใช้งานเรียบร้อยแล้ว' })
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+      return res.status(409).json({ error: 'ไม่สามารถลบผู้ใช้งานได้เนื่องจากมีข้อมูลที่เชื่อมโยงกันอยู่ในระบบ' })
+    }
     console.error('Error deleting user by Admin:', error)
     return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการลบบัญชีผู้ใช้งาน' })
   }

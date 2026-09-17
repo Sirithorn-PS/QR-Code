@@ -1,5 +1,22 @@
 # บันทึกการทำงาน (Memories)
 
+## 17 ก.ย. 2026
+- **ดำเนินการแก้ไข BUG-001: ถอด Legacy "Memory Mode" False Success ใน Admin User Management API (เสร็จสมบูรณ์ 100% - PASS)**:
+  - **เหตุผลและเป้าหมาย**: แก้ไขข้อผิดพลาดเชิงโครงสร้างในระบบจัดการผู้ใช้งาน (Admin User Management) ใน `backend/src/index.ts` ซึ่งเดิมมี inner try/catch ที่จับข้อผิดพลาดของฐานข้อมูล/Prisma (เช่น User ID ไม่มีอยู่จริง หรือข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล) แล้วตอบกลับเป็น HTTP 200 พร้อมข้อความ `(Memory Mode)` และ `success: true` ทำให้เกิด False Success ที่หลอกหน้าจอ Admin
+  - **รายละเอียดการแก้ไข (5 Endpoints ใน backend/src/index.ts)**:
+    1. `PATCH /users/:id/role`: ตรวจสอบการมีอยู่ของผู้ใช้ (`findUnique`) หากไม่พบส่งคืน HTTP 404 (Not Found), หาก Role ไม่ถูกต้องส่งคืน HTTP 400 (Bad Request), หากสำเร็จปรับปรุงสิทธิ์ในฐานข้อมูลจริงและส่งคืน HTTP 200 (OK), และหาก DB ขัดข้องส่งคืน HTTP 500 (Internal Server Error)
+    2. `PATCH /users/:id/reset-password`: ตรวจสอบความยาวรหัสผ่าน (>= 6 ตัวอักษร), ตรวจสอบการมีอยู่ของผู้ใช้ หากไม่พบส่งคืน HTTP 404, หากสำเร็จทำการเข้ารหัส Hash ใหม่ด้วย Bcryptjs และบันทึกลงฐานข้อมูลจริง
+    3. `PATCH /users/:id`: ตรวจสอบความครบถ้วนของชื่อ-นามสกุล, ตรวจสอบการมีอยู่ของผู้ใช้ หากไม่พบส่งคืน HTTP 404, หากสำเร็จปรับปรุงข้อมูลในฐานข้อมูลจริง
+    4. `PATCH /users/:id/status`: ตรวจสอบค่าสถานะ (`approved` / `disabled`), ตรวจสอบการมีอยู่ของผู้ใช้ หากไม่พบส่งคืน HTTP 404, หากสำเร็จปรับปรุงสถานะจริงในฐานข้อมูล
+    5. `DELETE /users/:id`: ตรวจสอบการมีอยู่ของผู้ใช้ หากไม่พบส่งคืน HTTP 404, เพิ่ม Guard ป้องกันการลบผู้ใช้ที่มีประวัติการทำรายการ (Transaction) โดยส่งคืน HTTP 409 (Conflict), ลบการแจ้งเตือนที่เกี่ยวข้องก่อนลบ และลบผู้ใช้ออกจากฐานข้อมูลจริง
+  - **การทดสอบและการตรวจสอบคุณภาพ (Quality & Automated Verification)**:
+    - สร้างชุดทดสอบ Vitest ใน [`backend/__tests__/user-management.test.ts`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/__tests__/user-management.test.ts) ครอบคลุมทั้ง 16 Test Cases (ตรวจสอบ HTTP 404 เมื่อ User ID ไม่มีอยู่จริง, ตรวจสอบ HTTP 400 Validation, ตรวจสอบ HTTP 403 เมื่อ Staff เรียกใช้, ตรวจสอบ HTTP 409 Foreign Key Guard เมื่อลบผู้ใช้ที่มี Transaction, ตรวจสอบความสำเร็จเมื่อแก้ไขจริง และยืนยันว่าไม่มีข้อความ `Memory Mode` หรือ False Success หลงเหลือ) ผลการทดสอบ **16/16 PASS (100%)**
+    - TypeScript Type Check: 0 errors ทั้ง Frontend และ Backend (`npx tsc --noEmit`) ปราศจาก `any` 100% ตาม Rule 1
+    - Backend Compilation (`npx tsc`): ผ่านสมบูรณ์ 0 errors
+    - Frontend Vitest: ผ่านครบถ้วน **104/104 tests (9/9 suites) PASS (100%)**
+    - Playwright E2E Tests: ผ่านครบถ้วน **18/18 tests PASS (100%)**
+    - ไม่มีการแตะต้อง Logic ส่วนอื่น (FIFO, ProductLot, Stock, Scan, Transaction, Reports, Notifications คงเดิม 100%)
+
 ## 16 ก.ย. 2026
 - **ดำเนินการปรับปรุง UI/Visual Design ของหน้า Dashboard สำหรับ Role Supervisor (เสร็จสมบูรณ์ 100%)**:
   - **เหตุผลและเป้าหมาย**: ปรับปรุงการออกแบบเชิงทัศนียภาพ (Visual Redesign) และลำดับขั้นการมองเห็น (Visual Hierarchy) ของหน้า Dashboard สำหรับบทบาท Supervisor ตามแนวทางอ้างอิง Reference Design โดยเน้นความเป็นมืออาชีพ เรียบง่าย สะอาดตา (Minimal, Clean, Professional WMS) และอ่านค่าง่าย โดยไม่แตะต้อง Business Logic, Database Schema, API, หรือการคำนวณข้อมูลจริงของระบบ

@@ -1,6 +1,23 @@
 # บันทึกการทำงาน (Memories)
 
 ## 17 ก.ย. 2026
+- **ดำเนินการแก้ไข BUG-003: ปรับปรุงความเสถียรของการ Build ฟอนต์ใน Frontend โดยเปลี่ยนมาใช้ Local Fonts (เสร็จสมบูรณ์ 100% - PASS)**:
+  - **เหตุผลและเป้าหมาย**: แก้ไขข้อผิดพลาด BUG-003 ที่การ Build ฝั่ง Frontend เดิมพึ่งพา `next/font/google` ซึ่งจำเป็นต้องดาวน์โหลดฟอนต์ผ่านเครือข่ายภายนอก (Google Fonts CDN) ในขณะ Build ทำให้เสี่ยงต่อการ Build ล้มเหลวเมื่ออยู่ในสภาพแวดล้อมที่ไม่มีอินเทอร์เน็ต, ติด Proxy, หรือ Google Fonts ไม่สามารถเข้าถึงได้
+  - **รายละเอียดการแก้ไข**:
+    1. นำเข้าไฟล์ฟอนต์มาตรฐานของแท้ (`.woff2`) สำหรับทั้ง **Prompt** (รองรับทั้งภาษาไทยและอังกฤษ ครอบคลุม Weights: 300, 400, 500, 600, 700, 800) และ **Inter** (Latin / Latin-Ext) มาจัดเก็บไว้ภายในโปรเจกต์ที่โฟลเดอร์ `frontend/app/fonts/`
+    2. ปรับปรุง [`frontend/app/layout.tsx`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/app/layout.tsx): เปลี่ยนจากการนำเข้า `next/font/google` มาใช้ `next/font/local` (`localFont`) โดยยังคงชื่อ CSS Variables เดิม (`--font-inter` และ `--font-prompt-sans`) และคงสัดส่วน Typography Hierarchy และ Weights ทั้งหมดไว้ 100%
+    3. ไม่ต้องพึ่งพา Third-party Library เพิ่มเติม และตัดการเชื่อมต่อเครือข่ายภายนอกสำหรับฟอนต์ในขั้นตอน Build ได้ 100%
+  - **ผลการทดสอบและการตรวจสอบคุณภาพ**:
+    - Frontend TypeScript Check: `npx tsc --noEmit` ผ่านสมบูรณ์ **0 errors**
+    - Frontend Production Build: `npm run build` ผ่านสมบูรณ์ (Compiled in 2.6s, Generating static pages 12/12)
+    - Offline / Network-restricted Build Simulation: ทดสอบ Build ผ่านการตั้งค่า Dead Proxy ปิดกั้นเครือข่ายภายนอก ผลการ Build สำเร็จสมบูรณ์ 100% ปราศจากการดึงข้อมูลภายนอก
+    - Frontend Vitest: ผ่านครบถ้วน **104/104 tests (9/9 suites) PASS**
+    - Playwright E2E: ผ่านครบถ้วน **18/18 tests PASS**
+    - Backend Vitest: ผ่านครบถ้วน **102/102 tests (5/5 suites) PASS**
+    - Backend TypeScript: ผ่านสมบูรณ์ **0 errors**
+    - Backend Build: ผ่านสมบูรณ์ **0 errors**
+    - Visual & Typography Verification: ตรวจสอบหน้าจอด้วย Browser Agent ยืนยันการแสดงผลฟอนต์ภาษาไทยและอังกฤษคมชัด สวยงาม ไม่มี Layout Shift และไม่มี Console Error
+
 - **ดำเนินการแก้ไข BUG-002: ปรับปรุง Test Fixture / Test Authentication ใน Backend Vitest Suite (เสร็จสมบูรณ์ 100% - PASS)**:
   - **เหตุผลและเป้าหมาย**: แก้ไขข้อผิดพลาดของชุดทดสอบ Backend Integration Tests ที่ล้มเหลวเนื่องจากพยายามเข้าสู่ระบบด้วยบัญชี Hardcoded/Fallback เก่าที่ถูกถอดออกจากระบบจริงแล้ว (`staff/staff123`, `admin/admin123`) โดยปรับปรุงให้ชุดทดสอบมีความเป็นอิสระ ปลอดภัย และอ้างอิงกระบวนการ Authentication/Authorization (JWT & RBAC) จริงของระบบ โดยไม่มีการคืนชีพบัญชี fallback หรือแก้ไขโค้ดการทำงานหลักใน Production
   - **รายละเอียดการแก้ไข (Test Fixtures Remediation)**:

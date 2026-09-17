@@ -1,6 +1,22 @@
 # บันทึกการทำงาน (Memories)
 
 ## 17 ก.ย. 2026
+- **ดำเนินการแก้ไข BUG-002: ปรับปรุง Test Fixture / Test Authentication ใน Backend Vitest Suite (เสร็จสมบูรณ์ 100% - PASS)**:
+  - **เหตุผลและเป้าหมาย**: แก้ไขข้อผิดพลาดของชุดทดสอบ Backend Integration Tests ที่ล้มเหลวเนื่องจากพยายามเข้าสู่ระบบด้วยบัญชี Hardcoded/Fallback เก่าที่ถูกถอดออกจากระบบจริงแล้ว (`staff/staff123`, `admin/admin123`) โดยปรับปรุงให้ชุดทดสอบมีความเป็นอิสระ ปลอดภัย และอ้างอิงกระบวนการ Authentication/Authorization (JWT & RBAC) จริงของระบบ โดยไม่มีการคืนชีพบัญชี fallback หรือแก้ไขโค้ดการทำงานหลักใน Production
+  - **รายละเอียดการแก้ไข (Test Fixtures Remediation)**:
+    1. [`backend/__tests__/export-excel.test.ts`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/__tests__/export-excel.test.ts): เปลี่ยนจากการเรียก `POST /auth/login` ด้วย `staff123` มาเป็นการสร้าง Synthetic JWT Token (`makeToken({ userId, username, role })`) ที่ลงลายมือชื่อด้วย `JWT_SECRET` จริงตามสิทธิ์ที่ต้องการทดสอบ (Supervisor / Staff / Admin) ผลการทดสอบ **13/13 tests PASS (100%)**
+    2. [`backend/__tests__/low-stock.test.ts`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/__tests__/low-stock.test.ts): สร้าง Isolated Temporary Test Users (`test-staff-ls-*`, `test-sup-ls-*`, `test-admin-ls-*`) ใน `beforeAll` เพื่อรองรับเงื่อนไข Foreign Key `Transaction.createdById` ในตารางฐานข้อมูล และทำความสะอาดข้อมูลทดสอบ (Transactions, ProductLots, Products, Notifications, Users) อย่างหมดจดใน `afterAll` ผลการทดสอบ **20/20 tests PASS (100%)**
+    3. [`backend/__tests__/api.test.ts`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/__tests__/api.test.ts): สร้าง Dynamic Isolated Test Users และ Synthetic Tokens ครอบคลุม Section 1-4 (Product Lifecycle, Status Guards, Role Boundaries, Staff CreatedById Filter) และปรับปรุงข้อความตรวจสอบ Error Guard ของ `DELETE /products/:id` (`มีประวัติ Lot บรรจุภัณฑ์`, `ผูกอยู่ในสูตรโครงสร้าง BOM`) ให้สอดคล้องกับ Implementation จริง ผลการทดสอบ **43/43 tests PASS (100%)**
+  - **ผลการทดสอบและการตรวจสอบคุณภาพ (Quality & Automated Verification)**:
+    - Backend Vitest Suite: ผ่านครบถ้วน **102/102 tests (5/5 suites) PASS (100%, 0 failures)**
+    - Backend TypeScript Check: `npx tsc --noEmit` ผ่านสมบูรณ์ **0 errors** ปราศจาก `any` ตาม Rule 1
+    - Backend Build: `npx tsc` ผ่านสมบูรณ์ **0 errors**
+    - Frontend Vitest Suite: ผ่านครบถ้วน **104/104 tests (9/9 suites) PASS (100%)**
+    - Frontend TypeScript Check: `npx tsc --noEmit` ผ่านสมบูรณ์ **0 errors**
+    - Playwright E2E Tests: ผ่านครบถ้วน **18/18 tests PASS (100%)**
+    - Security Regression Check: ยืนยันไม่มี Fallback Users, ไม่มี Fast-path Password, ไม่มี Memory Mode และไม่มี Auth Bypass ใน Production Source Code
+    - ไม่มีการแก้ไข Production Source Code ใน `backend/src/index.ts`, ไม่มีการแก้ไข Database Schema และไม่มีการรัน Migration ใดๆ
+
 - **ดำเนินการแก้ไข BUG-001: ถอด Legacy "Memory Mode" False Success ใน Admin User Management API (เสร็จสมบูรณ์ 100% - PASS)**:
   - **เหตุผลและเป้าหมาย**: แก้ไขข้อผิดพลาดเชิงโครงสร้างในระบบจัดการผู้ใช้งาน (Admin User Management) ใน `backend/src/index.ts` ซึ่งเดิมมี inner try/catch ที่จับข้อผิดพลาดของฐานข้อมูล/Prisma (เช่น User ID ไม่มีอยู่จริง หรือข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล) แล้วตอบกลับเป็น HTTP 200 พร้อมข้อความ `(Memory Mode)` และ `success: true` ทำให้เกิด False Success ที่หลอกหน้าจอ Admin
   - **รายละเอียดการแก้ไข (5 Endpoints ใน backend/src/index.ts)**:

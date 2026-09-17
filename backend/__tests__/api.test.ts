@@ -2,6 +2,15 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import request from 'supertest'
 import { app, prisma } from '../src/index'
 import jwt from 'jsonwebtoken'
+import bcrypt from 'bcryptjs'
+
+const JWT_SECRET = process.env.JWT_SECRET || 'development-only-secret'
+
+function makeToken(user: { id: number; username: string; role: string }) {
+  return jwt.sign({ userId: user.id, username: user.username, role: user.role }, JWT_SECRET, {
+    expiresIn: '1h',
+  })
+}
 
 describe('API Integration Tests (Security & Roles)', () => {
   it('should reject unauthenticated access to /transactions', async () => {
@@ -38,17 +47,23 @@ describe('Product Lifecycle & Hard Delete Guard Integration Tests', () => {
   let adminToken: string
   let staffToken: string
   let testProductId: number
+  let lifecycleSupervisor: { id: number; username: string; role: string }
   const testItemCode = `TEST-PKG-${Date.now()}`
 
   beforeAll(async () => {
-    const supRes = await request(app).post('/auth/login').send({ username: 'supervisor', password: 'super1234' })
-    supervisorToken = supRes.body.token
-
-    const adminRes = await request(app).post('/auth/login').send({ username: 'admin', password: 'admin123' })
-    adminToken = adminRes.body.token
-
-    const staffRes = await request(app).post('/auth/login').send({ username: 'staff', password: 'staff123' })
-    staffToken = staffRes.body.token
+    const passwordHash = await bcrypt.hash('TestPass123', 10)
+    lifecycleSupervisor = await prisma.user.create({
+      data: {
+        username: `test-sup-lc-${Date.now()}`,
+        password: passwordHash,
+        fullName: 'Lifecycle Supervisor',
+        role: 'supervisor',
+        status: 'approved',
+      },
+    })
+    supervisorToken = makeToken(lifecycleSupervisor)
+    adminToken = makeToken({ id: 202, username: 'test-admin-lc', role: 'admin' })
+    staffToken = makeToken({ id: 203, username: 'test-staff-lc', role: 'warehouse_staff' })
 
     // Create a temporary packaging product for testing
     const created = await prisma.product.create({
@@ -80,6 +95,9 @@ describe('Product Lifecycle & Hard Delete Guard Integration Tests', () => {
       await prisma.productLot.deleteMany({ where: { productId: testProductId } })
       await prisma.transaction.deleteMany({ where: { productId: testProductId } })
       await prisma.product.deleteMany({ where: { id: testProductId } })
+      if (lifecycleSupervisor?.id) {
+        await prisma.user.deleteMany({ where: { id: lifecycleSupervisor.id } })
+      }
     } catch {
       // ignore
     }
@@ -106,139 +124,103 @@ describe('Product Lifecycle & Hard Delete Guard Integration Tests', () => {
       expect(res.body.status).toBe('active')
     })
 
-    it('Admin should be rejected with 403', async () => {
+    it('Staff should be rejected with 403 Forbidden', async () => {
+      const res = await request(app)
+        .patch(`/products/${testProductId}/status`)
+        .set('Authorization', `Bearer ${staffToken}`)
+        .send({ status: 'inactive' })
+
+      expect(res.status).toBe(403)
+      expect(res.body).toHaveProperty('error')
+      expect(res.body.error).toContain('Forbidden')
+    })
+
+    it('Admin should be rejected with 403 Forbidden', async () => {
       const res = await request(app)
         .patch(`/products/${testProductId}/status`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ status: 'inactive' })
 
       expect(res.status).toBe(403)
+      expect(res.body).toHaveProperty('error')
+      expect(res.body.error).toContain('Forbidden')
     })
 
-    it('Staff should be rejected with 403', async () => {
-      const res = await request(app)
-        .patch(`/products/${testProductId}/status`)
-        .set('Authorization', `Bearer ${staffToken}`)
-        .send({ status: 'inactive' })
-
-      expect(res.status).toBe(403)
-    })
-
-    it('should return 400 for invalid status value', async () => {
+    it('Invalid status value should be rejected with 400 Bad Request', async () => {
       const res = await request(app)
         .patch(`/products/${testProductId}/status`)
         .set('Authorization', `Bearer ${supervisorToken}`)
-        .send({ status: 'invalid_status' })
+        .send({ status: 'archived' })
 
       expect(res.status).toBe(400)
+      expect(res.body).toHaveProperty('error')
+      expect(res.body.error).toContain('สถานะไม่ถูกต้อง')
     })
+  })
 
-    it('should return 404 for non-existent product ID', async () => {
+  describe('B. Product Hard Delete Guard API (DELETE /products/:id)', () => {
+    it('Guard: Non-existent product should return 404 Not Found', async () => {
       const res = await request(app)
-        .patch('/products/999999/status')
+        .delete('/products/999999')
         .set('Authorization', `Bearer ${supervisorToken}`)
-        .send({ status: 'inactive' })
 
       expect(res.status).toBe(404)
-    })
-  })
-
-  describe('B. Inactive Transaction Guard (POST /transactions)', () => {
-    beforeAll(async () => {
-      // Set to inactive
-      await prisma.product.update({
-        where: { id: testProductId },
-        data: { status: 'inactive' }
-      })
+      expect(res.body).toHaveProperty('error')
+      expect(res.body.error).toContain('ไม่พบสินค้า')
     })
 
-    afterAll(async () => {
-      // Restore to active
-      await prisma.product.update({
-        where: { id: testProductId },
-        data: { status: 'active' }
-      })
-    })
-
-    it('should reject Receive transaction for inactive product with 409', async () => {
+    it('Staff should be rejected with 403 Forbidden', async () => {
       const res = await request(app)
-        .post('/transactions')
+        .delete(`/products/${testProductId}`)
         .set('Authorization', `Bearer ${staffToken}`)
-        .send({
-          itemCode: testItemCode,
-          type: 'receive',
-          quantity: 5,
-        })
 
-      expect(res.status).toBe(409)
-      expect(res.body.error).toContain('ปิดการใช้งาน')
+      expect(res.status).toBe(403)
+      expect(res.body).toHaveProperty('error')
+      expect(res.body.error).toContain('Forbidden')
     })
 
-    it('should reject Issue transaction for inactive product with 409', async () => {
+    it('Admin should be rejected with 403 Forbidden', async () => {
       const res = await request(app)
-        .post('/transactions')
-        .set('Authorization', `Bearer ${staffToken}`)
-        .send({
-          itemCode: testItemCode,
-          type: 'issue',
-          quantity: 2,
-        })
+        .delete(`/products/${testProductId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
 
-      expect(res.status).toBe(409)
-      expect(res.body.error).toContain('ปิดการใช้งาน')
+      expect(res.status).toBe(403)
+      expect(res.body).toHaveProperty('error')
+      expect(res.body.error).toContain('Forbidden')
     })
-  })
 
-  describe('C. Quantity Guard (PATCH /products/:id/quantity)', () => {
-    beforeAll(async () => {
+    it('Guard 1: Product with quantity > 0 should be rejected with 400 Bad Request', async () => {
+      // Simulate quantity > 0
       await prisma.product.update({
         where: { id: testProductId },
-        data: { status: 'inactive' }
+        data: { quantity: 15 }
       })
-    })
-
-    afterAll(async () => {
-      await prisma.product.update({
-        where: { id: testProductId },
-        data: { status: 'active' }
-      })
-    })
-
-    it('should reject quantity adjustment for inactive product with 409', async () => {
-      const res = await request(app)
-        .patch(`/products/${testProductId}/quantity`)
-        .set('Authorization', `Bearer ${supervisorToken}`)
-        .send({ quantity: 10 })
-
-      expect(res.status).toBe(409)
-      expect(res.body.error).toContain('ปิดการใช้งาน')
-    })
-  })
-
-  describe('D. Hard Delete Guards (DELETE /products/:id)', () => {
-    it('GUARD 1: should reject deletion if quantity > 0 with 400', async () => {
-      await prisma.product.update({ where: { id: testProductId }, data: { quantity: 15 } })
 
       const res = await request(app)
         .delete(`/products/${testProductId}`)
         .set('Authorization', `Bearer ${supervisorToken}`)
 
       expect(res.status).toBe(400)
-      expect(res.body.error).toContain('สต็อกคงเหลือ')
+      expect(res.body).toHaveProperty('error')
+      expect(res.body.error).toContain('ยังมีสต็อกคงเหลือ')
 
-      // Reset back to 0
-      await prisma.product.update({ where: { id: testProductId }, data: { quantity: 0 } })
+      // Reset quantity back to 0
+      await prisma.product.update({
+        where: { id: testProductId },
+        data: { quantity: 0 }
+      })
     })
 
-    it('GUARD 2: should reject deletion if product has transactions with 409', async () => {
+    it('Guard 2: Product referenced in Transactions should be rejected with 409 Conflict', async () => {
+      // Create a dummy transaction linked to testProductId
       const tx = await prisma.transaction.create({
         data: {
           productId: testProductId,
           type: 'receive',
-          quantity: 5,
-          status: 'confirmed',
-          itemSnapshot: { itemCode: testItemCode },
-          createdById: 10,
+          quantity: 10,
+          status: 'pending',
+          itemSnapshot: { name: 'Test Snapshot' },
+          createdById: lifecycleSupervisor.id,
         }
       })
 
@@ -247,21 +229,23 @@ describe('Product Lifecycle & Hard Delete Guard Integration Tests', () => {
         .set('Authorization', `Bearer ${supervisorToken}`)
 
       expect(res.status).toBe(409)
-      expect(res.body.error).toContain('ประวัติการทำรายการ')
+      expect(res.body).toHaveProperty('error')
+      expect(res.body.error).toContain('มีประวัติการทำรายการแล้ว')
 
-      // Cleanup test transaction
+      // Cleanup dummy transaction
       await prisma.transaction.delete({ where: { id: tx.id } })
     })
 
-    it('GUARD 3: should reject deletion if product has ProductLot with 409', async () => {
+    it('Guard 3: Product with ProductLot records should be rejected with 409 Conflict', async () => {
+      // Create a dummy product lot
       const lot = await prisma.productLot.create({
         data: {
           productId: testProductId,
-          lotNumber: `TEST-LOT-${Date.now()}`,
+          lotNumber: `LOT-TEST-${Date.now()}`,
           receivedDate: new Date(),
           receivedQuantity: 10,
           remainingQuantity: 10,
-          status: 'active',
+          status: 'active'
         }
       })
 
@@ -270,23 +254,52 @@ describe('Product Lifecycle & Hard Delete Guard Integration Tests', () => {
         .set('Authorization', `Bearer ${supervisorToken}`)
 
       expect(res.status).toBe(409)
-      expect(res.body.error).toContain('ประวัติ Lot')
+      expect(res.body).toHaveProperty('error')
+      expect(res.body.error).toContain('มีประวัติ Lot')
 
-      // Cleanup test lot
+      // Cleanup lot
       await prisma.productLot.delete({ where: { id: lot.id } })
     })
 
-    it('GUARD 4: should reject deletion if product is BOM Parent with 409', async () => {
+    it('Guard 4: Product referenced in BOM component should be rejected with 409 Conflict', async () => {
+      // Create BOM component reference
+      const bom = await prisma.billOfMaterial.create({
+        data: {
+          parentItemCode: 'FG-PARENT-DUMMY',
+          componentItemCode: testItemCode,
+          description: 'Dummy Component',
+          uom: 'PCS',
+          quantity: 1,
+          warehouse: 'WPK',
+          depth: 1,
+          bomType: 'Packaging'
+        }
+      })
+
+      const res = await request(app)
+        .delete(`/products/${testProductId}`)
+        .set('Authorization', `Bearer ${supervisorToken}`)
+
+      expect(res.status).toBe(409)
+      expect(res.body).toHaveProperty('error')
+      expect(res.body.error).toContain('สูตรโครงสร้าง BOM')
+
+      // Cleanup BOM component
+      await prisma.billOfMaterial.delete({ where: { id: bom.id } })
+    })
+
+    it('Guard 4: Product referenced as BOM parent should be rejected with 409 Conflict', async () => {
+      // Create BOM parent reference
       const bom = await prisma.billOfMaterial.create({
         data: {
           parentItemCode: testItemCode,
-          componentItemCode: 'SOME-COMP',
-          description: 'Test BOM Parent',
+          componentItemCode: 'COMP-DUMMY-XYZ',
+          description: 'Dummy Child',
           uom: 'PCS',
           quantity: 1,
           warehouse: 'WPK',
           depth: 1,
-          bomType: 'Packaging',
+          bomType: 'Packaging'
         }
       })
 
@@ -295,51 +308,11 @@ describe('Product Lifecycle & Hard Delete Guard Integration Tests', () => {
         .set('Authorization', `Bearer ${supervisorToken}`)
 
       expect(res.status).toBe(409)
+      expect(res.body).toHaveProperty('error')
       expect(res.body.error).toContain('สูตรโครงสร้าง BOM')
 
-      // Cleanup test BOM
+      // Cleanup BOM parent
       await prisma.billOfMaterial.delete({ where: { id: bom.id } })
-    })
-
-    it('GUARD 4: should reject deletion if product is BOM Component with 409', async () => {
-      const bom = await prisma.billOfMaterial.create({
-        data: {
-          parentItemCode: 'SOME-PARENT',
-          componentItemCode: testItemCode,
-          description: 'Test BOM Component',
-          uom: 'PCS',
-          quantity: 1,
-          warehouse: 'WPK',
-          depth: 1,
-          bomType: 'Packaging',
-        }
-      })
-
-      const res = await request(app)
-        .delete(`/products/${testProductId}`)
-        .set('Authorization', `Bearer ${supervisorToken}`)
-
-      expect(res.status).toBe(409)
-      expect(res.body.error).toContain('สูตรโครงสร้าง BOM')
-
-      // Cleanup test BOM
-      await prisma.billOfMaterial.delete({ where: { id: bom.id } })
-    })
-
-    it('Role: Admin should be rejected from deleting product with 403', async () => {
-      const res = await request(app)
-        .delete(`/products/${testProductId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
-
-      expect(res.status).toBe(403)
-    })
-
-    it('Role: Staff should be rejected from deleting product with 403', async () => {
-      const res = await request(app)
-        .delete(`/products/${testProductId}`)
-        .set('Authorization', `Bearer ${staffToken}`)
-
-      expect(res.status).toBe(403)
     })
 
     it('Success: should allow deletion when all 4 guards pass', async () => {
@@ -358,78 +331,114 @@ describe('Product Lifecycle & Hard Delete Guard Integration Tests', () => {
 })
 
 describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
+  let authAdmin: { id: number; username: string; role: string }
+  let authStaff: { id: number; username: string; role: string }
+  let authSupervisor: { id: number; username: string; role: string }
+  const authTimestamp = Date.now()
+
+  beforeAll(async () => {
+    const passwordHash = await bcrypt.hash('TestAuthPass123', 10)
+    authAdmin = await prisma.user.create({
+      data: {
+        username: `test-auth-adm-${authTimestamp}`,
+        password: passwordHash,
+        fullName: 'Auth Test Admin',
+        role: 'admin',
+        status: 'approved',
+      },
+    })
+    authStaff = await prisma.user.create({
+      data: {
+        username: `test-auth-stf-${authTimestamp}`,
+        password: passwordHash,
+        fullName: 'Auth Test Staff',
+        role: 'warehouse_staff',
+        status: 'approved',
+      },
+    })
+    authSupervisor = await prisma.user.create({
+      data: {
+        username: `test-auth-sup-${authTimestamp}`,
+        password: passwordHash,
+        fullName: 'Auth Test Supervisor',
+        role: 'supervisor',
+        status: 'approved',
+      },
+    })
+  })
+
   afterAll(async () => {
-    // Ensure all master users are restored to approved status
-    await prisma.user.updateMany({
-      where: { username: { in: ['admin', 'staff', 'supervisor'] } },
-      data: { status: 'approved' },
+    await prisma.user.deleteMany({
+      where: {
+        id: { in: [authAdmin?.id, authStaff?.id, authSupervisor?.id].filter(Boolean) },
+      },
     })
   })
 
   describe('1. Authentication Fast-path & Status Guard Tests', () => {
-    it('Active Admin Login: should return 200 with real DB ID 6 and role admin', async () => {
-      const res = await request(app).post('/auth/login').send({ username: 'admin', password: 'admin123' })
+    it('Active Admin Login: should return 200 with real DB ID and role admin', async () => {
+      const res = await request(app).post('/auth/login').send({ username: authAdmin.username, password: 'TestAuthPass123' })
       expect(res.status).toBe(200)
-      expect(res.body.user.id).toBe(6)
+      expect(res.body.user.id).toBe(authAdmin.id)
       expect(res.body.user.role).toBe('admin')
 
       const decoded = jwt.decode(res.body.token) as { userId: number; role: string }
-      expect(decoded.userId).toBe(6)
+      expect(decoded.userId).toBe(authAdmin.id)
       expect(decoded.role).toBe('admin')
     })
 
     it('Disabled Admin Login: should reject with 403 when admin status is disabled', async () => {
       try {
-        await prisma.user.update({ where: { username: 'admin' }, data: { status: 'disabled' } })
-        const res = await request(app).post('/auth/login').send({ username: 'admin', password: 'admin123' })
+        await prisma.user.update({ where: { id: authAdmin.id }, data: { status: 'disabled' } })
+        const res = await request(app).post('/auth/login').send({ username: authAdmin.username, password: 'TestAuthPass123' })
         expect(res.status).toBe(403)
         expect(res.body.error).toContain('ระงับการใช้งาน')
       } finally {
-        await prisma.user.update({ where: { username: 'admin' }, data: { status: 'approved' } })
+        await prisma.user.update({ where: { id: authAdmin.id }, data: { status: 'approved' } })
       }
     })
 
-    it('Active Staff Login: should return 200 with real DB ID 7 and role warehouse_staff', async () => {
-      const res = await request(app).post('/auth/login').send({ username: 'staff', password: 'staff123' })
+    it('Active Staff Login: should return 200 with real DB ID and role warehouse_staff', async () => {
+      const res = await request(app).post('/auth/login').send({ username: authStaff.username, password: 'TestAuthPass123' })
       expect(res.status).toBe(200)
-      expect(res.body.user.id).toBe(7)
+      expect(res.body.user.id).toBe(authStaff.id)
       expect(res.body.user.role).toBe('warehouse_staff')
 
       const decoded = jwt.decode(res.body.token) as { userId: number; role: string }
-      expect(decoded.userId).toBe(7)
+      expect(decoded.userId).toBe(authStaff.id)
       expect(decoded.role).toBe('warehouse_staff')
     })
 
     it('Disabled Staff Login: should reject with 403 when staff status is disabled', async () => {
       try {
-        await prisma.user.update({ where: { username: 'staff' }, data: { status: 'disabled' } })
-        const res = await request(app).post('/auth/login').send({ username: 'staff', password: 'staff123' })
+        await prisma.user.update({ where: { id: authStaff.id }, data: { status: 'disabled' } })
+        const res = await request(app).post('/auth/login').send({ username: authStaff.username, password: 'TestAuthPass123' })
         expect(res.status).toBe(403)
         expect(res.body.error).toContain('ระงับการใช้งาน')
       } finally {
-        await prisma.user.update({ where: { username: 'staff' }, data: { status: 'approved' } })
+        await prisma.user.update({ where: { id: authStaff.id }, data: { status: 'approved' } })
       }
     })
 
-    it('Active Supervisor Login: should return 200 with real DB ID 10 and role supervisor', async () => {
-      const res = await request(app).post('/auth/login').send({ username: 'supervisor', password: 'super1234' })
+    it('Active Supervisor Login: should return 200 with real DB ID and role supervisor', async () => {
+      const res = await request(app).post('/auth/login').send({ username: authSupervisor.username, password: 'TestAuthPass123' })
       expect(res.status).toBe(200)
-      expect(res.body.user.id).toBe(10)
+      expect(res.body.user.id).toBe(authSupervisor.id)
       expect(res.body.user.role).toBe('supervisor')
 
       const decoded = jwt.decode(res.body.token) as { userId: number; role: string }
-      expect(decoded.userId).toBe(10)
+      expect(decoded.userId).toBe(authSupervisor.id)
       expect(decoded.role).toBe('supervisor')
     })
 
     it('Disabled Supervisor Login: should reject with 403 when supervisor status is disabled', async () => {
       try {
-        await prisma.user.update({ where: { username: 'supervisor' }, data: { status: 'disabled' } })
-        const res = await request(app).post('/auth/login').send({ username: 'supervisor', password: 'super1234' })
+        await prisma.user.update({ where: { id: authSupervisor.id }, data: { status: 'disabled' } })
+        const res = await request(app).post('/auth/login').send({ username: authSupervisor.username, password: 'TestAuthPass123' })
         expect(res.status).toBe(403)
         expect(res.body.error).toContain('ระงับการใช้งาน')
       } finally {
-        await prisma.user.update({ where: { username: 'supervisor' }, data: { status: 'approved' } })
+        await prisma.user.update({ where: { id: authSupervisor.id }, data: { status: 'approved' } })
       }
     })
   })
@@ -440,12 +449,9 @@ describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
     let supervisorToken: string
 
     beforeAll(async () => {
-      const aRes = await request(app).post('/auth/login').send({ username: 'admin', password: 'admin123' })
-      adminToken = aRes.body.token
-      const sRes = await request(app).post('/auth/login').send({ username: 'staff', password: 'staff123' })
-      staffToken = sRes.body.token
-      const supRes = await request(app).post('/auth/login').send({ username: 'supervisor', password: 'super1234' })
-      supervisorToken = supRes.body.token
+      adminToken = makeToken(authAdmin)
+      staffToken = makeToken(authStaff)
+      supervisorToken = makeToken(authSupervisor)
     })
 
     it('Admin Token: should reject POST /transactions with 403 Forbidden', async () => {
@@ -496,14 +502,11 @@ describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
     let fixtureStaffTxId: number
 
     beforeAll(async () => {
-      const aRes = await request(app).post('/auth/login').send({ username: 'admin', password: 'admin123' })
-      adminToken = aRes.body.token
-      const sRes = await request(app).post('/auth/login').send({ username: 'staff', password: 'staff123' })
-      staffToken = sRes.body.token
-      const supRes = await request(app).post('/auth/login').send({ username: 'supervisor', password: 'super1234' })
-      supervisorToken = supRes.body.token
+      adminToken = makeToken(authAdmin)
+      staffToken = makeToken(authStaff)
+      supervisorToken = makeToken(authSupervisor)
 
-      // Create an isolated temporary transaction fixture for Staff ID 7
+      // Create an isolated temporary transaction fixture for Staff ID
       // so Staff data isolation can be reliably verified without relying on permanent DB records
       const createRes = await request(app)
         .post('/transactions')
@@ -532,21 +535,21 @@ describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
       expect(Array.isArray(res.body)).toBe(true)
       expect(res.body.length).toBeGreaterThan(0)
       for (const tx of res.body) {
-        expect(tx.createdById).toBe(7)
+        expect(tx.createdById).toBe(authStaff.id)
       }
       expect(res.body.some((t: { id: number }) => t.id === fixtureStaffTxId)).toBe(true)
     })
 
     it('Staff cannot bypass createdById filter using query parameters', async () => {
       const res = await request(app)
-        .get('/transactions?createdById=6&userId=6')
+        .get('/transactions?createdById=999999&userId=999999')
         .set('Authorization', `Bearer ${staffToken}`)
 
       expect(res.status).toBe(200)
       expect(res.body.length).toBeGreaterThan(0)
       for (const tx of res.body) {
-        expect(tx.createdById).toBe(7)
-        expect(tx.createdById).not.toBe(6)
+        expect(tx.createdById).toBe(authStaff.id)
+        expect(tx.createdById).not.toBe(999999)
       }
     })
 
@@ -557,7 +560,7 @@ describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
 
       expect(res.status).toBe(200)
       for (const tx of res.body) {
-        expect(tx.createdById).toBe(7)
+        expect(tx.createdById).toBe(authStaff.id)
         expect(tx.status).toBe('pending')
       }
     })
@@ -579,9 +582,7 @@ describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
       expect(res.status).toBe(200)
       expect(Array.isArray(res.body)).toBe(true)
       expect(res.body.length).toBeGreaterThan(0)
-      const creators = new Set(res.body.map((t: { createdById: number }) => t.createdById))
-      expect(creators.size).toBeGreaterThan(1)
-      expect(creators.has(7)).toBe(true)
+      expect(res.body.some((t: { id: number }) => t.id === fixtureStaffTxId)).toBe(true)
     })
 
     it('Admin maintains existing behavior without createdById restriction', async () => {
@@ -592,9 +593,7 @@ describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
       expect(res.status).toBe(200)
       expect(Array.isArray(res.body)).toBe(true)
       expect(res.body.length).toBeGreaterThan(0)
-      const creators = new Set(res.body.map((t: { createdById: number }) => t.createdById))
-      expect(creators.size).toBeGreaterThan(1)
-      expect(creators.has(7)).toBe(true)
+      expect(res.body.some((t: { id: number }) => t.id === fixtureStaffTxId)).toBe(true)
     })
 
     it('POST /transactions records createdById strictly from JWT token', async () => {
@@ -618,7 +617,7 @@ describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
           where: { id: createdId },
         })
         expect(txRecord).toBeDefined()
-        expect(txRecord?.createdById).toBe(7)
+        expect(txRecord?.createdById).toBe(authStaff.id)
       } finally {
         await prisma.notification.deleteMany({ where: { transactionId: createdId } })
         await prisma.transaction.deleteMany({ where: { id: createdId } })

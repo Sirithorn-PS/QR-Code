@@ -1,27 +1,67 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import request from 'supertest'
+import jwt from 'jsonwebtoken'
+import bcrypt from 'bcryptjs'
 import { app, prisma } from '../src/index'
+
+const JWT_SECRET = process.env.JWT_SECRET || 'development-only-secret'
+
+function makeToken(user: { id: number; username: string; role: string }) {
+  return jwt.sign({ userId: user.id, username: user.username, role: user.role }, JWT_SECRET, {
+    expiresIn: '1h',
+  })
+}
 
 describe('Low Stock Notification & Min Stock Management Tests', () => {
   let supervisorToken: string
   let staffToken: string
   let adminToken: string
+  let testStaffUser: { id: number; username: string; role: string }
+  let testSupervisorUser: { id: number; username: string; role: string }
+  let testAdminUser: { id: number; username: string; role: string }
 
-  const pkgItemCode = `TEST-PKG-LOW-${Date.now()}`
-  const fgItemCode = `TEST-FG-LOW-${Date.now()}`
+  const timestamp = Date.now()
+  const pkgItemCode = `TEST-PKG-LOW-${timestamp}`
+  const fgItemCode = `TEST-FG-LOW-${timestamp}`
   let pkgProductId: number
   let fgProductId: number
 
   beforeAll(async () => {
-    // 1. Authenticate users
-    const supRes = await request(app).post('/auth/login').send({ username: 'supervisor', password: 'super1234' })
-    supervisorToken = supRes.body.token
+    const passwordHash = await bcrypt.hash('TestPass123', 10)
 
-    const staffRes = await request(app).post('/auth/login').send({ username: 'staff', password: 'staff123' })
-    staffToken = staffRes.body.token
+    // 1. Create temporary isolated test users
+    testStaffUser = await prisma.user.create({
+      data: {
+        username: `test-staff-ls-${timestamp}`,
+        password: passwordHash,
+        fullName: 'Test Staff LowStock',
+        role: 'warehouse_staff',
+        status: 'approved',
+      },
+    })
+    staffToken = makeToken(testStaffUser)
 
-    const adminRes = await request(app).post('/auth/login').send({ username: 'admin', password: 'admin123' })
-    adminToken = adminRes.body.token
+    testSupervisorUser = await prisma.user.create({
+      data: {
+        username: `test-sup-ls-${timestamp}`,
+        password: passwordHash,
+        fullName: 'Test Supervisor LowStock',
+        role: 'supervisor',
+        status: 'approved',
+      },
+    })
+    supervisorToken = makeToken(testSupervisorUser)
+
+    testAdminUser = await prisma.user.create({
+      data: {
+        username: `test-admin-ls-${timestamp}`,
+        password: passwordHash,
+        fullName: 'Test Admin LowStock',
+        role: 'admin',
+        status: 'approved',
+      },
+    })
+    adminToken = makeToken(testAdminUser)
 
     // 2. Create a test Packaging product
     const createdPkg = await prisma.product.create({
@@ -94,6 +134,7 @@ describe('Low Stock Notification & Min Stock Management Tests', () => {
           OR: [
             { productId: pkgProductId },
             { productId: fgProductId },
+            { createdById: { in: [testStaffUser?.id, testSupervisorUser?.id, testAdminUser?.id].filter(Boolean) } },
           ],
         },
       })
@@ -108,6 +149,11 @@ describe('Low Stock Notification & Min Stock Management Tests', () => {
       await prisma.product.deleteMany({
         where: {
           id: { in: [pkgProductId, fgProductId] },
+        },
+      })
+      await prisma.user.deleteMany({
+        where: {
+          id: { in: [testStaffUser?.id, testSupervisorUser?.id, testAdminUser?.id].filter(Boolean) },
         },
       })
     } catch (err) {

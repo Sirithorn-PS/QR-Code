@@ -1,7 +1,16 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import request from 'supertest'
+import jwt from 'jsonwebtoken'
 import { app, prisma } from '../src/index'
 import * as xlsx from 'xlsx'
+
+const JWT_SECRET = process.env.JWT_SECRET || 'development-only-secret'
+
+function makeToken(user: { id: number; username: string; role: string }) {
+  return jwt.sign({ userId: user.id, username: user.username, role: user.role }, JWT_SECRET, {
+    expiresIn: '1h',
+  })
+}
 
 describe('Backend Excel Export API Integration Tests (GET /reports/export-excel)', () => {
   let supervisorToken: string
@@ -9,14 +18,9 @@ describe('Backend Excel Export API Integration Tests (GET /reports/export-excel)
   let adminToken: string
 
   beforeAll(async () => {
-    const supRes = await request(app).post('/auth/login').send({ username: 'supervisor', password: 'super1234' })
-    supervisorToken = supRes.body.token
-
-    const staffRes = await request(app).post('/auth/login').send({ username: 'staff', password: 'staff123' })
-    staffToken = staffRes.body.token
-
-    const adminRes = await request(app).post('/auth/login').send({ username: 'admin', password: 'admin123' })
-    adminToken = adminRes.body.token
+    supervisorToken = makeToken({ id: 101, username: 'test-supervisor', role: 'supervisor' })
+    staffToken = makeToken({ id: 102, username: 'test-staff', role: 'warehouse_staff' })
+    adminToken = makeToken({ id: 103, username: 'test-admin', role: 'admin' })
   })
 
   afterAll(async () => {

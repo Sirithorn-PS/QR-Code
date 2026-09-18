@@ -1703,6 +1703,18 @@ app.post(
       return res.json(result)
     } catch (error) {
       console.error(error)
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'statusCode' in error &&
+        typeof (error as { statusCode: unknown }).statusCode === 'number'
+      ) {
+        const status = (error as { statusCode: number }).statusCode
+        if (status >= 400 && status < 500) {
+          const message = error instanceof Error ? error.message : 'Bad request'
+          return res.status(status).json({ error: message })
+        }
+      }
       return res.status(500).json({ error: 'Internal server error' })
     }
   },

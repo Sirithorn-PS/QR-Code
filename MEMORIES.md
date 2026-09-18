@@ -1,5 +1,51 @@
 # บันทึกการทำงาน (Memories)
 
+## 18 ก.ย. 2026
+- **ดำเนินการแก้ไข BUG-OBS-001: แก้ไข Outer Catch Handler ให้ส่งกลับ HTTP 409 สำหรับกรณีสต็อกไม่เพียงพอใน Transaction Confirmation (เสร็จสมบูรณ์ 100% - PASS)**:
+  - **เหตุผลและเป้าหมาย**: แก้ไขข้อผิดพลาด BUG-OBS-001 ที่ตรวจพบระหว่างการทดสอบ Concurrency Test ของกระบวนการยืนยันรายการเบิกสินค้า (`POST /transactions/:id/confirm`) โดยโค้ดภายใน Transaction ได้ตรวจสอบสต็อกและโยน Error พร้อมแนบ `statusCode = 409` ไว้อย่างถูกต้องแล้ว แต่ Outer Catch Handler เดิมละเลย `error.statusCode` และแปลงเป็น HTTP 500 (Internal Server Error) เสมอ ทำให้ความขัดแย้งทางธุรกิจ (Business Conflict / Insufficient Stock) ถูกรายงานผิดพลาดเป็นข้อผิดพลาดของเซิร์ฟเวอร์
+  - **รายละเอียดการแก้ไข**:
+    1. ปรับปรุง Outer Catch Block ใน [`backend/src/index.ts`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts) ที่ Route `POST /transactions/:id/confirm`: ตรวจสอบหาก Error มี property `statusCode` ที่เป็นตัวเลขในช่วง Client Error (400 - 499) ให้ส่งกลับค่านั้นพร้อมข้อความแจ้งเตือนเดิม เช่น `'สต็อกใน Lot ไม่เพียงพอสำหรับการเบิก'` ในรูปแบบ JSON `{ error: message }` ตามเดิม
+    2. สำหรับ Error อื่นๆ หรือ Unexpected Database/Server Error ยังคงส่งกลับ HTTP 500 (`'Internal server error'`) เพื่อความปลอดภัย
+    3. ปฏิบัติตามกฎอย่างเคร่งครัด: ไม่ใช้ `any`, ใช้ Type Guard และ Type Narrowing อย่างรัดกุม, ไม่แก้ไข FIFO Logic, ไม่แก้ไข Database Schema, Migration หรือ Production Data
+  - **การทดสอบและการตรวจสอบคุณภาพ**:
+    - เพิ่มและปรับปรุง Automated Regression Tests ใน [`backend/__tests__/concurrency-rollback.test.ts`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/__tests__/concurrency-rollback.test.ts):
+      - TEST A: ตรวจสอบการยืนยันเบิกสินค้าเกินสต็อกได้รับ HTTP 409 พร้อมข้อความภาษาไทยเดิม และสต็อก/สถานะ pending ไม่เปลี่ยนแปลง (PASS)
+      - TEST B: ตรวจสอบกรณีเกิด Unexpected Database Failure ภายใน `$transaction` ได้รับ HTTP 500 และเกิด Rollback สมบูรณ์ (PASS)
+      - TEST C: ตรวจสอบ Concurrent Confirmation กำหนดให้รายการที่แพ้ต้องได้รับ HTTP 409 อย่างเข้มงวด (PASS)
+    - Backend Vitest: ผ่านครบถ้วน **105/105 tests (6/6 suites) PASS**
+    - Frontend Vitest: ผ่านครบถ้วน **104/104 tests (9/9 suites) PASS**
+    - Playwright E2E: ผ่านครบถ้วน **18/18 tests PASS**
+    - TypeScript Check (Frontend & Backend): ผ่านสมบูรณ์ **0 errors**
+    - Production Build (Frontend & Backend): ผ่านสมบูรณ์ **0 errors**
+
+- **ดำเนินการแก้ไข BUG-005: ลบ Legacy User Management APIs และ Wrapper Functions ที่ไม่ได้ใช้งาน (เสร็จสมบูรณ์ 100% - PASS)**:
+  - **เหตุผลและเป้าหมาย**: แก้ไขปัญหา Technical Debt (BUG-005) ตามผลการสอบสวนที่ได้รับการอนุมัติ โดยลบ Legacy User Endpoints ที่ตกค้างใน Backend จากระบบสมัครสมาชิกเดิมที่ปิดตัวไปแล้ว (`GET /users/pending`, `POST /users/:id/approve`, `POST /users/:id/reject`) และ Wrapper Functions ที่ไม่มีการเรียกใช้ใน Frontend (`getPendingUsers`, `approveUser`, `rejectUser`) เพื่อลดภาระการบำรุงรักษาโค้ดและทำให้ API Surface สะอาด ปลอดภัย
+  - **รายละเอียดการแก้ไข**:
+    1. ลบ Route Handlers ใน [`backend/src/index.ts`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts): `GET /users/pending`, `POST /users/:id/approve`, และ `POST /users/:id/reject`
+    2. ลบ Unused Wrapper Functions ใน [`frontend/lib/auth.ts`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/frontend/lib/auth.ts): `getPendingUsers`, `approveUser`, และ `rejectUser`
+    3. คงฟังก์ชันและ Endpoints ของระบบ User Management ปัจจุบันไว้ครบถ้วน 100% (`POST /users`, `GET /users`, `PATCH /users/:id/status`, `PATCH /users/:id/role`, `PATCH /users/:id/reset-password`, `DELETE /users/:id`) โดยไม่มีการเปลี่ยน Database Schema, Migration, หรือ Business Logic
+  - **ผลการทดสอบและการตรวจสอบคุณภาพ**:
+    - Backend Vitest: ผ่านครบถ้วน **102/102 tests (5/5 suites) PASS**
+    - Frontend Vitest: ผ่านครบถ้วน **104/104 tests (9/9 suites) PASS**
+    - Playwright E2E: ผ่านครบถ้วน **18/18 tests PASS**
+    - TypeScript Check (Frontend & Backend): ผ่านสมบูรณ์ **0 errors**
+    - Production Build (Frontend & Backend): ผ่านสมบูรณ์ **0 errors**
+
+- **ดำเนินการแก้ไข BUG-004: แก้ไข ESLint Warning react-hooks/set-state-in-effect ในหน้า Scan (`frontend/app/scan/page.tsx:31`) (เสร็จสมบูรณ์ 100% - PASS)**:
+  - **เหตุผลและเป้าหมาย**: แก้ไขข้อผิดพลาด BUG-004 ในหน้า `frontend/app/scan/page.tsx` ที่มีการเรียก `setUser(JSON.parse(userStr))` ภายใน `useEffect` และใช้คอมเมนต์ `// eslint-disable-next-line react-hooks/set-state-in-effect` ในการ suppress warning ซึ่งก่อให้เกิด Cascading Render (Render รอบแรกเป็น null และ Render ทันทีอีกรอบหลัง mount)
+  - **รายละเอียดการแก้ไข**:
+    1. เปลี่ยนกระบวนการอ่านข้อมูล `user` จาก `localStorage` มาใช้ React 18/19 Standard API คือ `useSyncExternalStore` ร่วมกับ `useMemo`
+    2. สร้างฟังก์ชัน `subscribeToStorage`, `getUserSnapshot` และ `getServerSnapshot` เพื่ออ่าน snapshot อย่างเป็นทางการ
+    3. ลบคอมเมนต์ `// eslint-disable-next-line react-hooks/set-state-in-effect` ออกอย่างสมบูรณ์ และแก้ปัญหาที่ Root Cause โดยตรง
+    4. ป้องกันปัญหา Hydration Mismatch และไม่ก่อให้เกิด Cascading Render เพิ่มเติม โดยคง Type (`{ username?: string; fullName: string } | null`) และการแสดงผลชื่อผู้ใช้บน UI ไว้เหมือนเดิม 100%
+  - **ผลการทดสอบและการตรวจสอบคุณภาพ**:
+    - ESLint Check: `npx eslint app/scan/page.tsx` ผ่านสมบูรณ์ ปราศจาก `set-state-in-effect` warning
+    - Frontend TypeScript: `npx tsc --noEmit` ผ่านสมบูรณ์ **0 errors**
+    - Frontend Production Build: `npm run build` ผ่านสมบูรณ์ (Compiled in 4.8s, Generating static pages 12/12)
+    - Frontend Vitest: ผ่านครบถ้วน **104/104 tests (9/9 suites) PASS**
+    - Playwright E2E: ผ่านครบถ้วน **18/18 tests PASS**
+    - ไม่มีผลกระทบต่อ Scan behavior, Validation, FIFO, หรือระบบ Authentication/RBAC
+
 ## 17 ก.ย. 2026
 - **ดำเนินการแก้ไข BUG-003: ปรับปรุงความเสถียรของการ Build ฟอนต์ใน Frontend โดยเปลี่ยนมาใช้ Local Fonts (เสร็จสมบูรณ์ 100% - PASS)**:
   - **เหตุผลและเป้าหมาย**: แก้ไขข้อผิดพลาด BUG-003 ที่การ Build ฝั่ง Frontend เดิมพึ่งพา `next/font/google` ซึ่งจำเป็นต้องดาวน์โหลดฟอนต์ผ่านเครือข่ายภายนอก (Google Fonts CDN) ในขณะ Build ทำให้เสี่ยงต่อการ Build ล้มเหลวเมื่ออยู่ในสภาพแวดล้อมที่ไม่มีอินเทอร์เน็ต, ติด Proxy, หรือ Google Fonts ไม่สามารถเข้าถึงได้

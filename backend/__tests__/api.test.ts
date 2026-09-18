@@ -638,7 +638,86 @@ describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
     })
   })
 
-  describe('3. Security Hardening & Strict CORS Tests (STEP 4.32)', () => {
+  describe('4. BOM Role Boundary Authorization Tests (GAP-003)', () => {
+    it('Staff cannot create BOM and receives 403 Forbidden', async () => {
+      const staffToken = makeToken(authStaff)
+      const validBomPayload = {
+        parentItemCode: `TEST-BOM-STAFF-${authTimestamp}`,
+        componentItemCode: `TEST-BOM-STAFF-${authTimestamp}`,
+        description: 'Staff Attempt to Create BOM',
+        uom: 'PCS',
+        warehouse: 'WPK',
+        quantity: 10,
+        bomType: 'Packaging',
+        components: [
+          {
+            componentItemCode: `TEST-COMP-STAFF-${authTimestamp}`,
+            description: 'Component 1',
+            quantity: 2,
+            uom: 'PCS',
+            warehouse: 'WPK',
+          },
+        ],
+      }
+
+      try {
+        const res = await request(app)
+          .post('/products/with-bom')
+          .set('Authorization', `Bearer ${staffToken}`)
+          .send(validBomPayload)
+
+        // 1. HTTP status must be 403 Forbidden
+        expect(res.status).toBe(403)
+        expect(res.body).toHaveProperty('error')
+        expect(res.body.error).toContain('Forbidden')
+
+        // 2. Response must not indicate success
+        expect(res.body.product).toBeUndefined()
+        expect(res.body.message).toBeUndefined()
+
+        // 3. Confirm no BOM record was created in the database
+        const createdBom = await prisma.billOfMaterial.findFirst({
+          where: {
+            OR: [
+              { parentItemCode: validBomPayload.parentItemCode },
+              { componentItemCode: validBomPayload.componentItemCode },
+            ],
+          },
+        })
+        expect(createdBom).toBeNull()
+
+        // 4. Confirm no Product was created in the database
+        const createdProduct = await prisma.product.findFirst({
+          where: {
+            itemCode: validBomPayload.componentItemCode,
+          },
+        })
+        expect(createdProduct).toBeNull()
+      } finally {
+        // Defensive cleanup to ensure isolated test environment
+        await prisma.billOfMaterial.deleteMany({
+          where: {
+            OR: [
+              { parentItemCode: validBomPayload.parentItemCode },
+              { componentItemCode: validBomPayload.componentItemCode },
+            ],
+          },
+        })
+        await prisma.product.deleteMany({
+          where: {
+            itemCode: {
+              in: [
+                validBomPayload.componentItemCode,
+                validBomPayload.components[0].componentItemCode,
+              ],
+            },
+          },
+        })
+      }
+    })
+  })
+
+  describe('5. Security Hardening & Strict CORS Tests (STEP 4.32)', () => {
     it('Wrong Password fails with 401 and does not issue token', async () => {
       const res = await request(app).post('/auth/login').send({ username: 'admin', password: 'wrongpassword' })
       expect(res.status).toBe(401)

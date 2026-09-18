@@ -1,6 +1,24 @@
 # บันทึกการทำงาน (Memories)
 
 ## 18 ก.ย. 2026
+- **ดำเนินการเพิ่มชุดทดสอบ GAP-003: ตรวจสอบสิทธิ์ RBAC ของ Staff ในการสร้าง BOM (Staff Cannot Create BOM -> 403 Forbidden) (เสร็จสมบูรณ์ 100% - PASS)**:
+  - **เหตุผลและเป้าหมาย**: เพิ่ม Automated Test Case สำหรับปิดช่องว่างการทดสอบ (Test Gap) ในส่วนของ RBAC Boundary เพื่อยืนยันว่าผู้ใช้งานบทบาท `warehouse_staff` (Staff) ไม่มีสิทธิ์สร้างโครงสร้างสูตรสินค้า BOM และเมื่อเรียก API `POST /products/with-bom` โดยตรง ระบบจะปฏิเสธด้วย HTTP 403 Forbidden เสมอ
+  - **รายละเอียดการดำเนินการ**:
+    1. ตรวจสอบ Route `POST /products/with-bom` ใน [`backend/src/index.ts`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts) ยืนยันว่าถูกป้องกันด้วย Middleware `authenticate` และ `requireRole('supervisor')` อย่างถูกต้อง
+    2. เพิ่ม Test Case `Staff cannot create BOM and receives 403 Forbidden` ใน [`backend/__tests__/api.test.ts`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/__tests__/api.test.ts):
+       - ใช้ Synthetic JWT สำหรับ Role `warehouse_staff`
+       - ส่ง Valid Payload สำหรับการสร้าง Product พร้อม BOM Components
+       - ตรวจสอบว่าระบบตอบกลับ HTTP 403 Forbidden พร้อม Error message ชัดเจน
+       - ตรวจสอบยืนยันระดับฐานข้อมูลว่าไม่มีการสร้างข้อมูลในตาราง `BillOfMaterial` หรือ `Product`
+       - มีกระบวนการ Defensive Cleanup ข้อมูลทดสอบในบล็อก `finally`
+    3. ไม่มีการแก้ไข Business Logic, สิทธิ์ RBAC, Database Schema, หรือ Production Data ใดๆ ทั้งสิ้น
+  - **ผลการทดสอบและการตรวจสอบคุณภาพ**:
+    - Backend Vitest: ผ่านครบถ้วน **106/106 tests (6/6 suites) PASS**
+    - Frontend Vitest: ผ่านครบถ้วน **104/104 tests (9/9 suites) PASS**
+    - Playwright E2E: ผ่านครบถ้วน **18/18 tests PASS**
+    - TypeScript Check (Frontend & Backend): ผ่านสมบูรณ์ **0 errors**
+    - Production Build (Frontend & Backend): ผ่านสมบูรณ์ **0 errors**
+
 - **ดำเนินการแก้ไข BUG-OBS-001: แก้ไข Outer Catch Handler ให้ส่งกลับ HTTP 409 สำหรับกรณีสต็อกไม่เพียงพอใน Transaction Confirmation (เสร็จสมบูรณ์ 100% - PASS)**:
   - **เหตุผลและเป้าหมาย**: แก้ไขข้อผิดพลาด BUG-OBS-001 ที่ตรวจพบระหว่างการทดสอบ Concurrency Test ของกระบวนการยืนยันรายการเบิกสินค้า (`POST /transactions/:id/confirm`) โดยโค้ดภายใน Transaction ได้ตรวจสอบสต็อกและโยน Error พร้อมแนบ `statusCode = 409` ไว้อย่างถูกต้องแล้ว แต่ Outer Catch Handler เดิมละเลย `error.statusCode` และแปลงเป็น HTTP 500 (Internal Server Error) เสมอ ทำให้ความขัดแย้งทางธุรกิจ (Business Conflict / Insufficient Stock) ถูกรายงานผิดพลาดเป็นข้อผิดพลาดของเซิร์ฟเวอร์
   - **รายละเอียดการแก้ไข**:

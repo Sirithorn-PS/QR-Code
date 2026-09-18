@@ -777,4 +777,195 @@ describe('Security & Role Boundary Hardening Tests (STEP 4.14)', () => {
       expect(res.headers['access-control-allow-origin']).toBeUndefined()
     })
   })
+
+  describe('6. Password Reset Case-Sensitivity & Integrity Tests (GAP-004)', () => {
+    it('Password reset respects username case sensitivity (different case fails with 404, exact case succeeds with 200)', async () => {
+      const resetTimestamp = Date.now()
+      const exactUsername = `caseTestUser_${resetTimestamp}`
+      const upperInitialUsername = `CaseTestUser_${resetTimestamp}`
+      const allCapsUsername = `CASETESTUSER_${resetTimestamp}`
+      const employeeId = `EMP-CASE-${resetTimestamp}`
+      const initialPassword = 'InitialPass123'
+      const newPassword = 'NewSecretPass123'
+
+      const initialPasswordHash = await bcrypt.hash(initialPassword, 10)
+
+      // Create isolated test user
+      const createdUser = await prisma.user.create({
+        data: {
+          username: exactUsername,
+          password: initialPasswordHash,
+          fullName: 'Case Sensitivity Test User',
+          employeeId: employeeId,
+          role: 'warehouse_staff',
+          status: 'approved',
+        },
+      })
+
+      try {
+        // 1. Verify Employee with different casing -> Expected 404 Not Found
+        const verifyDiffCaseRes = await request(app)
+          .post('/auth/verify-employee')
+          .send({
+            username: upperInitialUsername,
+            employeeId: employeeId,
+          })
+        expect(verifyDiffCaseRes.status).toBe(404)
+        expect(verifyDiffCaseRes.body).toHaveProperty('error')
+        expect(verifyDiffCaseRes.body.error).toContain('ไม่พบชื่อผู้ใช้นี้ในระบบ')
+
+        // 2. Attempt password reset with uppercase initial (CaseTestUser) -> Expected 404 Not Found
+        const diffCaseRes1 = await request(app)
+          .post('/auth/reset-password')
+          .send({
+            username: upperInitialUsername,
+            employeeId: employeeId,
+            newPassword: newPassword,
+          })
+
+        expect(diffCaseRes1.status).toBe(404)
+        expect(diffCaseRes1.body).toHaveProperty('error')
+        expect(diffCaseRes1.body.error).toContain('ไม่พบชื่อผู้ใช้นี้ในระบบ')
+
+        // Verify password was NOT changed in database
+        const userAfterDiffCase1 = await prisma.user.findUnique({
+          where: { id: createdUser.id },
+        })
+        expect(userAfterDiffCase1).not.toBeNull()
+        if (userAfterDiffCase1) {
+          const isOldPassStillValid = await bcrypt.compare(initialPassword, userAfterDiffCase1.password)
+          expect(isOldPassStillValid).toBe(true)
+        }
+
+        // 3. Attempt password reset with all-uppercase (CASETESTUSER) -> Expected 404 Not Found
+        const diffCaseRes2 = await request(app)
+          .post('/auth/reset-password')
+          .send({
+            username: allCapsUsername,
+            employeeId: employeeId,
+            newPassword: newPassword,
+          })
+
+        expect(diffCaseRes2.status).toBe(404)
+        expect(diffCaseRes2.body).toHaveProperty('error')
+        expect(diffCaseRes2.body.error).toContain('ไม่พบชื่อผู้ใช้นี้ในระบบ')
+
+        // 4. Verify Employee with exact case -> Expected 200 OK
+        const verifyExactRes = await request(app)
+          .post('/auth/verify-employee')
+          .send({
+            username: exactUsername,
+            employeeId: employeeId,
+          })
+        expect(verifyExactRes.status).toBe(200)
+        expect(verifyExactRes.body.success).toBe(true)
+
+        // 5. Password reset with exact-case username -> Expected 200 OK
+        const exactCaseRes = await request(app)
+          .post('/auth/reset-password')
+          .send({
+            username: exactUsername,
+            employeeId: employeeId,
+            newPassword: newPassword,
+          })
+
+        expect(exactCaseRes.status).toBe(200)
+        expect(exactCaseRes.body.success).toBe(true)
+        expect(exactCaseRes.body.message).toContain('เปลี่ยนรหัสผ่านใหม่เรียบร้อยแล้ว')
+
+        // Verify password in database has been updated to new password
+        const updatedUser = await prisma.user.findUnique({
+          where: { id: createdUser.id },
+        })
+        expect(updatedUser).not.toBeNull()
+        if (updatedUser) {
+          const isNewPassValid = await bcrypt.compare(newPassword, updatedUser.password)
+          expect(isNewPassValid).toBe(true)
+          const isOldPassInvalid = await bcrypt.compare(initialPassword, updatedUser.password)
+          expect(isOldPassInvalid).toBe(false)
+        }
+      } finally {
+        // Defensive cleanup
+        await prisma.user.deleteMany({
+          where: { id: createdUser.id },
+        })
+      }
+    })
+
+    it('Password reset for User A does not modify or affect User B with different case', async () => {
+      const resetTimestamp = Date.now()
+      const userA_name = `caseUserA_${resetTimestamp}`
+      const userB_name = `CaseUserA_${resetTimestamp}`
+      const empA = `EMP-A-${resetTimestamp}`
+      const empB = `EMP-B-${resetTimestamp}`
+      const passA = 'PasswordForUserA123'
+      const passB = 'PasswordForUserB456'
+      const newPassA = 'UpdatedPasswordForUserA999'
+
+      const hashA = await bcrypt.hash(passA, 10)
+      const hashB = await bcrypt.hash(passB, 10)
+
+      // Create User A
+      const userA = await prisma.user.create({
+        data: {
+          username: userA_name,
+          password: hashA,
+          fullName: 'User A',
+          employeeId: empA,
+          role: 'warehouse_staff',
+          status: 'approved',
+        },
+      })
+
+      // Create User B (same characters, different casing)
+      const userB = await prisma.user.create({
+        data: {
+          username: userB_name,
+          password: hashB,
+          fullName: 'User B',
+          employeeId: empB,
+          role: 'warehouse_staff',
+          status: 'approved',
+        },
+      })
+
+      try {
+        // Reset password specifically for User A
+        const resetResA = await request(app)
+          .post('/auth/reset-password')
+          .send({
+            username: userA_name,
+            employeeId: empA,
+            newPassword: newPassA,
+          })
+
+        expect(resetResA.status).toBe(200)
+        expect(resetResA.body.success).toBe(true)
+
+        // Verify User A password is updated
+        const fetchedUserA = await prisma.user.findUnique({ where: { id: userA.id } })
+        expect(fetchedUserA).not.toBeNull()
+        if (fetchedUserA) {
+          const isUserANewPassValid = await bcrypt.compare(newPassA, fetchedUserA.password)
+          expect(isUserANewPassValid).toBe(true)
+        }
+
+        // Verify User B password is completely untouched
+        const fetchedUserB = await prisma.user.findUnique({ where: { id: userB.id } })
+        expect(fetchedUserB).not.toBeNull()
+        if (fetchedUserB) {
+          const isUserBPassUntouched = await bcrypt.compare(passB, fetchedUserB.password)
+          expect(isUserBPassUntouched).toBe(true)
+          const isUserBNewPassA = await bcrypt.compare(newPassA, fetchedUserB.password)
+          expect(isUserBNewPassA).toBe(false)
+        }
+      } finally {
+        await prisma.user.deleteMany({
+          where: {
+            id: { in: [userA.id, userB.id] },
+          },
+        })
+      }
+    })
+  })
 })

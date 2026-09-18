@@ -1,6 +1,27 @@
 # บันทึกการทำงาน (Memories)
 
 ## 18 ก.ย. 2026
+- **ดำเนินการเพิ่มชุดทดสอบ GAP-004: ตรวจสอบ Case Sensitivity และ Data Integrity ของ Username ในกระบวนการ Reset Password (Password Reset Respects Username Case Sensitivity) (เสร็จสมบูรณ์ 100% - PASS)**:
+  - **เหตุผลและเป้าหมาย**: เพิ่ม Automated Test Case เพื่อปิดช่องว่างการทดสอบ (Test Gap) ในส่วนของ Password Reset โดยยืนยันพฤติกรรมความไวต่อตัวพิมพ์ใหญ่-เล็ก (Case Sensitivity) ของ Username ว่าสอดคล้องกับพฤติกรรมของระบบที่มีอยู่จริง (Database และ Prisma Model ใช้ Case-Sensitive สำหรับ Unique Username Lookup ใน `/auth/reset-password` และ `/auth/verify-employee`)
+  - **รายละเอียดการดำเนินการ**:
+    1. ตรวจสอบ Route `POST /auth/reset-password` และ `POST /auth/verify-employee` ใน [`backend/src/index.ts`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/src/index.ts): ยืนยันว่าระบบค้นหาผู้ใช้งานผ่าน `prisma.user.findUnique({ where: { username } })` ซึ่งเป็น Exact Match (Case-Sensitive) ตามธรรมชาติของ PostgreSQL TEXT
+    2. เพิ่ม Test Cases ใน [`backend/__tests__/api.test.ts`](file:///d:/PailuiSirithorn/Pailui/Documents/รวมปี 4/ปี 4 เทอม 1/ฝึกงาน/QR Code Webapp/backend/__tests__/api.test.ts) ภายใต้ Suite `6. Password Reset Case-Sensitivity & Integrity Tests (GAP-004)`:
+       - **Test Case 1 (`Password reset respects username case sensitivity (different case fails with 404, exact case succeeds with 200)`)**:
+         - สร้าง Isolated Test User เช่น `caseTestUser_<timestamp>`
+         - ทดสอบการส่ง Username ที่มีตัวพิมพ์ต่างกัน เช่น `CaseTestUser` และ `CASETESTUSER` ทั้งใน `/auth/verify-employee` และ `/auth/reset-password` ยืนยันว่าระบบปฏิเสธด้วย HTTP 404 (`'ไม่พบชื่อผู้ใช้นี้ในระบบ'`) และรหัสผ่านเดิมในฐานข้อมูลไม่ถูกเปลี่ยนแปลง
+         - ทดสอบการส่ง Username ที่ตรงกันทุกตัวอักษร (Exact Match) ยืนยันว่าระบบตอบกลับ HTTP 200 และรหัสผ่านในฐานข้อมูลถูกอัปเดตอย่างถูกต้อง
+       - **Test Case 2 (`Password reset for User A does not modify or affect User B with different case`)**:
+         - สร้าง User A (`caseUserA`) และ User B (`CaseUserA`) ที่สะกดด้วยตัวอักษรเดียวกันแต่ต่างกันเฉพาะตัวพิมพ์
+         - ทดสอบรีเซ็ตรหัสผ่านเฉพาะของ User A แล้วตรวจสอบระดับฐานข้อมูลยืนยันว่ารหัสผ่านของ User A เปลี่ยนแปลงถูกต้อง ขณะที่รหัสผ่านของ User B ยังคงเดิม ไม่ถูกแตะต้องหรือได้รับผลกระทบใดๆ (Data Integrity Verified)
+       - มีกระบวนการ Defensive Cleanup ข้อมูลทดสอบในบล็อก `finally`
+    3. ไม่มีการแก้ไข Business Logic, Authentication, Database Schema, หรือ Production Data ใดๆ ทั้งสิ้น
+  - **ผลการทดสอบและการตรวจสอบคุณภาพ**:
+    - Backend Vitest: ผ่านครบถ้วน **108/108 tests (6/6 suites) PASS** (เพิ่มขึ้น 2 tests)
+    - Frontend Vitest: ผ่านครบถ้วน **104/104 tests (9/9 suites) PASS**
+    - Playwright E2E: ผ่านครบถ้วน **18/18 tests PASS**
+    - TypeScript Check (Frontend & Backend): ผ่านสมบูรณ์ **0 errors**
+    - Production Build (Frontend & Backend): ผ่านสมบูรณ์ **0 errors**
+
 - **ดำเนินการเพิ่มชุดทดสอบ GAP-003: ตรวจสอบสิทธิ์ RBAC ของ Staff ในการสร้าง BOM (Staff Cannot Create BOM -> 403 Forbidden) (เสร็จสมบูรณ์ 100% - PASS)**:
   - **เหตุผลและเป้าหมาย**: เพิ่ม Automated Test Case สำหรับปิดช่องว่างการทดสอบ (Test Gap) ในส่วนของ RBAC Boundary เพื่อยืนยันว่าผู้ใช้งานบทบาท `warehouse_staff` (Staff) ไม่มีสิทธิ์สร้างโครงสร้างสูตรสินค้า BOM และเมื่อเรียก API `POST /products/with-bom` โดยตรง ระบบจะปฏิเสธด้วย HTTP 403 Forbidden เสมอ
   - **รายละเอียดการดำเนินการ**:

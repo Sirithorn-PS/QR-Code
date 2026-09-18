@@ -1,11 +1,25 @@
 'use client'
 
-import { FormEvent, useState, useCallback, useEffect } from 'react'
+import { FormEvent, useState, useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
 import { createTransaction, fetchProduct, fetchProductBom, Product, BillOfMaterial } from '@/lib/auth'
 import { isPackagingItem } from '@/lib/packaging'
 import { motion, AnimatePresence } from 'framer-motion'
 import QRScanner from '@/components/QRScanner'
 import { FileText, ChevronDown, ChevronUp, Droplets, Box, FlaskConical, ExternalLink, ArrowLeft, PackagePlus, PackageMinus, Search, X, AlertCircle } from 'lucide-react'
+
+// อ่านข้อมูลผู้ใช้จาก localStorage โดยใช้ useSyncExternalStore เพื่อป้องกัน cascading render และ hydration mismatch
+function subscribeToStorage(callback: () => void) {
+  window.addEventListener('storage', callback)
+  return () => window.removeEventListener('storage', callback)
+}
+
+function getUserSnapshot(): string | null {
+  return typeof window !== 'undefined' ? localStorage.getItem('user') : null
+}
+
+function getServerSnapshot(): string | null {
+  return null
+}
 
 export default function ScanPage() {
   const [, setItemCode] = useState('')
@@ -17,24 +31,21 @@ export default function ScanPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [scanCooldown, setScanCooldown] = useState(false)
-  const [user, setUser] = useState<{ username?: string; fullName: string } | null>(null)
+
+  const userJson = useSyncExternalStore(subscribeToStorage, getUserSnapshot, getServerSnapshot)
+  const user = useMemo<{ username?: string; fullName: string } | null>(() => {
+    if (!userJson) return null
+    try {
+      return JSON.parse(userJson)
+    } catch {
+      return null
+    }
+  }, [userJson])
 
   const [bomList, setBomList] = useState<BillOfMaterial[]>([])
   const [showBom, setShowBom] = useState(false)
   const [expandedBomSubgroups, setExpandedBomSubgroups] = useState<Record<string, boolean>>({})
   const [productHistory, setProductHistory] = useState<Product[]>([])
-
-  useEffect(() => {
-    const userStr = localStorage.getItem('user')
-    if (userStr) {
-      try {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setUser(JSON.parse(userStr))
-      } catch {
-        // ignore
-      }
-    }
-  }, [])
 
   const extractItemCode = useCallback((raw: string): string => {
     if (!raw) return ''

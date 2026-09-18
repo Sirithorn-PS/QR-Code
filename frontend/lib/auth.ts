@@ -390,22 +390,6 @@ export function getUsers(status?: string) {
   return apiRequest<UserItem[]>(`/users${query}`)
 }
 
-export function getPendingUsers() {
-  return apiRequest<UserItem[]>('/users/pending')
-}
-
-export function approveUser(id: number) {
-  return apiRequest<{ success: boolean; message: string; user: UserItem }>(`/users/${id}/approve`, {
-    method: 'POST',
-  })
-}
-
-export function rejectUser(id: number) {
-  return apiRequest<{ success: boolean; message: string; user: UserItem }>(`/users/${id}/reject`, {
-    method: 'POST',
-  })
-}
-
 export function createUser(data: { username: string; password: string; fullName: string; employeeId?: string; role: string }) {
   return apiRequest<{ success: boolean; message: string; user: UserItem }>('/users', {
     method: 'POST',
